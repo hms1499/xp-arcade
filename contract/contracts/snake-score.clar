@@ -97,3 +97,90 @@
 
 (define-read-only (get-last-token-id)
   (ok (var-get last-token-id)))
+
+;; --- Errors ---
+(define-constant ERR-NOT-IN-TOP-TEN (err u101))
+(define-constant ERR-ALREADY-CLAIMED (err u102))
+(define-constant ERR-NOT-OWNER (err u103))
+
+;; --- Trophy NFT ---
+(define-non-fungible-token snake-trophy uint)
+(define-data-var last-trophy-id uint u0)
+(define-map trophy-data uint { player: principal, rank: uint, season: uint })
+(define-map trophy-claimed { player: principal, season: uint } bool)
+
+(define-data-var contract-owner principal tx-sender)
+(define-data-var base-uri (string-ascii 80) "https://xp-snake.example/api/metadata/score/{id}")
+
+;; Count how many top-ten entries have score strictly greater than tx-sender's best.
+(define-private (rank-fold
+    (e { player: principal, score: uint })
+    (acc { caller-score: uint, higher: uint, present: bool }))
+  (let ((cs (get caller-score acc)))
+    {
+      caller-score: cs,
+      higher: (if (> (get score e) cs) (+ (get higher acc) u1) (get higher acc)),
+      present: (or (get present acc) (is-eq (get player e) tx-sender))
+    }))
+
+(define-read-only (get-current-season)
+  (var-get current-season))
+
+(define-read-only (get-trophy-data (trophy-id uint))
+  (map-get? trophy-data trophy-id))
+
+(define-read-only (get-trophy-owner (trophy-id uint))
+  (ok (nft-get-owner? snake-trophy trophy-id)))
+
+(define-read-only (get-last-trophy-id)
+  (ok (var-get last-trophy-id)))
+
+(define-read-only (has-claimed-trophy (player principal))
+  (default-to false
+    (map-get? trophy-claimed { player: player, season: (var-get current-season) })))
+
+(define-public (claim-trophy)
+  (let
+    (
+      (best (map-get? best-score tx-sender))
+      (season (var-get current-season))
+      (claimed (default-to false (map-get? trophy-claimed { player: tx-sender, season: season })))
+    )
+    (asserts! (not claimed) ERR-ALREADY-CLAIMED)
+    (asserts! (is-some best) ERR-NOT-IN-TOP-TEN)
+    (let
+      (
+        (cs (get score (unwrap-panic best)))
+        (result (fold rank-fold (var-get top-ten)
+                      { caller-score: cs, higher: u0, present: false }))
+      )
+      (asserts! (get present result) ERR-NOT-IN-TOP-TEN)
+      (let ((rank (+ u1 (get higher result)))
+            (new-id (+ (var-get last-trophy-id) u1)))
+        (try! (nft-mint? snake-trophy new-id tx-sender))
+        (map-set trophy-data new-id { player: tx-sender, rank: rank, season: season })
+        (map-set trophy-claimed { player: tx-sender, season: season } true)
+        (var-set last-trophy-id new-id)
+        (ok new-id)))))
+
+(define-public (reset-season)
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-OWNER)
+    (var-set top-ten (list))
+    (var-set current-season (+ (var-get current-season) u1))
+    (ok true)))
+
+(define-public (set-base-uri (uri (string-ascii 80)))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-OWNER)
+    (var-set base-uri uri)
+    (ok true)))
+
+;; --- SIP-009 ---
+(define-public (transfer (token-id uint) (sender principal) (recipient principal))
+  (begin
+    (asserts! (is-eq tx-sender sender) ERR-NOT-OWNER)
+    (nft-transfer? snake-score token-id sender recipient)))
+
+(define-read-only (get-token-uri (token-id uint))
+  (ok (some (var-get base-uri))))
