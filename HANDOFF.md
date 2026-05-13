@@ -8,9 +8,9 @@
 |---|---|---|
 | 0. Scaffolding | ✅ | `.gitignore`, `README.md` |
 | 1. Clarity contract | ✅ | `contract/contracts/snake-score.clar` + 14 Clarinet tests passing |
-| 2. Next.js + snake engine | ✅ | `web/lib/snake-engine.ts` + 5 Vitest tests passing |
-| 3. Stacks integration | ✅ | `web/lib/stacks.ts`, `web/lib/contract-calls.ts`, `web/state/wallet.ts` |
-| 4. XP UI shell | ✅ | `web/components/desktop/*`, `web/components/windows/Window.tsx`, `web/state/window-manager.ts` |
+| 2. Next.js + snake engine | ✅ | `frontend/lib/snake-engine.ts` + 5 Vitest tests passing |
+| 3. Stacks integration | ✅ | `frontend/lib/stacks.ts`, `frontend/lib/contract-calls.ts`, `frontend/state/wallet.ts` |
+| 4. XP UI shell | ✅ | `frontend/components/desktop/*`, `frontend/components/windows/Window.tsx`, `frontend/state/window-manager.ts` |
 | 5. Game window + mint | ✅ | `GameCanvas.tsx`, `MintDialog.tsx`, `GameWindow.tsx` |
 | 6. Leaderboard + trophy | ✅ | `LeaderboardWindow.tsx`, `TrophyDialog.tsx` (with `canvas-confetti`) |
 | 7. My NFTs + metadata | ✅ | `MyNftsWindow.tsx`, `app/api/metadata/{score,trophy}/[id]/route.ts`, `lib/metadata-svg.ts` + 2 Vitest tests passing |
@@ -40,7 +40,7 @@ clarinet deployments apply --testnet
 ### 2. Wire the frontend to the deployed contract
 
 ```bash
-cd web
+cd frontend
 cp .env.example .env.local
 ```
 
@@ -54,7 +54,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ### 3. Local smoke test
 
 ```bash
-cd web
+cd frontend
 npm run dev
 ```
 
@@ -73,7 +73,7 @@ Open http://localhost:3000 and walk through the demo flow:
 ### 4. Deploy to Vercel
 
 ```bash
-cd web
+cd frontend
 npx vercel link
 npx vercel env add NEXT_PUBLIC_CONTRACT_ADDRESS preview
 npx vercel env add NEXT_PUBLIC_NETWORK preview         # value: testnet
@@ -101,7 +101,7 @@ If you want the deployed Vercel URL to also serve metadata for marketplaces, cal
 - **Score is client-trusted.** No on-chain verification of gameplay. Acceptable for hackathon MVP; surface this in the demo. Future: on-chain RNG + replay verification.
 - **Top-10 is unsorted on-chain.** Eviction works (lowest score gets bumped when 11th higher score arrives), but ordering is done client-side in `LeaderboardWindow`. `claim-trophy` rank is computed via fold counting higher scores — no sort needed.
 - **Trophy rank locked at claim time.** Documented behavior — if a player claims at rank 3 then gets bumped to rank 4, their trophy stays Bronze.
-- **No sound effects.** Spec §8 listed XP `ding`/`error`/`balloon` MP3s; skipped since I can't generate audio assets. To add: drop MP3s into `web/public/sounds/` and use the `lib/sounds.ts` snippet from the plan (Phase 8 task 8.2).
+- **No sound effects.** Spec §8 listed XP `ding`/`error`/`balloon` MP3s; skipped since I can't generate audio assets. To add: drop MP3s into `frontend/public/sounds/` and use the `lib/sounds.ts` snippet from the plan (Phase 8 task 8.2).
 - **Mobile is fallback only.** XP metaphor is desktop-first by design. Mobile users will see a janky responsive view.
 
 ## Environment quirks

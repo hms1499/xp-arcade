@@ -10,7 +10,7 @@ plan:
     - transaction-type: contract-publish
       contract-name: snake-score
       expected-sender: ST2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB4PBYSC2
-      cost: 99878
+      cost: 63280
       path: contracts/snake-score.clar
       anchor-block-only: true
       clarity-version: 4

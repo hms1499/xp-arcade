@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 contract/   Clarinet project — Clarity SIP-009 NFT contract + Vitest tests
-web/        Next.js 16 App Router app — XP-themed desktop UI
+frontend/        Next.js 16 App Router app — XP-themed desktop UI
 docs/       spec, plan, design notes
 HANDOFF.md  user-facing to-do list (deploy, smoke test, Vercel)
 ```
@@ -27,9 +27,9 @@ clarinet deployments generate --testnet --low-cost
 clarinet deployments apply --testnet   # deploys with mnemonic from settings/Testnet.toml
 ```
 
-### web/
+### frontend/
 ```bash
-cd web
+cd frontend
 npm run dev                    # Next dev server on :3000 (Turbopack)
 npm run build                  # production build
 npm test                       # Vitest (snake-engine + metadata-svg, 7 passing)
@@ -66,7 +66,7 @@ These are non-obvious choices baked in — preserve them unless the user explici
 - **Path must not contain spaces.** Vitest's worker pool fails on URL-encoded paths (`%20`). The project lives at `Desktop/xp-snake/` — do not rename to anything with a space.
 - **Vitest 4 is incompatible with `vitest-environment-clarinet` 3.** The contract workspace pins `vitest@^3`. If `clarinet new` regenerates and bumps vitest, downgrade.
 - **Clarity rejects non-ASCII.** No em-dash, smart quotes, etc. in `.clar` files. ASCII hyphens only.
-- **Path with space artifact:** `npm test` in `web/` sometimes prints `Shell cwd was reset to /Users/vanhuy/Desktop/untitled folder` after — harmless leftover from the original directory before the rename. Tests still run from the new path.
+- **Path with space artifact:** `npm test` in `frontend/` sometimes prints `Shell cwd was reset to /Users/vanhuy/Desktop/untitled folder` after — harmless leftover from the original directory before the rename. Tests still run from the new path.
 
 ## Tech stack (as installed)
 
@@ -76,7 +76,7 @@ These are non-obvious choices baked in — preserve them unless the user explici
 - Polish: **`canvas-confetti`** for trophy claim
 - Deploy targets: **Vercel** (frontend), **Stacks testnet** (contract)
 
-Required Vercel env vars: `NEXT_PUBLIC_CONTRACT_ADDRESS`, `NEXT_PUBLIC_NETWORK=testnet`, `NEXT_PUBLIC_APP_URL`. See `web/.env.example`.
+Required Vercel env vars: `NEXT_PUBLIC_CONTRACT_ADDRESS`, `NEXT_PUBLIC_NETWORK=testnet`, `NEXT_PUBLIC_APP_URL`. See `frontend/.env.example`.
 
 ## When working in this repo
 

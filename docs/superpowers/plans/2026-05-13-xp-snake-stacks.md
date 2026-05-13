@@ -4,7 +4,7 @@
 
 **Goal:** Ship a hackathon MVP snake game with a Windows XP themed UI that mints score and trophy NFTs on Stacks testnet via a single SIP-009 Clarity contract.
 
-**Architecture:** Two top-level workspaces — `contract/` (Clarinet project, Clarity smart contract + Vitest tests) and `web/` (Next.js 16 App Router app with XP-themed desktop UI). The contract maintains an on-chain top-10 leaderboard via insertion sort during `mint-score`; the frontend renders the game in a `<canvas>` inside a draggable XP window managed by Zustand state.
+**Architecture:** Two top-level workspaces — `contract/` (Clarinet project, Clarity smart contract + Vitest tests) and `frontend/` (Next.js 16 App Router app with XP-themed desktop UI). The contract maintains an on-chain top-10 leaderboard via insertion sort during `mint-score`; the frontend renders the game in a `<canvas>` inside a draggable XP window managed by Zustand state.
 
 **Tech Stack:** Clarity, Clarinet, `@hirosystems/clarinet-sdk`, Vitest, Next.js 16, React, TypeScript, xp.css, Tailwind CSS, Zustand, `@stacks/connect`, `@stacks/transactions`, `@stacks/network`, `canvas-confetti`, deployed on Vercel + Stacks testnet.
 
@@ -20,7 +20,7 @@ contract/
   contracts/snake-score.clar
   tests/snake-score.test.ts
   deployments/default.testnet-plan.yaml
-web/
+frontend/
   package.json
   next.config.ts
   tsconfig.json
@@ -80,7 +80,7 @@ Each file has one responsibility. Game logic (`snake-engine.ts`) is DOM-free for
 ### Task 0.1: Initialize repo structure
 
 **Files:**
-- Create: `.gitignore`, `README.md`, `contract/`, `web/`
+- Create: `.gitignore`, `README.md`, `contract/`, `frontend/`
 
 - [ ] **Step 1: Create root .gitignore**
 
@@ -861,7 +861,7 @@ git commit -m "chore(contract): deploy snake-score to testnet"
 ### Task 2.1: Bootstrap Next.js app
 
 **Files:**
-- Create entire `web/` workspace via `create-next-app`
+- Create entire `frontend/` workspace via `create-next-app`
 
 - [ ] **Step 1: Scaffold Next.js**
 
@@ -874,14 +874,14 @@ npx create-next-app@latest web --typescript --tailwind --eslint --app --no-src-d
 
 Run:
 ```bash
-cd web
+cd frontend
 npm install @stacks/connect @stacks/transactions @stacks/network zustand canvas-confetti xp.css
 npm install -D vitest @vitejs/plugin-react jsdom @testing-library/react @testing-library/jest-dom
 ```
 
 - [ ] **Step 3: Add vitest config**
 
-Create `web/vitest.config.ts`:
+Create `frontend/vitest.config.ts`:
 ```ts
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
@@ -900,7 +900,7 @@ export default defineConfig({
 });
 ```
 
-Update `web/package.json` scripts:
+Update `frontend/package.json` scripts:
 ```json
 "scripts": {
   "dev": "next dev",
@@ -916,7 +916,7 @@ Update `web/package.json` scripts:
 
 Run:
 ```bash
-cd web && npm run build
+cd frontend && npm run build
 ```
 
 Expected: clean build with one default route.
@@ -924,18 +924,18 @@ Expected: clean build with one default route.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web/
+git add frontend/
 git commit -m "chore(web): bootstrap next.js app"
 ```
 
 ### Task 2.2: Failing test — snake engine tick
 
 **Files:**
-- Create: `web/lib/snake-engine.ts`, `web/lib/snake-engine.test.ts`
+- Create: `frontend/lib/snake-engine.ts`, `frontend/lib/snake-engine.test.ts`
 
 - [ ] **Step 1: Write failing test**
 
-Create `web/lib/snake-engine.test.ts`:
+Create `frontend/lib/snake-engine.test.ts`:
 ```ts
 import { describe, it, expect } from "vitest";
 import { createGame } from "./snake-engine";
@@ -989,12 +989,12 @@ describe("snake-engine", () => {
 
 - [ ] **Step 2: Run — expect failure**
 
-Run: `cd web && npm test`
+Run: `cd frontend && npm test`
 Expected: FAIL — `createGame` not defined.
 
 - [ ] **Step 3: Implement engine**
 
-Create `web/lib/snake-engine.ts`:
+Create `frontend/lib/snake-engine.ts`:
 ```ts
 export type Direction = "up" | "down" | "left" | "right";
 export type Cell = { x: number; y: number };
@@ -1077,13 +1077,13 @@ export function createGame(opts: { gridSize: number; seed: number }): Game {
 
 - [ ] **Step 4: Run — expect pass**
 
-Run: `cd web && npm test`
+Run: `cd frontend && npm test`
 Expected: 5 passing.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web/lib/snake-engine.ts web/lib/snake-engine.test.ts
+git add frontend/lib/snake-engine.ts frontend/lib/snake-engine.test.ts
 git commit -m "feat(web): pure snake engine with seeded RNG"
 ```
 
@@ -1094,12 +1094,12 @@ git commit -m "feat(web): pure snake engine with seeded RNG"
 ### Task 3.1: Wallet store + connect button
 
 **Files:**
-- Create: `web/state/wallet.ts`, `web/lib/stacks.ts`, `web/components/desktop/SystemTray.tsx`
-- Create: `web/.env.example`
+- Create: `frontend/state/wallet.ts`, `frontend/lib/stacks.ts`, `frontend/components/desktop/SystemTray.tsx`
+- Create: `frontend/.env.example`
 
 - [ ] **Step 1: Add env example**
 
-Create `web/.env.example`:
+Create `frontend/.env.example`:
 ```
 NEXT_PUBLIC_CONTRACT_ADDRESS=ST3XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.snake-score
 NEXT_PUBLIC_NETWORK=testnet
@@ -1108,7 +1108,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 - [ ] **Step 2: Stacks helper**
 
-Create `web/lib/stacks.ts`:
+Create `frontend/lib/stacks.ts`:
 ```ts
 import { STACKS_TESTNET, STACKS_MAINNET } from "@stacks/network";
 
@@ -1127,7 +1127,7 @@ export const stacks = {
 
 - [ ] **Step 3: Wallet store**
 
-Create `web/state/wallet.ts`:
+Create `frontend/state/wallet.ts`:
 ```ts
 "use client";
 import { create } from "zustand";
@@ -1171,7 +1171,7 @@ export const useWallet = create<WalletState>((set) => ({
 
 - [ ] **Step 4: Minimal SystemTray component**
 
-Create `web/components/desktop/SystemTray.tsx`:
+Create `frontend/components/desktop/SystemTray.tsx`:
 ```tsx
 "use client";
 import { useEffect } from "react";
@@ -1197,23 +1197,23 @@ export function SystemTray() {
 
 - [ ] **Step 5: Smoke test (manual)**
 
-Run: `cd web && npm run dev` — visit http://localhost:3000, render `<SystemTray />` temporarily in `app/page.tsx`, click Connect, verify Leather popup appears.
+Run: `cd frontend && npm run dev` — visit http://localhost:3000, render `<SystemTray />` temporarily in `app/page.tsx`, click Connect, verify Leather popup appears.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add web/
+git add frontend/
 git commit -m "feat(web): wallet connect via @stacks/connect"
 ```
 
 ### Task 3.2: Contract call helpers
 
 **Files:**
-- Create: `web/lib/contract-calls.ts`
+- Create: `frontend/lib/contract-calls.ts`
 
 - [ ] **Step 1: Implement wrappers**
 
-Create `web/lib/contract-calls.ts`:
+Create `frontend/lib/contract-calls.ts`:
 ```ts
 "use client";
 import { openContractCall } from "@stacks/connect";
@@ -1292,13 +1292,13 @@ export async function getLastTokenId(): Promise<number> {
 
 - [ ] **Step 2: Type-check**
 
-Run: `cd web && npx tsc --noEmit`
+Run: `cd frontend && npx tsc --noEmit`
 Expected: no errors.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add web/lib/contract-calls.ts
+git add frontend/lib/contract-calls.ts
 git commit -m "feat(web): contract call wrappers"
 ```
 
@@ -1309,11 +1309,11 @@ git commit -m "feat(web): contract call wrappers"
 ### Task 4.1: Window manager store
 
 **Files:**
-- Create: `web/state/window-manager.ts`
+- Create: `frontend/state/window-manager.ts`
 
 - [ ] **Step 1: Implement**
 
-Create `web/state/window-manager.ts`:
+Create `frontend/state/window-manager.ts`:
 ```ts
 "use client";
 import { create } from "zustand";
@@ -1367,20 +1367,20 @@ export const useWindows = create<S>((set, get) => ({
 - [ ] **Step 2: Commit**
 
 ```bash
-git add web/state/window-manager.ts
+git add frontend/state/window-manager.ts
 git commit -m "feat(web): window manager store"
 ```
 
 ### Task 4.2: Desktop + Taskbar + Window chrome
 
 **Files:**
-- Create: `web/components/desktop/Desktop.tsx`, `Taskbar.tsx`, `StartMenu.tsx`, `DesktopIcon.tsx`
-- Create: `web/components/windows/Window.tsx`
-- Modify: `web/app/page.tsx`, `web/app/layout.tsx`, `web/app/globals.css`
+- Create: `frontend/components/desktop/Desktop.tsx`, `Taskbar.tsx`, `StartMenu.tsx`, `DesktopIcon.tsx`
+- Create: `frontend/components/windows/Window.tsx`
+- Modify: `frontend/app/page.tsx`, `frontend/app/layout.tsx`, `frontend/app/globals.css`
 
 - [ ] **Step 1: Add xp.css**
 
-Modify `web/app/globals.css`:
+Modify `frontend/app/globals.css`:
 ```css
 @import "xp.css/dist/XP.css";
 @tailwind base;
@@ -1396,11 +1396,11 @@ body {
 
 - [ ] **Step 2: Drop a bliss wallpaper into public**
 
-Place a Bliss-style JPG at `web/public/wallpaper-bliss.jpg` (any green-hills CC-licensed image is fine — record source in README).
+Place a Bliss-style JPG at `frontend/public/wallpaper-bliss.jpg` (any green-hills CC-licensed image is fine — record source in README).
 
 - [ ] **Step 3: Window component**
 
-Create `web/components/windows/Window.tsx`:
+Create `frontend/components/windows/Window.tsx`:
 ```tsx
 "use client";
 import { ReactNode, useRef } from "react";
@@ -1452,7 +1452,7 @@ export function Window({
 
 - [ ] **Step 4: Desktop + DesktopIcon + Taskbar + StartMenu**
 
-Create `web/components/desktop/DesktopIcon.tsx`:
+Create `frontend/components/desktop/DesktopIcon.tsx`:
 ```tsx
 "use client";
 export function DesktopIcon({
@@ -1472,7 +1472,7 @@ export function DesktopIcon({
 }
 ```
 
-Create `web/components/desktop/StartMenu.tsx`:
+Create `frontend/components/desktop/StartMenu.tsx`:
 ```tsx
 "use client";
 import { useWindows } from "@/state/window-manager";
@@ -1503,7 +1503,7 @@ export function StartMenu({ open, onClose }: { open: boolean; onClose: () => voi
 }
 ```
 
-Create `web/components/desktop/Taskbar.tsx`:
+Create `frontend/components/desktop/Taskbar.tsx`:
 ```tsx
 "use client";
 import { useState, useEffect } from "react";
@@ -1544,7 +1544,7 @@ export function Taskbar() {
 }
 ```
 
-Create `web/components/desktop/Desktop.tsx`:
+Create `frontend/components/desktop/Desktop.tsx`:
 ```tsx
 "use client";
 import { DesktopIcon } from "./DesktopIcon";
@@ -1569,7 +1569,7 @@ export function Desktop({ children }: { children: React.ReactNode }) {
 
 - [ ] **Step 5: Wire into page**
 
-Modify `web/app/page.tsx`:
+Modify `frontend/app/page.tsx`:
 ```tsx
 import { Desktop } from "@/components/desktop/Desktop";
 import { GameWindow } from "@/components/windows/GameWindow";
@@ -1587,7 +1587,7 @@ export default function Home() {
 }
 ```
 
-Create stubs `web/components/windows/GameWindow.tsx`, `LeaderboardWindow.tsx`, `MyNftsWindow.tsx`:
+Create stubs `frontend/components/windows/GameWindow.tsx`, `LeaderboardWindow.tsx`, `MyNftsWindow.tsx`:
 ```tsx
 "use client";
 import { useWindows } from "@/state/window-manager";
@@ -1602,12 +1602,12 @@ export function GameWindow() {
 
 - [ ] **Step 6: Smoke test**
 
-Run: `cd web && npm run dev` — verify desktop renders with wallpaper, double-click icons opens windows, drag works, close works, taskbar shows clock.
+Run: `cd frontend && npm run dev` — verify desktop renders with wallpaper, double-click icons opens windows, drag works, close works, taskbar shows clock.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add web/
+git add frontend/
 git commit -m "feat(web): XP desktop shell — windows, taskbar, start menu"
 ```
 
@@ -1618,12 +1618,12 @@ git commit -m "feat(web): XP desktop shell — windows, taskbar, start menu"
 ### Task 5.1: GameCanvas component
 
 **Files:**
-- Create: `web/components/game/GameCanvas.tsx`
-- Modify: `web/components/windows/GameWindow.tsx`
+- Create: `frontend/components/game/GameCanvas.tsx`
+- Modify: `frontend/components/windows/GameWindow.tsx`
 
 - [ ] **Step 1: GameCanvas**
 
-Create `web/components/game/GameCanvas.tsx`:
+Create `frontend/components/game/GameCanvas.tsx`:
 ```tsx
 "use client";
 import { useEffect, useRef, useState } from "react";
@@ -1694,7 +1694,7 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
 
 - [ ] **Step 2: Wire into GameWindow with MintDialog**
 
-Replace `web/components/windows/GameWindow.tsx`:
+Replace `frontend/components/windows/GameWindow.tsx`:
 ```tsx
 "use client";
 import { useState } from "react";
@@ -1728,7 +1728,7 @@ export function GameWindow() {
 
 - [ ] **Step 3: MintDialog**
 
-Create `web/components/dialogs/MintDialog.tsx`:
+Create `frontend/components/dialogs/MintDialog.tsx`:
 ```tsx
 "use client";
 import { useState } from "react";
@@ -1784,7 +1784,7 @@ export function MintDialog({
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web/
+git add frontend/
 git commit -m "feat(web): game canvas + mint dialog"
 ```
 
@@ -1795,12 +1795,12 @@ git commit -m "feat(web): game canvas + mint dialog"
 ### Task 6.1: LeaderboardWindow
 
 **Files:**
-- Modify: `web/components/windows/LeaderboardWindow.tsx`
-- Create: `web/components/dialogs/TrophyDialog.tsx`
+- Modify: `frontend/components/windows/LeaderboardWindow.tsx`
+- Create: `frontend/components/dialogs/TrophyDialog.tsx`
 
 - [ ] **Step 1: Leaderboard**
 
-Replace `web/components/windows/LeaderboardWindow.tsx`:
+Replace `frontend/components/windows/LeaderboardWindow.tsx`:
 ```tsx
 "use client";
 import { useEffect, useState } from "react";
@@ -1858,7 +1858,7 @@ export function LeaderboardWindow() {
 
 - [ ] **Step 2: TrophyDialog with confetti**
 
-Create `web/components/dialogs/TrophyDialog.tsx`:
+Create `frontend/components/dialogs/TrophyDialog.tsx`:
 ```tsx
 "use client";
 import { useEffect } from "react";
@@ -1895,7 +1895,7 @@ Mint a few scores from different testnet wallets, open leaderboard, claim trophy
 - [ ] **Step 4: Commit**
 
 ```bash
-git add web/
+git add frontend/
 git commit -m "feat(web): leaderboard + trophy claim dialog"
 ```
 
@@ -1906,11 +1906,11 @@ git commit -m "feat(web): leaderboard + trophy claim dialog"
 ### Task 7.1: Metadata SVG generator
 
 **Files:**
-- Create: `web/lib/metadata-svg.ts`, `web/lib/metadata-svg.test.ts`
+- Create: `frontend/lib/metadata-svg.ts`, `frontend/lib/metadata-svg.test.ts`
 
 - [ ] **Step 1: Failing test**
 
-Create `web/lib/metadata-svg.test.ts`:
+Create `frontend/lib/metadata-svg.test.ts`:
 ```ts
 import { describe, it, expect } from "vitest";
 import { scoreSvg, trophySvg } from "./metadata-svg";
@@ -1933,12 +1933,12 @@ describe("metadata svg", () => {
 
 - [ ] **Step 2: Run — expect failure**
 
-Run: `cd web && npm test`
+Run: `cd frontend && npm test`
 Expected: FAIL — module not found.
 
 - [ ] **Step 3: Implement**
 
-Create `web/lib/metadata-svg.ts`:
+Create `frontend/lib/metadata-svg.ts`:
 ```ts
 export function scoreSvg(o: { tokenId: number; score: number; playerName: string }) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400">
@@ -1968,24 +1968,24 @@ export function trophySvg(o: { trophyId: number; rank: number; season: number })
 
 - [ ] **Step 4: Run — expect pass**
 
-Run: `cd web && npm test`
+Run: `cd frontend && npm test`
 Expected: 7 passing (5 engine + 2 svg).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web/
+git add frontend/
 git commit -m "feat(web): score + trophy SVG generators"
 ```
 
 ### Task 7.2: Metadata API routes
 
 **Files:**
-- Create: `web/app/api/metadata/score/[id]/route.ts`, `web/app/api/metadata/trophy/[id]/route.ts`
+- Create: `frontend/app/api/metadata/score/[id]/route.ts`, `frontend/app/api/metadata/trophy/[id]/route.ts`
 
 - [ ] **Step 1: Score route**
 
-Create `web/app/api/metadata/score/[id]/route.ts`:
+Create `frontend/app/api/metadata/score/[id]/route.ts`:
 ```ts
 import { NextResponse } from "next/server";
 import { fetchCallReadOnlyFunction, cvToValue, uintCV } from "@stacks/transactions";
@@ -2019,7 +2019,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
 - [ ] **Step 2: Trophy route**
 
-Create `web/app/api/metadata/trophy/[id]/route.ts`:
+Create `frontend/app/api/metadata/trophy/[id]/route.ts`:
 ```ts
 import { NextResponse } from "next/server";
 import { fetchCallReadOnlyFunction, cvToValue, uintCV } from "@stacks/transactions";
@@ -2056,18 +2056,18 @@ Run dev server, visit `http://localhost:3000/api/metadata/score/1` — expect JS
 - [ ] **Step 4: Commit**
 
 ```bash
-git add web/
+git add frontend/
 git commit -m "feat(web): metadata API routes with SIP-016 JSON"
 ```
 
 ### Task 7.3: MyNftsWindow
 
 **Files:**
-- Modify: `web/components/windows/MyNftsWindow.tsx`
+- Modify: `frontend/components/windows/MyNftsWindow.tsx`
 
 - [ ] **Step 1: Implement**
 
-Replace `web/components/windows/MyNftsWindow.tsx`:
+Replace `frontend/components/windows/MyNftsWindow.tsx`:
 ```tsx
 "use client";
 import { useEffect, useState } from "react";
@@ -2131,7 +2131,7 @@ Mint a score on testnet → open My NFTs window → expect thumbnail with score 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add web/
+git add frontend/
 git commit -m "feat(web): my NFTs window via Hiro API"
 ```
 
@@ -2142,12 +2142,12 @@ git commit -m "feat(web): my NFTs window via Hiro API"
 ### Task 8.1: Boot screen
 
 **Files:**
-- Create: `web/components/desktop/BootScreen.tsx`
-- Modify: `web/app/page.tsx`
+- Create: `frontend/components/desktop/BootScreen.tsx`
+- Modify: `frontend/app/page.tsx`
 
 - [ ] **Step 1: BootScreen**
 
-Create `web/components/desktop/BootScreen.tsx`:
+Create `frontend/components/desktop/BootScreen.tsx`:
 ```tsx
 "use client";
 import { useEffect, useState } from "react";
@@ -2166,25 +2166,25 @@ export function BootScreen({ children }: { children: React.ReactNode }) {
 }
 ```
 
-Wrap `Desktop` in `BootScreen` inside `web/app/page.tsx`.
+Wrap `Desktop` in `BootScreen` inside `frontend/app/page.tsx`.
 
 - [ ] **Step 2: Commit**
 
 ```bash
-git add web/
+git add frontend/
 git commit -m "feat(web): boot screen on app load"
 ```
 
 ### Task 8.2: Sound effects
 
 **Files:**
-- Create: `web/public/sounds/{ding,error,balloon}.mp3` (sourced free assets — note source in README)
-- Create: `web/lib/sounds.ts`
-- Modify: `web/components/dialogs/MintDialog.tsx`, `TrophyDialog.tsx`
+- Create: `frontend/public/sounds/{ding,error,balloon}.mp3` (sourced free assets — note source in README)
+- Create: `frontend/lib/sounds.ts`
+- Modify: `frontend/components/dialogs/MintDialog.tsx`, `TrophyDialog.tsx`
 
 - [ ] **Step 1: Sound helper**
 
-Create `web/lib/sounds.ts`:
+Create `frontend/lib/sounds.ts`:
 ```ts
 "use client";
 const cache = new Map<string, HTMLAudioElement>();
@@ -2205,19 +2205,19 @@ Call `play("ding")` when MintDialog opens, `play("balloon")` on trophy claim suc
 - [ ] **Step 2: Commit**
 
 ```bash
-git add web/
+git add frontend/
 git commit -m "feat(web): XP sound effects"
 ```
 
 ### Task 8.3: Balloon notification on tx success
 
 **Files:**
-- Create: `web/components/dialogs/BalloonNotification.tsx`
-- Modify: `web/state/wallet.ts` (or a new toast store)
+- Create: `frontend/components/dialogs/BalloonNotification.tsx`
+- Modify: `frontend/state/wallet.ts` (or a new toast store)
 
 - [ ] **Step 1: BalloonNotification + toast store**
 
-Create `web/components/dialogs/BalloonNotification.tsx`:
+Create `frontend/components/dialogs/BalloonNotification.tsx`:
 ```tsx
 "use client";
 import { create } from "zustand";
@@ -2253,7 +2253,7 @@ Mount `<Balloons />` inside `Desktop`. Call `useToasts.getState().push(...)` aft
 - [ ] **Step 2: Commit**
 
 ```bash
-git add web/
+git add frontend/
 git commit -m "feat(web): balloon notifications for tx success"
 ```
 
@@ -2264,13 +2264,13 @@ git commit -m "feat(web): balloon notifications for tx success"
 ### Task 9.1: Vercel deploy
 
 **Files:**
-- Create: `web/vercel.ts` (per Vercel knowledge update — prefer over vercel.json)
+- Create: `frontend/vercel.ts` (per Vercel knowledge update — prefer over vercel.json)
 
 - [ ] **Step 1: vercel.ts**
 
-Install: `cd web && npm install @vercel/config`
+Install: `cd frontend && npm install @vercel/config`
 
-Create `web/vercel.ts`:
+Create `frontend/vercel.ts`:
 ```ts
 import { type VercelConfig } from "@vercel/config/v1";
 
@@ -2282,7 +2282,7 @@ export const config: VercelConfig = {
 
 - [ ] **Step 2: Link + deploy preview**
 
-Run from `web/`:
+Run from `frontend/`:
 ```bash
 npx vercel link
 npx vercel env add NEXT_PUBLIC_CONTRACT_ADDRESS preview
@@ -2308,7 +2308,7 @@ Run: `npx vercel deploy --prod`
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web/vercel.ts
+git add frontend/vercel.ts
 git commit -m "chore(web): vercel.ts config + production deploy"
 ```
 
