@@ -1,29 +1,36 @@
 ;; title: snake-score
-;; version:
-;; summary:
-;; description:
+;; summary: XP Snake on Stacks - score + trophy NFTs
 
-;; traits
-;;
+(define-non-fungible-token snake-score uint)
+(define-data-var last-token-id uint u0)
+(define-data-var current-season uint u1)
 
-;; token definitions
-;;
+(define-map score-data uint {
+  player: principal,
+  score: uint,
+  player-name: (string-ascii 24),
+  block: uint,
+  season: uint
+})
 
-;; constants
-;;
+(define-public (mint-score (score uint) (player-name (string-ascii 24)))
+  (let ((new-id (+ (var-get last-token-id) u1)))
+    (try! (nft-mint? snake-score new-id tx-sender))
+    (map-set score-data new-id {
+      player: tx-sender,
+      score: score,
+      player-name: player-name,
+      block: stacks-block-height,
+      season: (var-get current-season)
+    })
+    (var-set last-token-id new-id)
+    (ok new-id)))
 
-;; data vars
-;;
+(define-read-only (get-owner (token-id uint))
+  (ok (nft-get-owner? snake-score token-id)))
 
-;; data maps
-;;
+(define-read-only (get-score-data (token-id uint))
+  (map-get? score-data token-id))
 
-;; public functions
-;;
-
-;; read only functions
-;;
-
-;; private functions
-;;
-
+(define-read-only (get-last-token-id)
+  (ok (var-get last-token-id)))

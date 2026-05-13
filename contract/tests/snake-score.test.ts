@@ -1,20 +1,41 @@
-import { describe, expect, it } from "vitest";
+import { describe, it, expect } from "vitest";
+import { Cl } from "@stacks/transactions";
 
 const accounts = simnet.getAccounts();
-const address1 = accounts.get("wallet_1")!;
+const wallet1 = accounts.get("wallet_1")!;
 
-/*
-The test below is an example. To learn more, read the testing documentation here:
-https://docs.stacks.co/clarinet/testing-with-clarinet-sdk
-*/
+describe("mint-score", () => {
+  it("mints an NFT with correct score data to caller", () => {
+    const { result } = simnet.callPublicFn(
+      "snake-score",
+      "mint-score",
+      [Cl.uint(42), Cl.stringAscii("alice")],
+      wallet1
+    );
+    expect(result).toBeOk(Cl.uint(1));
 
-describe("example tests", () => {
-it("ensures simnet is well initialised", () => {
-    expect(simnet.blockHeight).toBeDefined();
-});
+    const owner = simnet.callReadOnlyFn(
+      "snake-score",
+      "get-owner",
+      [Cl.uint(1)],
+      wallet1
+    ).result;
+    expect(owner).toBeOk(Cl.some(Cl.principal(wallet1)));
 
-// it("shows an example", () => {
-//   const { result } = simnet.callReadOnlyFn("counter", "get-counter", [], address1);
-//   expect(result).toBeUint(0);
-// });
+    const data = simnet.callReadOnlyFn(
+      "snake-score",
+      "get-score-data",
+      [Cl.uint(1)],
+      wallet1
+    ).result;
+    expect(data).toBeSome(
+      Cl.tuple({
+        player: Cl.principal(wallet1),
+        score: Cl.uint(42),
+        "player-name": Cl.stringAscii("alice"),
+        block: Cl.uint(simnet.blockHeight),
+        season: Cl.uint(1),
+      })
+    );
+  });
 });
