@@ -5,6 +5,7 @@ import { useWallet } from "@/state/wallet";
 import { Window } from "./Window";
 import { getTopTen, claimTrophy, type TopEntry } from "@/lib/contract-calls";
 import { TrophyDialog } from "@/components/dialogs/TrophyDialog";
+import { useToasts } from "@/state/toasts";
 
 export function LeaderboardWindow() {
   const w = useWindows((s) => s.windows.find((win) => win.type === "leaderboard"));
@@ -37,6 +38,10 @@ export function LeaderboardWindow() {
     try {
       await claimTrophy();
       setClaimedRank(myRank);
+      useToasts.getState().push({
+        title: "Trophy claimed!",
+        body: `Trophy NFT submitted for rank #${myRank}.`,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Claim failed");
     } finally {

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useWallet } from "@/state/wallet";
 import { mintScore } from "@/lib/contract-calls";
+import { useToasts } from "@/state/toasts";
 
 export function MintDialog({
   score,
@@ -28,6 +29,10 @@ export function MintDialog({
     try {
       const tx = await mintScore(score, name || "anon");
       setTxId(tx);
+      useToasts.getState().push({
+        title: "Mint submitted",
+        body: `Your score NFT (${score}) is being broadcast.`,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Mint failed");
     } finally {
