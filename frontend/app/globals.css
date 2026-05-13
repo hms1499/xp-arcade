@@ -1,0 +1,28 @@
+@import "tailwindcss";
+@import "../node_modules/98.css/dist/98.css";
+
+@font-face {
+  font-family: "MS Sans Serif";
+  src: url("./ms_sans_serif.woff2") format("woff2"),
+       url("./ms_sans_serif.woff") format("woff");
+  font-weight: 400;
+}
+@font-face {
+  font-family: "MS Sans Serif";
+  src: url("./ms_sans_serif_bold.woff2") format("woff2"),
+       url("./ms_sans_serif_bold.woff") format("woff");
+  font-weight: 700;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: "MS Sans Serif", Arial, sans-serif;
+  font-size: 11px;
+}
+
+body {
+  overflow: hidden;
+  background: #008080;
+}
