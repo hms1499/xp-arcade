@@ -1,9 +1,9 @@
 "use client";
-import type React from "react";
+import { useState, useEffect } from "react";
 import { useWindows } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
 
-const menuItemStyle: React.CSSProperties = {
+const menuItemBase: React.CSSProperties = {
   width: "100%",
   textAlign: "left",
   padding: "4px 16px 4px 8px",
@@ -12,10 +12,8 @@ const menuItemStyle: React.CSSProperties = {
   alignItems: "center",
   fontSize: 11,
   fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
-  background: "transparent",
   border: "none",
   cursor: "default",
-  color: "#000000",
 };
 
 function MenuItem({
@@ -27,19 +25,19 @@ function MenuItem({
   label: string;
   onClick: () => void;
 }) {
+  const [hovered, setHovered] = useState(false);
+
   return (
     <li role="none">
       <button
         role="menuitem"
-        style={menuItemStyle}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "#000080";
-          e.currentTarget.style.color = "#ffffff";
+        style={{
+          ...menuItemBase,
+          background: hovered ? "#000080" : "transparent",
+          color: hovered ? "#ffffff" : "#000000",
         }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "transparent";
-          e.currentTarget.style.color = "#000000";
-        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         onClick={onClick}
       >
         <span style={{ fontSize: 18, lineHeight: "1" }}>{icon}</span>
@@ -58,6 +56,13 @@ export function StartMenu({
 }) {
   const openWin = useWindows((s) => s.open);
   const disconnect = useWallet((s) => s.disconnect);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, onClose]);
 
   if (!open) return null;
 
