@@ -6,6 +6,7 @@ import { Window } from "./Window";
 import { getTopTen, claimTrophy, type TopEntry } from "@/lib/contract-calls";
 import { TrophyDialog } from "@/components/dialogs/TrophyDialog";
 import { useToasts } from "@/state/toasts";
+import { watchTx } from "@/lib/tx-tracker";
 
 export function LeaderboardWindow() {
   const w = useWindows((s) => s.windows.find((win) => win.type === "leaderboard"));
@@ -45,11 +46,18 @@ export function LeaderboardWindow() {
   async function handleClaim() {
     setBusy(true);
     try {
-      await claimTrophy();
+      const txId = await claimTrophy();
       setClaimedRank(myRank);
       useToasts.getState().push({
-        title: "Trophy claimed!",
-        body: `Trophy NFT submitted for rank #${myRank}.`,
+        title: "Trophy submitted",
+        body: `Watching for confirmation…`,
+      });
+      watchTx(txId, (s) => {
+        if (s === "success") {
+          useToasts.getState().push({ title: "Trophy confirmed!", body: `Rank #${myRank} trophy is on-chain.` });
+        } else if (s !== "pending") {
+          useToasts.getState().push({ title: "Trophy tx failed", body: "Transaction rejected on-chain." });
+        }
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Claim failed");
