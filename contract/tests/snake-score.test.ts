@@ -244,12 +244,12 @@ describe("rarity", () => {
 });
 
 describe("mint-fee", () => {
-  it("deducts 10000 µSTX from caller on mint", () => {
-    const before = simnet.getAssetsMap().get("STX")?.get(wallet1) ?? 0n;
+  it("deducts 10000 µSTX from caller and credits contract-owner", () => {
+    const ownerBefore = simnet.getAssetsMap().get("STX")?.get(deployer) ?? 0n;
     simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(42), Cl.stringAscii("a")], wallet1);
-    const after = simnet.getAssetsMap().get("STX")?.get(wallet1) ?? 0n;
-    // deducted: 10000 µSTX fee + tx fee (tx fee varies; just verify at least 10000 deducted)
-    expect(before - after).toBeGreaterThanOrEqual(10000n);
+    const ownerAfter = simnet.getAssetsMap().get("STX")?.get(deployer) ?? 0n;
+    // contract-owner receives the 10000 µSTX fee
+    expect(ownerAfter - ownerBefore).toBe(10000n);
   });
 
   it("season-accumulated increases by 10000 per mint", () => {
