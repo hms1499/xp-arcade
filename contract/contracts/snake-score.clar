@@ -146,6 +146,14 @@
 (define-data-var contract-owner principal tx-sender)
 (define-data-var base-uri (string-ascii 80) "https://xp-snake.example/api/metadata/score/{id}")
 
+;; Find the caller's entry in a snapshot list
+(define-private (find-caller-score
+    (e { player: principal, score: uint })
+    (acc { found: bool, score: uint }))
+  (if (and (not (get found acc)) (is-eq (get player e) tx-sender))
+      { found: true, score: (get score e) }
+      acc))
+
 ;; Count how many top-ten entries have score strictly greater than tx-sender's best.
 (define-private (rank-fold
     (e { player: principal, score: uint })
@@ -168,6 +176,9 @@
 
 (define-read-only (get-last-trophy-id)
   (ok (var-get last-trophy-id)))
+
+(define-read-only (has-claimed-prize (player principal) (season uint))
+  (default-to false (map-get? prize-claimed { player: player, season: season })))
 
 (define-read-only (has-claimed-trophy (player principal))
   (default-to false
@@ -208,6 +219,42 @@
     (var-set top-ten (list))
     (var-set current-season (+ (var-get current-season) u1))
     (ok true)))
+
+(define-public (claim-prize (season uint))
+  (let
+    (
+      (current (var-get current-season))
+      (claimed (default-to false
+        (map-get? prize-claimed { player: tx-sender, season: season })))
+      (prize-info (map-get? season-prize season))
+    )
+    (asserts! (not (is-eq season current)) ERR-SEASON-NOT-CLOSED)
+    (asserts! (is-some prize-info) ERR-PRIZE-NOT-FOUND)
+    (asserts! (not claimed) ERR-ALREADY-CLAIMED)
+    (let
+      (
+        (info (unwrap-panic prize-info))
+        (total (get total info))
+        (snapshot (get top-ten info))
+      )
+      (asserts! (> total u0) ERR-EMPTY-POOL)
+      (let
+        (
+          (caller-info (fold find-caller-score snapshot { found: false, score: u0 }))
+        )
+        (asserts! (get found caller-info) ERR-NOT-IN-TOP-TEN)
+        (let
+          (
+            (cs (get score caller-info))
+            (rank-result (fold rank-fold snapshot
+              { caller-score: cs, higher: u0, present: false }))
+            (rank (+ u1 (get higher rank-result)))
+            (payout (if (<= rank u3)
+                        (/ (* total u20) u100)
+                        (/ (* total u4) u70)))
+          )
+          (map-set prize-claimed { player: tx-sender, season: season } true)
+          (ok payout))))))
 
 (define-public (set-base-uri (uri (string-ascii 80)))
   (begin

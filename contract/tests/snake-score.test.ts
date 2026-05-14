@@ -274,6 +274,55 @@ describe("mint-fee", () => {
   });
 });
 
+describe("claim-prize", () => {
+  function setupSeason() {
+    // 3 players mint: w(1)=score 1000, w(2)=800, w(3)=500
+    // fee per mint = 10000 µSTX → total = 30000 µSTX
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(1000), Cl.stringAscii("a")], w(1));
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(800), Cl.stringAscii("b")], w(2));
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(500), Cl.stringAscii("c")], w(3));
+    simnet.callPublicFn("snake-score", "end-season", [], deployer);
+    // season is now 2, season 1 is closed with total=30000
+  }
+
+  it("rank-1 player receives 20% of pool (6000 µSTX from 30000)", () => {
+    setupSeason();
+    const r = simnet.callPublicFn("snake-score", "claim-prize", [Cl.uint(1)], w(1));
+    expect(r.result).toBeOk(Cl.uint(6000));
+  });
+
+  it("rank-3 player receives 20% of pool (6000 µSTX, still in top-3)", () => {
+    setupSeason();
+    const r = simnet.callPublicFn("snake-score", "claim-prize", [Cl.uint(1)], w(3));
+    expect(r.result).toBeOk(Cl.uint(6000));
+  });
+
+  it("fails ERR-ALREADY-CLAIMED on second claim", () => {
+    setupSeason();
+    simnet.callPublicFn("snake-score", "claim-prize", [Cl.uint(1)], w(1));
+    const r = simnet.callPublicFn("snake-score", "claim-prize", [Cl.uint(1)], w(1));
+    expect(r.result).toBeErr(Cl.uint(102));
+  });
+
+  it("fails ERR-SEASON-NOT-CLOSED on current season", () => {
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(100), Cl.stringAscii("a")], w(1));
+    const r = simnet.callPublicFn("snake-score", "claim-prize", [Cl.uint(1)], w(1));
+    expect(r.result).toBeErr(Cl.uint(105));
+  });
+
+  it("fails ERR-NOT-IN-TOP-TEN for player not in snapshot", () => {
+    setupSeason();
+    const r = simnet.callPublicFn("snake-score", "claim-prize", [Cl.uint(1)], w(8));
+    expect(r.result).toBeErr(Cl.uint(101));
+  });
+
+  it("fails ERR-PRIZE-NOT-FOUND for non-existent season", () => {
+    setupSeason();
+    const r = simnet.callPublicFn("snake-score", "claim-prize", [Cl.uint(99)], w(1));
+    expect(r.result).toBeErr(Cl.uint(107));
+  });
+});
+
 describe("SIP-009", () => {
   it("transfer moves NFT to recipient", () => {
     simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(10), Cl.stringAscii("a")], w(1));
