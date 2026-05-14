@@ -189,12 +189,3 @@ The contract is **immutable** once deployed. Changes require a new deploy and a 
 ### Frontend (Vercel)
 
 `git push` to the deployment branch. Make sure the four `NEXT_PUBLIC_*` env vars are set in Vercel Project Settings for the relevant environment.
-
----
-
-## Further reading
-
-- [`CLAUDE.md`](CLAUDE.md) — repo conventions, architectural decisions
-- [`HANDOFF.md`](HANDOFF.md) — operational to-do list
-- [`docs/superpowers/specs/`](docs/superpowers/specs/) — design specs
-- [`docs/superpowers/plans/`](docs/superpowers/plans/) — implementation plans
