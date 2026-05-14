@@ -5,12 +5,10 @@ import { useWallet } from "@/state/wallet";
 import { Window } from "./Window";
 import {
   getTopTen,
-  claimTrophy,
   claimPrize,
   getPrizePoolBalance,
   type TopEntry,
 } from "@/lib/contract-calls";
-import { TrophyDialog } from "@/components/dialogs/TrophyDialog";
 import { useToasts } from "@/state/toasts";
 import { watchTx } from "@/lib/tx-tracker";
 
@@ -19,8 +17,6 @@ export function LeaderboardWindow() {
   const address = useWallet((s) => s.address);
   const [rows, setRows] = useState<TopEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [claimedRank, setClaimedRank] = useState<number | null>(null);
-  const [busyTrophy, setBusyTrophy] = useState(false);
   const [busyPrize, setBusyPrize] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [prizePool, setPrizePool] = useState<number | null>(null);
@@ -54,26 +50,6 @@ export function LeaderboardWindow() {
   const myRank = address && rows
     ? rows.findIndex((r) => r.player === address) + 1
     : 0;
-
-  async function handleClaimTrophy() {
-    setBusyTrophy(true);
-    try {
-      const txId = await claimTrophy();
-      setClaimedRank(myRank);
-      useToasts.getState().push({ title: "Trophy submitted", body: "Watching for confirmation…" });
-      watchTx(txId, (s) => {
-        if (s === "success") {
-          useToasts.getState().push({ title: "Trophy confirmed!", body: `Rank #${myRank} trophy is on-chain.` });
-        } else if (s !== "pending") {
-          useToasts.getState().push({ title: "Trophy tx failed", body: "Transaction rejected on-chain." });
-        }
-      });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Claim failed");
-    } finally {
-      setBusyTrophy(false);
-    }
-  }
 
   async function handleClaimPrize() {
     const season = 1; // TODO: derive from contract once multi-season UI is built
@@ -153,18 +129,8 @@ export function LeaderboardWindow() {
               Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })} &middot; auto-refresh 30s
             </p>
           )}
-          {myRank > 0 && (
-            <div className="mt-3 text-center">
-              <button onClick={handleClaimTrophy} disabled={busyTrophy}>
-                {busyTrophy ? "Claiming…" : `Claim Trophy (Rank #${myRank})`}
-              </button>
-            </div>
-          )}
         </div>
       </Window>
-      {claimedRank !== null && (
-        <TrophyDialog rank={claimedRank} onClose={() => setClaimedRank(null)} />
-      )}
     </>
   );
 }

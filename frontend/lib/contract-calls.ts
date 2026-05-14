@@ -36,18 +36,6 @@ export async function mintScore(
   });
 }
 
-export async function claimTrophy(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    openContractCall({
-      ...base,
-      functionName: "claim-trophy",
-      functionArgs: [],
-      onFinish: (data) => resolve(data.txId),
-      onCancel: () => reject(new Error("cancelled")),
-    });
-  });
-}
-
 export type TopEntry = { player: string; score: number };
 
 export async function getTopTen(): Promise<TopEntry[]> {

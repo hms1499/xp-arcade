@@ -30,24 +30,6 @@ export function scoreSvg(o: {
 </svg>`;
 }
 
-const TIER = (rank: number) => {
-  if (rank === 1) return { label: "Gold", color: "#ffd700", emoji: "🏆" };
-  if (rank === 2) return { label: "Silver", color: "#c0c0c0", emoji: "🥈" };
-  if (rank === 3) return { label: "Bronze", color: "#cd7f32", emoji: "🥉" };
-  return { label: "Top 10", color: "#4477aa", emoji: "🎖️" };
-};
-
-export function trophySvg(o: { trophyId: number; rank: number; season: number }) {
-  const t = TIER(o.rank);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400">
-  <rect width="400" height="400" fill="${t.color}"/>
-  <text x="200" y="220" font-size="180" text-anchor="middle">${t.emoji}</text>
-  <text x="200" y="290" font-family="Tahoma, sans-serif" font-weight="bold" font-size="36" fill="black" text-anchor="middle">${t.label}</text>
-  <text x="200" y="330" font-family="Tahoma, sans-serif" font-size="18" fill="black" text-anchor="middle">Rank #${o.rank} - Season ${o.season}</text>
-  <text x="200" y="380" font-family="Tahoma, sans-serif" font-size="12" fill="black" text-anchor="middle">Trophy #${o.trophyId}</text>
-</svg>`;
-}
-
 function escapeXml(s: string) {
   return s
     .replace(/&/g, "&amp;")

@@ -7,7 +7,6 @@ import { stacks } from "@/lib/stacks";
 import { rarityColor } from "@/lib/metadata-svg";
 
 type Nft = {
-  type: "score" | "trophy";
   id: number;
   image: string;
   name: string;
@@ -17,31 +16,17 @@ type Nft = {
 async function fetchHoldings(addr: string): Promise<Nft[]> {
   const apiBase = stacks.network.client?.baseUrl ?? "https://api.hiro.so";
   const scoreAsset = `${stacks.contractAddress}.${stacks.contractName}::snake-score`;
-  const trophyAsset = `${stacks.contractAddress}.${stacks.contractName}::snake-trophy`;
-  const url = `${apiBase}/extended/v1/tokens/nft/holdings?principal=${addr}&asset_identifiers=${scoreAsset},${trophyAsset}&limit=50`;
+  const url = `${apiBase}/extended/v1/tokens/nft/holdings?principal=${addr}&asset_identifiers=${scoreAsset}&limit=50`;
   const data = await fetch(url).then((r) => r.json());
-  const results = (data.results ?? []) as Array<{
-    asset_identifier: string;
-    value: { repr: string };
-  }>;
+  const results = (data.results ?? []) as Array<{ value: { repr: string } }>;
   return Promise.all(
     results.map(async (r) => {
-      const isTrophy = r.asset_identifier.endsWith("snake-trophy");
       const id = Number(r.value.repr.replace("u", ""));
-      const meta = await fetch(
-        `/api/metadata/${isTrophy ? "trophy" : "score"}/${id}`
-      ).then((x) => x.json());
-      const rarity = !isTrophy
-        ? (meta.attributes as Array<{ trait_type: string; value: string }> | undefined)
-            ?.find((a) => a.trait_type === "Rarity")?.value
-        : undefined;
-      return {
-        type: isTrophy ? "trophy" : "score",
-        id,
-        image: meta.image,
-        name: meta.name,
-        rarity,
-      } as Nft;
+      const meta = await fetch(`/api/metadata/score/${id}`).then((x) => x.json());
+      const rarity = (
+        meta.attributes as Array<{ trait_type: string; value: string }> | undefined
+      )?.find((a) => a.trait_type === "Rarity")?.value;
+      return { id, image: meta.image, name: meta.name, rarity };
     })
   );
 }
@@ -80,7 +65,7 @@ export function MyNftsWindow() {
           <div className="grid grid-cols-4 gap-2">
             {nfts.map((n) => (
               <div
-                key={`${n.type}-${n.id}`}
+                key={n.id}
                 className="text-center text-xs border border-gray-300 p-1"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
