@@ -36,6 +36,7 @@ describe("mint-score", () => {
         "player-name": Cl.stringAscii("alice"),
         block: Cl.uint(simnet.blockHeight),
         season: Cl.uint(1),
+        rarity: Cl.stringAscii("Common"),
       })
     );
   });
@@ -181,6 +182,48 @@ describe("score-cap", () => {
       wallet1
     );
     expect(r.result).toBeOk(Cl.uint(1));
+  });
+});
+
+describe("rarity", () => {
+  it("score 0 → Common", () => {
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(0), Cl.stringAscii("a")], w(1));
+    const d = simnet.callReadOnlyFn("snake-score", "get-score-data", [Cl.uint(1)], w(1)).result;
+    expect(d).toBeSome(expect.objectContaining({
+      value: expect.objectContaining({ rarity: Cl.stringAscii("Common") })
+    }));
+  });
+
+  it("score 166 → Common", () => {
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(166), Cl.stringAscii("a")], w(1));
+    const d = simnet.callReadOnlyFn("snake-score", "get-score-data", [Cl.uint(1)], w(1)).result;
+    expect(d).toBeSome(expect.objectContaining({
+      value: expect.objectContaining({ rarity: Cl.stringAscii("Common") })
+    }));
+  });
+
+  it("score 167 → Rare", () => {
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(167), Cl.stringAscii("a")], w(1));
+    const d = simnet.callReadOnlyFn("snake-score", "get-score-data", [Cl.uint(1)], w(1)).result;
+    expect(d).toBeSome(expect.objectContaining({
+      value: expect.objectContaining({ rarity: Cl.stringAscii("Rare") })
+    }));
+  });
+
+  it("score 500 → Epic", () => {
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(500), Cl.stringAscii("a")], w(1));
+    const d = simnet.callReadOnlyFn("snake-score", "get-score-data", [Cl.uint(1)], w(1)).result;
+    expect(d).toBeSome(expect.objectContaining({
+      value: expect.objectContaining({ rarity: Cl.stringAscii("Epic") })
+    }));
+  });
+
+  it("score 1000 → Legendary", () => {
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(1000), Cl.stringAscii("a")], w(1));
+    const d = simnet.callReadOnlyFn("snake-score", "get-score-data", [Cl.uint(1)], w(1)).result;
+    expect(d).toBeSome(expect.objectContaining({
+      value: expect.objectContaining({ rarity: Cl.stringAscii("Legendary") })
+    }));
   });
 });
 

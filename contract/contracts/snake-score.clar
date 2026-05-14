@@ -13,7 +13,8 @@
   score: uint,
   player-name: (string-ascii 24),
   block: uint,
-  season: uint
+  season: uint,
+  rarity: (string-ascii 10)
 })
 
 (define-map best-score principal { score: uint, token-id: uint })
@@ -42,6 +43,15 @@
            (is-eq (get score e) (var-get pending-min)))
       (begin (var-set pending-removed true) false)
       true))
+
+(define-private (compute-rarity (score uint))
+  (if (>= score u1000)
+      "Legendary"
+      (if (>= score u500)
+          "Epic"
+          (if (>= score u167)
+              "Rare"
+              "Common"))))
 
 (define-private (try-insert-top-ten (entry { player: principal, score: uint }))
   (let
@@ -81,7 +91,8 @@
       score: score,
       player-name: player-name,
       block: stacks-block-height,
-      season: (var-get current-season)
+      season: (var-get current-season),
+      rarity: (compute-rarity score)
     })
     (var-set last-token-id new-id)
     (if (or (is-none prev) (> score (get score (unwrap-panic prev))))
