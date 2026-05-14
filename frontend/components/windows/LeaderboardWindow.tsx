@@ -14,17 +14,26 @@ export function LeaderboardWindow() {
   const [error, setError] = useState<string | null>(null);
   const [claimedRank, setClaimedRank] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
     if (!w) return;
+
+    function load() {
+      getTopTen()
+        .then((data) => {
+          const sorted = [...data].sort((a, b) => b.score - a.score);
+          setRows(sorted);
+          setError(null);
+          setLastUpdated(new Date());
+        })
+        .catch((e) => setError(e instanceof Error ? e.message : "Load failed"));
+    }
+
     setRows(null);
-    setError(null);
-    getTopTen()
-      .then((data) => {
-        const sorted = [...data].sort((a, b) => b.score - a.score);
-        setRows(sorted);
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : "Load failed"));
+    load();
+    const interval = setInterval(load, 30_000);
+    return () => clearInterval(interval);
   }, [w]);
 
   if (!w) return null;
@@ -89,6 +98,11 @@ export function LeaderboardWindow() {
               ))}
             </tbody>
           </table>
+          {lastUpdated && (
+            <p className="text-[9px] text-gray-400 mt-1 text-right">
+              Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })} · auto-refresh 30s
+            </p>
+          )}
           {myRank > 0 && (
             <div className="mt-3 text-center">
               <button onClick={handleClaim} disabled={busy}>
