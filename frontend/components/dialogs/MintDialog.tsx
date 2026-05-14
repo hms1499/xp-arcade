@@ -69,7 +69,12 @@ export function MintDialog({
         body: `Score NFT (${score}) broadcast — watching for confirmation.`,
       });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Mint failed");
+      const msg = e instanceof Error ? e.message : "Mint failed";
+      if (msg.includes("104") || msg.toLowerCase().includes("score-too-high")) {
+        setError("Score rejected by contract (too high). Please play a normal game.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setBusy(false);
     }
@@ -79,6 +84,9 @@ export function MintDialog({
     <div className="text-sm">
       <p className="mb-3">
         ⚠️ <b>Game Over</b> — Score: <b>{score}</b>
+        <span className="block text-xs text-gray-500 mt-1">
+          Minting costs <b>0.01 STX</b> and records your score on-chain forever.
+        </span>
       </p>
       {!txId && (
         <fieldset className="mb-3">
