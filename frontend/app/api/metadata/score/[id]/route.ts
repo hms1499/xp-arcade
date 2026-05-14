@@ -3,8 +3,8 @@ import { fetchCallReadOnlyFunction, cvToValue, uintCV } from "@stacks/transactio
 import { stacks } from "@/lib/stacks";
 import { scoreSvg } from "@/lib/metadata-svg";
 
-export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const { id } = await ctx.params;
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const tokenId = Number(id);
   if (!Number.isFinite(tokenId) || tokenId <= 0) {
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
@@ -19,18 +19,31 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
       functionArgs: [uintCV(tokenId)],
       senderAddress: stacks.contractAddress,
     });
-    const v = cvToValue(res) as null | { score: bigint; "player-name": string };
+    const v = cvToValue(res) as null | {
+      score: bigint;
+      "player-name": string;
+      rarity: string;
+      season: bigint;
+    };
     if (!v) return NextResponse.json({ error: "not found" }, { status: 404 });
 
+    const rarity = String(v.rarity ?? "Common");
+    const season = Number(v.season ?? 1);
     const svg = scoreSvg({
       tokenId,
       score: Number(v.score),
       playerName: String(v["player-name"]),
+      rarity,
     });
     return NextResponse.json({
       name: `Snake Score #${tokenId}`,
       description: `On-chain proof of a snake game score: ${v.score}.`,
       image: "data:image/svg+xml;utf8," + encodeURIComponent(svg),
+      attributes: [
+        { trait_type: "Rarity", value: rarity },
+        { trait_type: "Season", value: String(season) },
+        { trait_type: "Score", value: String(Number(v.score)) },
+      ],
     });
   } catch (e) {
     return NextResponse.json(
