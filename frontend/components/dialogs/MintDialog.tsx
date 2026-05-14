@@ -61,7 +61,7 @@ export function MintDialog({
     setBusy(true);
     setError(null);
     try {
-      const tx = await mintScore(score, name || "anon");
+      const tx = await mintScore(score, name || "anon", address);
       setTxId(tx);
       setTxStatus("pending");
       useToasts.getState().push({

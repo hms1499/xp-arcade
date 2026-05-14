@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchCallReadOnlyFunction, cvToValue, uintCV } from "@stacks/transactions";
 import { stacks } from "@/lib/stacks";
+import { unwrap } from "@/lib/contract-calls";
 import { scoreSvg } from "@/lib/metadata-svg";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -19,12 +20,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       functionArgs: [uintCV(tokenId)],
       senderAddress: stacks.contractAddress,
     });
-    const v = cvToValue(res) as null | {
-      score: bigint;
+    const v = unwrap<null | {
+      score: string;
       "player-name": string;
       rarity: string;
-      season: bigint;
-    };
+      season: string;
+    }>(cvToValue(res));
     if (!v) return NextResponse.json({ error: "not found" }, { status: 404 });
 
     const rarity = String(v.rarity ?? "Common");

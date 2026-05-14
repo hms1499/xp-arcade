@@ -6,8 +6,26 @@ import {
   principalCV,
   cvToValue,
   fetchCallReadOnlyFunction,
+  Pc,
 } from "@stacks/transactions";
 import { stacks } from "./stacks";
+
+const MINT_FEE_USTX = BigInt(10_000);
+
+// @stacks/transactions v7 cvToValue returns nested {type, value} wrappers for
+// tuples/lists/responses. Recursively strip them down to plain JS values.
+export function unwrap<T = unknown>(v: unknown): T {
+  if (v === null || v === undefined) return v as T;
+  if (Array.isArray(v)) return v.map(unwrap) as unknown as T;
+  if (typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    if ("type" in o && "value" in o) return unwrap(o.value);
+    const out: Record<string, unknown> = {};
+    for (const k of Object.keys(o)) out[k] = unwrap(o[k]);
+    return out as T;
+  }
+  return v as T;
+}
 
 const base = {
   network: stacks.network,
@@ -15,12 +33,17 @@ const base = {
   contractName: stacks.contractName,
 } as const;
 
-export async function mintScore(score: number, playerName: string): Promise<string> {
+export async function mintScore(
+  score: number,
+  playerName: string,
+  senderAddress: string,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     openContractCall({
       ...base,
       functionName: "mint-score",
       functionArgs: [uintCV(score), stringAsciiCV(playerName.slice(0, 24))],
+      postConditions: [Pc.principal(senderAddress).willSendEq(MINT_FEE_USTX).ustx()],
       onFinish: (data) => resolve(data.txId),
       onCancel: () => reject(new Error("cancelled")),
     });
@@ -48,7 +71,7 @@ export async function getTopTen(): Promise<TopEntry[]> {
     functionArgs: [],
     senderAddress: stacks.contractAddress,
   });
-  const v = cvToValue(res) as Array<{ player: string; score: bigint | number }>;
+  const v = unwrap<Array<{ player: string; score: string }>>(cvToValue(res));
   return v.map((e) => ({ player: String(e.player), score: Number(e.score) }));
 }
 
@@ -59,7 +82,7 @@ export async function getBestScore(addr: string) {
     functionArgs: [principalCV(addr)],
     senderAddress: addr,
   });
-  const v = cvToValue(res) as null | { score: bigint; "token-id": bigint };
+  const v = unwrap<null | { score: string; "token-id": string }>(cvToValue(res));
   return v ? { score: Number(v.score), tokenId: Number(v["token-id"]) } : null;
 }
 
@@ -70,7 +93,7 @@ export async function getLastTokenId(): Promise<number> {
     functionArgs: [],
     senderAddress: stacks.contractAddress,
   });
-  return Number(cvToValue(res));
+  return Number(unwrap(cvToValue(res)));
 }
 
 export async function getPrizePoolBalance(): Promise<number> {
@@ -80,7 +103,7 @@ export async function getPrizePoolBalance(): Promise<number> {
     functionArgs: [],
     senderAddress: stacks.contractAddress,
   });
-  return Number(cvToValue(res));
+  return Number(unwrap(cvToValue(res)));
 }
 
 export type SeasonPrize = {
@@ -95,10 +118,10 @@ export async function getSeasonPrize(season: number): Promise<SeasonPrize> {
     functionArgs: [uintCV(season)],
     senderAddress: stacks.contractAddress,
   });
-  const v = cvToValue(res) as null | {
-    total: bigint;
-    "top-ten": Array<{ player: string; score: bigint }>;
-  };
+  const v = unwrap<null | {
+    total: string;
+    "top-ten": Array<{ player: string; score: string }>;
+  }>(cvToValue(res));
   if (!v) return null;
   return {
     total: Number(v.total),
