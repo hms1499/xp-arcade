@@ -72,3 +72,58 @@ export async function getLastTokenId(): Promise<number> {
   });
   return Number(cvToValue(res));
 }
+
+export async function getPrizePoolBalance(): Promise<number> {
+  const res = await fetchCallReadOnlyFunction({
+    ...base,
+    functionName: "get-prize-pool-balance",
+    functionArgs: [],
+    senderAddress: stacks.contractAddress,
+  });
+  return Number(cvToValue(res));
+}
+
+export type SeasonPrize = {
+  total: number;
+  topTen: Array<{ player: string; score: number }>;
+} | null;
+
+export async function getSeasonPrize(season: number): Promise<SeasonPrize> {
+  const res = await fetchCallReadOnlyFunction({
+    ...base,
+    functionName: "get-season-prize",
+    functionArgs: [uintCV(season)],
+    senderAddress: stacks.contractAddress,
+  });
+  const v = cvToValue(res) as null | {
+    total: bigint;
+    "top-ten": Array<{ player: string; score: bigint }>;
+  };
+  if (!v) return null;
+  return {
+    total: Number(v.total),
+    topTen: v["top-ten"].map((e) => ({ player: String(e.player), score: Number(e.score) })),
+  };
+}
+
+export async function hasClaimedPrize(player: string, season: number): Promise<boolean> {
+  const res = await fetchCallReadOnlyFunction({
+    ...base,
+    functionName: "has-claimed-prize",
+    functionArgs: [principalCV(player), uintCV(season)],
+    senderAddress: player,
+  });
+  return Boolean(cvToValue(res));
+}
+
+export async function claimPrize(season: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    openContractCall({
+      ...base,
+      functionName: "claim-prize",
+      functionArgs: [uintCV(season)],
+      onFinish: (data) => resolve(data.txId),
+      onCancel: () => reject(new Error("cancelled")),
+    });
+  });
+}
