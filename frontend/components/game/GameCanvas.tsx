@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { createGame, type Direction, type Game } from "@/lib/snake-engine";
+import { TouchControls } from "./TouchControls";
 
 const CELL = 16;
 const GRID = 20;
@@ -16,6 +17,15 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<Game | null>(null);
   const [score, setScore] = useState(0);
+  const [isTouch, setIsTouch] = useState(false);
+
+  useEffect(() => {
+    setIsTouch(window.matchMedia("(pointer: coarse)").matches);
+  }, []);
+
+  function handleDir(d: Direction) {
+    gameRef.current?.turn(d);
+  }
 
   useEffect(() => {
     gameRef.current = createGame({ gridSize: GRID, seed: Date.now() });
@@ -92,9 +102,13 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
         height={GRID * CELL}
         style={{ imageRendering: "pixelated", border: "1px solid #444" }}
       />
-      <div className="text-[10px] mt-1 text-gray-600">
-        Arrows / WASD to move
-      </div>
+      {isTouch ? (
+        <TouchControls onDir={handleDir} />
+      ) : (
+        <div className="text-[10px] mt-1 text-gray-600">
+          Arrows / WASD to move
+        </div>
+      )}
     </div>
   );
 }
