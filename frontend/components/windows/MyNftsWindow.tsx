@@ -4,12 +4,14 @@ import { useWindows } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
 import { Window } from "./Window";
 import { stacks } from "@/lib/stacks";
+import { rarityColor } from "@/lib/metadata-svg";
 
 type Nft = {
   type: "score" | "trophy";
   id: number;
   image: string;
   name: string;
+  rarity?: string;
 };
 
 async function fetchHoldings(addr: string): Promise<Nft[]> {
@@ -29,11 +31,16 @@ async function fetchHoldings(addr: string): Promise<Nft[]> {
       const meta = await fetch(
         `/api/metadata/${isTrophy ? "trophy" : "score"}/${id}`
       ).then((x) => x.json());
+      const rarity = !isTrophy
+        ? (meta.attributes as Array<{ trait_type: string; value: string }> | undefined)
+            ?.find((a) => a.trait_type === "Rarity")?.value
+        : undefined;
       return {
         type: isTrophy ? "trophy" : "score",
         id,
         image: meta.image,
         name: meta.name,
+        rarity,
       } as Nft;
     })
   );
@@ -79,6 +86,14 @@ export function MyNftsWindow() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={n.image} alt={n.name} className="w-full h-auto" />
                 <div className="mt-1 truncate">{n.name}</div>
+                {n.rarity && (
+                  <div
+                    className="text-[9px] font-bold mt-0.5"
+                    style={{ color: rarityColor(n.rarity) }}
+                  >
+                    {n.rarity}
+                  </div>
+                )}
               </div>
             ))}
           </div>
