@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchCallReadOnlyFunction, cvToValue, uintCV } from "@stacks/transactions";
 import { stacks } from "@/lib/stacks";
-import { unwrap } from "@/lib/contract-calls";
+import { unwrap } from "@/lib/cv-unwrap";
 import { scoreSvg } from "@/lib/metadata-svg";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
