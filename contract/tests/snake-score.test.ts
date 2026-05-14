@@ -218,6 +218,22 @@ describe("rarity", () => {
     }));
   });
 
+  it("score 499 → Rare", () => {
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(499), Cl.stringAscii("a")], w(1));
+    const d = simnet.callReadOnlyFn("snake-score", "get-score-data", [Cl.uint(1)], w(1)).result;
+    expect(d).toBeSome(expect.objectContaining({
+      value: expect.objectContaining({ rarity: Cl.stringAscii("Rare") })
+    }));
+  });
+
+  it("score 999 → Epic", () => {
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(999), Cl.stringAscii("a")], w(1));
+    const d = simnet.callReadOnlyFn("snake-score", "get-score-data", [Cl.uint(1)], w(1)).result;
+    expect(d).toBeSome(expect.objectContaining({
+      value: expect.objectContaining({ rarity: Cl.stringAscii("Epic") })
+    }));
+  });
+
   it("score 1000 → Legendary", () => {
     simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(1000), Cl.stringAscii("a")], w(1));
     const d = simnet.callReadOnlyFn("snake-score", "get-score-data", [Cl.uint(1)], w(1)).result;
