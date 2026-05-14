@@ -4,6 +4,7 @@ import { useWallet } from "@/state/wallet";
 import { mintScore } from "@/lib/contract-calls";
 import { useToasts } from "@/state/toasts";
 import { watchTx, type TxStatus } from "@/lib/tx-tracker";
+import { playSuccess } from "@/lib/sounds";
 
 const STATUS_LABEL: Record<TxStatus, string> = {
   pending: "⏳ Confirming…",
@@ -40,6 +41,7 @@ export function MintDialog({
     const stop = watchTx(txId, (s) => {
       setTxStatus(s);
       if (s === "success") {
+        playSuccess();
         useToasts.getState().push({
           title: "NFT confirmed!",
           body: `Score #${score} NFT is on-chain.`,

@@ -1,9 +1,17 @@
 "use client";
+import { useEffect, useRef } from "react";
 import { useToasts } from "@/state/toasts";
+import { playBalloon } from "@/lib/sounds";
 
 export function Balloons() {
   const toasts = useToasts((s) => s.toasts);
   const dismiss = useToasts((s) => s.dismiss);
+  const prevLen = useRef(0);
+
+  useEffect(() => {
+    if (toasts.length > prevLen.current) playBalloon();
+    prevLen.current = toasts.length;
+  }, [toasts.length]);
 
   return (
     <div

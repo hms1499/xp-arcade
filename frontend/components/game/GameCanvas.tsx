@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createGame, type Direction, type Game } from "@/lib/snake-engine";
 import { TouchControls } from "./TouchControls";
+import { playEat, playDead, playStart } from "@/lib/sounds";
 
 const CELL = 16;
 const GRID = 20;
@@ -29,6 +30,7 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
 
   useEffect(() => {
     gameRef.current = createGame({ gridSize: GRID, seed: Date.now() });
+    playStart();
 
     const onKey = (e: KeyboardEvent) => {
       const map: Record<string, Direction> = {
@@ -56,6 +58,7 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
     const loop = (t: number) => {
       if (stopped) return;
       if (t - last >= tickMs(gameRef.current!.state.score)) {
+        const prevScore = gameRef.current!.state.score;
         gameRef.current!.tick();
         last = t;
         const s = gameRef.current!.state;
@@ -71,8 +74,10 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
           ctx.fillRect(s.food.x * CELL, s.food.y * CELL, CELL - 1, CELL - 1);
         }
         setScore(s.score);
+        if (s.score > prevScore) playEat();
         if (s.gameOver) {
           stopped = true;
+          playDead();
           onGameOver(s.score);
           return;
         }

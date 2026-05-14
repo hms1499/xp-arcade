@@ -2,6 +2,7 @@
 import { DesktopIcon } from "./DesktopIcon";
 import { Taskbar } from "./Taskbar";
 import { useWindows } from "@/state/window-manager";
+import { unlockAudio } from "@/lib/sounds";
 
 export function Desktop({ children }: { children: React.ReactNode }) {
   const open = useWindows((s) => s.open);
@@ -9,6 +10,8 @@ export function Desktop({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="fixed inset-0"
+      onMouseDown={unlockAudio}
+      onTouchStart={unlockAudio}
       style={{
         background:
           "linear-gradient(180deg, #4a90e2 0%, #7bb3e5 40%, #8fc859 60%, #4a8a3a 100%)",
