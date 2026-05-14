@@ -144,7 +144,7 @@
 (define-map trophy-claimed { player: principal, season: uint } bool)
 
 (define-data-var contract-owner principal tx-sender)
-(define-data-var base-uri (string-ascii 80) "https://xp-snake.example/api/metadata/score/{id}")
+(define-data-var base-uri (string-ascii 80) "https://xp-snake.example/api/metadata/score/")
 
 ;; Find the caller's entry in a snapshot list
 (define-private (find-caller-score
@@ -260,6 +260,12 @@
   (begin
     (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-OWNER)
     (var-set base-uri uri)
+    (ok true)))
+
+(define-public (transfer-ownership (new-owner principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-OWNER)
+    (var-set contract-owner new-owner)
     (ok true)))
 
 ;; --- SIP-009 ---

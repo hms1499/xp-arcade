@@ -352,8 +352,25 @@ describe("SIP-009", () => {
   it("get-token-uri returns score metadata URL", () => {
     const r = simnet.callReadOnlyFn("snake-score", "get-token-uri", [Cl.uint(1)], w(1)).result;
     expect(r).toBeOk(
-      Cl.some(Cl.stringAscii("https://xp-snake.example/api/metadata/score/{id}"))
+      Cl.some(Cl.stringAscii("https://xp-snake.example/api/metadata/score/"))
     );
+  });
+});
+
+describe("transfer-ownership", () => {
+  it("owner can transfer ownership to a new principal", () => {
+    const r = simnet.callPublicFn("snake-score", "transfer-ownership", [Cl.principal(w(1))], deployer);
+    expect(r.result).toBeOk(Cl.bool(true));
+
+    // new owner can call end-season (owner-only function)
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(50), Cl.stringAscii("a")], w(2));
+    const r2 = simnet.callPublicFn("snake-score", "end-season", [], w(1));
+    expect(r2.result).toBeOk(Cl.bool(true));
+  });
+
+  it("non-owner cannot transfer ownership", () => {
+    const r = simnet.callPublicFn("snake-score", "transfer-ownership", [Cl.principal(w(2))], w(1));
+    expect(r.result).toBeErr(Cl.uint(103));
   });
 });
 
