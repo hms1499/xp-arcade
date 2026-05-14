@@ -23,6 +23,11 @@ check_checker = { trusted_sender = false, trusted_caller = false, callee_filter 
 
 [contracts]
 
+[contracts.nft-trait]
+path = "contracts/nft-trait.clar"
+clarity_version = 4
+epoch = "latest"
+
 [contracts.snake-score]
 path = "contracts/snake-score.clar"
 clarity_version = 4
