@@ -162,6 +162,28 @@ describe("reset-season", () => {
   });
 });
 
+describe("score-cap", () => {
+  it("rejects mint-score when score > 9999", () => {
+    const r = simnet.callPublicFn(
+      "snake-score",
+      "mint-score",
+      [Cl.uint(10000), Cl.stringAscii("hacker")],
+      wallet1
+    );
+    expect(r.result).toBeErr(Cl.uint(104));
+  });
+
+  it("allows mint-score at exactly 9999", () => {
+    const r = simnet.callPublicFn(
+      "snake-score",
+      "mint-score",
+      [Cl.uint(9999), Cl.stringAscii("alice")],
+      wallet1
+    );
+    expect(r.result).toBeOk(Cl.uint(1));
+  });
+});
+
 describe("SIP-009", () => {
   it("transfer moves NFT to recipient", () => {
     simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(10), Cl.stringAscii("a")], w(1));

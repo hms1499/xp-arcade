@@ -1,9 +1,12 @@
 ;; title: snake-score
-;; summary: XP Snake on Stacks - score + trophy NFTs
+;; summary: XP Snake on Stacks - score + trophy NFTs v2
+
+(impl-trait .nft-trait.nft-trait)
 
 (define-non-fungible-token snake-score uint)
 (define-data-var last-token-id uint u0)
 (define-data-var current-season uint u1)
+(define-data-var season-accumulated uint u0)
 
 (define-map score-data uint {
   player: principal,
@@ -71,6 +74,7 @@
 (define-public (mint-score (score uint) (player-name (string-ascii 24)))
   (let ((new-id (+ (var-get last-token-id) u1))
         (prev (map-get? best-score tx-sender)))
+    (asserts! (<= score u9999) ERR-SCORE-TOO-HIGH)
     (try! (nft-mint? snake-score new-id tx-sender))
     (map-set score-data new-id {
       player: tx-sender,
@@ -102,6 +106,10 @@
 (define-constant ERR-NOT-IN-TOP-TEN (err u101))
 (define-constant ERR-ALREADY-CLAIMED (err u102))
 (define-constant ERR-NOT-OWNER (err u103))
+(define-constant ERR-SCORE-TOO-HIGH (err u104))
+(define-constant ERR-SEASON-NOT-CLOSED (err u105))
+(define-constant ERR-EMPTY-POOL (err u106))
+(define-constant ERR-PRIZE-NOT-FOUND (err u107))
 
 ;; --- Trophy NFT ---
 (define-non-fungible-token snake-trophy uint)
