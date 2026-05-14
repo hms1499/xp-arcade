@@ -144,10 +144,10 @@ describe("claim-trophy", () => {
   });
 });
 
-describe("reset-season", () => {
+describe("end-season", () => {
   it("admin clears top-ten and increments season", () => {
     simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(50), Cl.stringAscii("a")], w(1));
-    const r = simnet.callPublicFn("snake-score", "reset-season", [], deployer);
+    const r = simnet.callPublicFn("snake-score", "end-season", [], deployer);
     expect(r.result).toBeOk(Cl.bool(true));
 
     const top = simnet.callReadOnlyFn("snake-score", "get-top-ten", [], w(1)).result;
@@ -158,8 +158,22 @@ describe("reset-season", () => {
   });
 
   it("non-admin caller fails with ERR-NOT-OWNER", () => {
-    const r = simnet.callPublicFn("snake-score", "reset-season", [], w(1));
+    const r = simnet.callPublicFn("snake-score", "end-season", [], w(1));
     expect(r.result).toBeErr(Cl.uint(103));
+  });
+
+  it("snapshots pool + top-ten, clears accumulator", () => {
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(50), Cl.stringAscii("a")], w(1));
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(80), Cl.stringAscii("b")], w(2));
+    simnet.callPublicFn("snake-score", "end-season", [], deployer);
+
+    const bal = simnet.callReadOnlyFn("snake-score", "get-prize-pool-balance", [], w(1)).result;
+    expect(bal).toBeUint(0);
+
+    const prize = simnet.callReadOnlyFn("snake-score", "get-season-prize", [Cl.uint(1)], w(1)).result;
+    const v = (prize as any).value.value;
+    expect(Number(v.total.value)).toBe(20000);
+    expect(v["top-ten"].value.length).toBe(2);
   });
 });
 

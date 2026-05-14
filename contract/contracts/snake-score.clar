@@ -19,6 +19,13 @@
 
 (define-map best-score principal { score: uint, token-id: uint })
 
+(define-map season-prize uint {
+  total: uint,
+  top-ten: (list 10 { player: principal, score: uint })
+})
+
+(define-map prize-claimed { player: principal, season: uint } bool)
+
 (define-data-var top-ten
   (list 10 { player: principal, score: uint })
   (list))
@@ -118,6 +125,9 @@
 (define-read-only (get-prize-pool-balance)
   (var-get season-accumulated))
 
+(define-read-only (get-season-prize (season uint))
+  (map-get? season-prize season))
+
 ;; --- Errors ---
 (define-constant ERR-NOT-IN-TOP-TEN (err u101))
 (define-constant ERR-ALREADY-CLAIMED (err u102))
@@ -187,9 +197,14 @@
         (var-set last-trophy-id new-id)
         (ok new-id)))))
 
-(define-public (reset-season)
+(define-public (end-season)
   (begin
     (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-OWNER)
+    (map-set season-prize (var-get current-season) {
+      total: (var-get season-accumulated),
+      top-ten: (var-get top-ten)
+    })
+    (var-set season-accumulated u0)
     (var-set top-ten (list))
     (var-set current-season (+ (var-get current-season) u1))
     (ok true)))
