@@ -4,7 +4,7 @@ import { stacks } from "./stacks";
 export type TxStatus = "pending" | "success" | "abort_by_response" | "abort_by_post_condition";
 
 export async function pollTxStatus(txId: string): Promise<TxStatus> {
-  const base = stacks.network.client?.baseUrl ?? "https://api.testnet.hiro.so";
+  const base = stacks.network.client?.baseUrl ?? "https://api.hiro.so";
   const res = await fetch(`${base}/extended/v1/tx/${txId}`);
   if (!res.ok) return "pending";
   const data = await res.json();

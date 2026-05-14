@@ -15,7 +15,7 @@ type Nft = {
 };
 
 async function fetchHoldings(addr: string): Promise<Nft[]> {
-  const apiBase = stacks.network.client?.baseUrl ?? "https://api.testnet.hiro.so";
+  const apiBase = stacks.network.client?.baseUrl ?? "https://api.hiro.so";
   const scoreAsset = `${stacks.contractAddress}.${stacks.contractName}::snake-score`;
   const trophyAsset = `${stacks.contractAddress}.${stacks.contractName}::snake-trophy`;
   const url = `${apiBase}/extended/v1/tokens/nft/holdings?principal=${addr}&asset_identifiers=${scoreAsset},${trophyAsset}&limit=50`;
