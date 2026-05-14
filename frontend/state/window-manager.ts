@@ -1,7 +1,7 @@
 "use client";
 import { create } from "zustand";
 
-export type WindowType = "game" | "leaderboard" | "my-nfts";
+export type WindowType = "game" | "leaderboard" | "my-nfts" | "season-admin";
 
 export type WindowEntry = {
   id: string;

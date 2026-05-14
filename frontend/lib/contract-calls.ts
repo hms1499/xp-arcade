@@ -1,5 +1,5 @@
 "use client";
-import { openContractCall } from "@stacks/connect";
+import { openContractCall, openSTXTransfer } from "@stacks/connect";
 import {
   uintCV,
   stringAsciiCV,
@@ -123,4 +123,49 @@ export async function claimPrize(season: number): Promise<string> {
       onCancel: () => reject(new Error("cancelled")),
     });
   });
+}
+
+export async function getCurrentSeason(): Promise<number> {
+  const res = await fetchCallReadOnlyFunction({
+    ...base,
+    functionName: "get-current-season",
+    functionArgs: [],
+    senderAddress: stacks.contractAddress,
+  });
+  return Number(unwrap(cvToValue(res)));
+}
+
+export async function endSeason(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    openContractCall({
+      ...base,
+      functionName: "end-season",
+      functionArgs: [],
+      onFinish: (data) => resolve(data.txId),
+      onCancel: () => reject(new Error("cancelled")),
+    });
+  });
+}
+
+export async function transferStx(
+  recipient: string,
+  amountUstx: number,
+  memo?: string,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    openSTXTransfer({
+      network: stacks.network,
+      recipient,
+      amount: String(amountUstx),
+      memo: memo ?? "",
+      onFinish: (data) => resolve(data.txId),
+      onCancel: () => reject(new Error("cancelled")),
+    });
+  });
+}
+
+// Rank-based payout used by claim-prize: top 1-3 get 20% each, rank 4-10 get 4/70 each.
+export function computePayoutUstx(total: number, rank: number): number {
+  if (rank <= 3) return Math.floor((total * 20) / 100);
+  return Math.floor((total * 4) / 70);
 }
