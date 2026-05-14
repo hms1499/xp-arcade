@@ -7,3 +7,10 @@ node_modules/
 .DS_Store
 contract/.cache/
 contract/deployments/*.local-plan.yaml
+.vercel
+.env*.local
+
+# Playwright screenshots
+*.png
+*.jpeg
+.playwright-mcp/
