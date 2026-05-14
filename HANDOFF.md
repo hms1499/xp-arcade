@@ -1,151 +1,132 @@
 # Handoff — XP Snake on Stacks
 
-**Status as of 2026-05-14:** Contract v2 fully implemented and tested (34 tests). Frontend updated for v2. Testnet deploy and Vercel deploy remain.
+**Status as of 2026-05-14 (end of session 3):** Contract **deployed to Stacks mainnet**. Frontend wired to mainnet, Trophy UI removed, Season Admin window built, prize-claim discovery wired, soft countdown via env var. Repo pushed to `github.com/hms1499/xp-snake`. **Vercel deploy + end-to-end smoke test on production remain.**
 
-## What's done
+---
 
-| Phase | Status | Output |
-|---|---|---|
-| 0. Scaffolding | ✅ | `.gitignore`, `README.md` |
-| 1. Clarity contract v1 | ✅ | `contract/contracts/snake-score.clar` + 14 Clarinet tests |
-| 2. Next.js + snake engine | ✅ | `frontend/lib/snake-engine.ts` + 5 Vitest tests |
-| 3. Stacks integration | ✅ | `frontend/lib/stacks.ts`, `contract-calls.ts`, `state/wallet.ts` |
-| 4. XP UI shell | ✅ | `frontend/components/desktop/*`, `Window.tsx`, `window-manager.ts` |
-| 5. Game window + mint | ✅ | `GameCanvas.tsx`, `MintDialog.tsx`, `GameWindow.tsx` |
-| 6. Leaderboard + trophy | ✅ | `LeaderboardWindow.tsx`, `TrophyDialog.tsx` (canvas-confetti) |
-| 7. My NFTs + metadata | ✅ | `MyNftsWindow.tsx`, `app/api/metadata/{score,trophy}/[id]/route.ts`, `metadata-svg.ts` |
-| 8. Polish | ✅ | `BootScreen.tsx`, Balloons toast system, night city wallpaper, Web Audio sound effects |
-| **v2. Contract upgrade** | ✅ | See detail below — 34 tests passing |
-| **v2. Frontend upgrade** | ✅ | See detail below — 7 tests, 0 type errors |
-| Deploy to testnet | ⏸ | Needs funded deployer wallet — see steps below |
-| Deploy to Vercel | ⏸ | Waiting on Vercel auth — see steps below |
+## Live state
 
-### v2 Contract changes (2026-05-14, commits `7b1a3e7` → `6754237`)
-
-| Feature | What was added |
+| Thing | Value |
 |---|---|
-| SIP-009 `impl-trait` | Local `nft-trait.clar` + `(impl-trait .nft-trait.nft-trait)` for marketplace indexer compatibility |
-| Score cap | `(asserts! (<= score u9999) ERR-SCORE-TOO-HIGH)` — error `u104` |
-| Mint fee | 0.01 STX per mint → accumulates in `season-accumulated` (tracked in contract, paid to deployer) |
-| Rarity tiers | `compute-rarity` stored in `score-data.rarity`: Common 0–166 / Rare 167–499 / Epic 500–999 / Legendary 1000+ |
-| Prize pool | `season-prize` map + `season-accumulated` var — snapshots pool + top-ten at season end |
-| `end-season` | Owner-only; replaces `reset-season`. Snapshots, clears top-ten, increments season |
-| `claim-prize` | Claim-based payout by rank: top 3 = 20% each, rank 4–10 = `(total * 4) / 70` each |
-| `transfer-ownership` | New owner guard so deployer key can be rotated |
-| `base-uri` fix | Default no longer includes `{id}` placeholder |
+| Network | Stacks **mainnet** |
+| Main contract | `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.snake-score` |
+| SIP-009 trait | `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.nft-trait` |
+| Deployer / `contract-owner` | `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV` |
+| Total deploy cost | ~0.098 STX |
+| Tests | contract: 34 ✓ · frontend: 6 ✓ · `tsc --noEmit`: clean |
+| GitHub | `https://github.com/hms1499/xp-snake` (default branch: `main`) |
 
-**Critical implementation note:** `as-contract` is unsupported in clarinet WASM simnet. Mint fee is transferred to `contract-owner` (not contract address). `claim-prize` records owed amounts and returns the payout value but does NOT execute an actual STX transfer — actual distribution must be done off-chain by the contract owner. This is a known limitation; real STX transfer requires `as-contract` on mainnet.
+On-chain right now: 1 score NFT minted (token #1, score 2, player `SPV5...QFH8Y`), pool = 0.01 STX, current season = 1.
 
-### v2 Frontend changes (2026-05-14, commits `74e61ac` → `6702e25`)
+---
 
-| File | What changed |
+## What changed this session
+
+| Commit | Summary |
 |---|---|
-| `lib/contract-calls.ts` | Added `getPrizePoolBalance`, `getSeasonPrize`, `hasClaimedPrize`, `claimPrize` |
-| `lib/metadata-svg.ts` | Added `Rarity` type, `rarityColor()` helper, rarity colour border + label in score SVG |
-| `app/api/metadata/score/[id]/route.ts` | Passes `rarity` to SVG; returns SIP-016 `attributes` array (Rarity, Season, Score) |
-| `MintDialog.tsx` | Shows "Minting costs 0.01 STX"; detects error `u104` (score-too-high) |
-| `LeaderboardWindow.tsx` | Displays live prize pool balance; shows "Claim Prize" button for top-10 players |
-| `MyNftsWindow.tsx` | Rarity badge on each score NFT card, coloured by tier |
+| `538218c` | Added mainnet deployment plan; deployed both contracts |
+| `4690717` | Frontend env + UI fallbacks now point to mainnet |
+| `f2dbad9` | **Fix:** STX post-condition for mint fee (was being rejected by wallet) |
+| `f2dbad9` | **Fix:** `unwrap()` helper for nested `{type, value}` shape from `@stacks/transactions` v7 `cvToValue` — was rendering "undefined" / NaN in leaderboard |
+| `521efb4` | **Fix:** moved `unwrap` to `lib/cv-unwrap.ts` so server API routes (`/api/metadata/*`) can use it |
+| `5019071` | **Refactor:** dropped Trophy NFT UI — TrophyDialog, trophy metadata route, `claim-trophy` helper, `trophySvg`, `canvas-confetti` dep. Contract still exposes trophy functions; just not surfaced. |
+| `b9825dc` | **Feat:** `SeasonAdminWindow` (owner-only, gated by `address === stacks.contractAddress`) — End Season button + per-row Send STX for past-season payouts. `LeaderboardWindow` now discovers claimable past seasons automatically (was hardcoded to `season=1` which always failed). |
+| `6a3c683` | **Feat:** soft countdown via `NEXT_PUBLIC_SEASON_END_ISO` shown in Leaderboard header + Season Admin |
+| `50c04d7` + `2c7c22f` | README rewrite |
 
-## To-do for you
+---
 
-### 1. Deploy the v2 contract to Stacks testnet
+## To-do for next session
 
-The deployer address is **`ST2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB4PBYSC2`** (derived from your mnemonic in `contract/settings/Testnet.toml`).
-
-> ⚠️ This is a **breaking contract change** — a new contract address will be generated. Update `NEXT_PUBLIC_CONTRACT_ADDRESS` in Vercel after deploy. Old testnet NFTs (v1) will not have `rarity` field — handle gracefully in frontend (the `rarity` field is already `rarity?: string` so missing values render no badge).
-
-Steps:
-
-1. Visit https://explorer.hiro.so/sandbox/faucet?chain=testnet
-2. Paste `ST2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB4PBYSC2` and request STX (cost is ~0.1 STX; faucet sends 500)
-3. Wait ~1–2 minutes for confirmation, then:
-
-```bash
-cd contract
-clarinet deployments apply --testnet
-```
-
-4. Note the contract address from the output (format: `ST2CMK69QN...snake-score`).
-
-### 2. Wire the frontend to the deployed contract
+### 1. Deploy to Vercel (the only blocker left)
 
 ```bash
 cd frontend
-cp .env.example .env.local
+vercel link            # if not linked yet
 ```
 
-Edit `.env.local`:
-```
-NEXT_PUBLIC_CONTRACT_ADDRESS=<the contract address from step 1>
-NEXT_PUBLIC_NETWORK=testnet
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
+Set the four env vars (Production + Preview):
 
-### 3. Local smoke test
+| Key | Value |
+|---|---|
+| `NEXT_PUBLIC_CONTRACT_ADDRESS` | `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.snake-score` |
+| `NEXT_PUBLIC_NETWORK` | `mainnet` |
+| `NEXT_PUBLIC_APP_URL` | the Vercel domain after first deploy |
+| `NEXT_PUBLIC_SEASON_END_ISO` | `2026-06-01T00:00:00Z` (or pick another date) |
 
 ```bash
-cd frontend
-npm run dev
+vercel deploy            # preview
+# verify it loads, then:
+vercel deploy --prod
+# go back and update NEXT_PUBLIC_APP_URL to the prod domain, redeploy
 ```
 
-Open http://localhost:3000 and walk through the demo flow:
+Vercel CLI is at v52 locally; consider `npm i -g vercel@latest` for v54+.
 
-- [ ] Boot screen renders (1.4s) → XP desktop with wallpaper, taskbar, start button
-- [ ] System tray "Connect Wallet" → Leather/Xverse popup → connect testnet wallet
-- [ ] Double-click "Snake.exe" → game window opens, draggable, closable
-- [ ] Play a game → game over → MintDialog shows "Minting costs 0.01 STX" notice
-- [ ] Enter player name → "Mint as NFT" → wallet popup (approve 0.01 STX) → tx submits → balloon notification
-- [ ] Open My NFTs → score NFT renders with rarity badge (colour matches tier)
-- [ ] Open Leaderboard → prize pool balance visible (e.g. "0.0001 STX") → top scores load
-- [ ] Leaderboard shows "Claim Prize" button if wallet is in top-10
-- [ ] "Claim Trophy" button visible when in top-10 → tx submits → confetti + rank dialog
-- [ ] Start menu opens, shutdown reloads page
-- [ ] Disconnect from system tray clears state
+### 2. Production smoke test
 
-### 4. Deploy to Vercel
+After Vercel is live, walk through every flow with the **owner wallet** and a **second non-owner wallet**:
 
-```bash
-cd frontend
-npx vercel link
-npx vercel env add NEXT_PUBLIC_CONTRACT_ADDRESS preview
-npx vercel env add NEXT_PUBLIC_NETWORK preview         # value: testnet
-npx vercel env add NEXT_PUBLIC_APP_URL preview         # set after first preview deploy
-npx vercel deploy
+**As non-owner player:**
+- [ ] Boot → desktop loads, taskbar + Start menu visible
+- [ ] Start → no "Season Admin" entry (correct — hidden from non-owners)
+- [ ] Connect wallet (Leather / Xverse mainnet) → tray shows address
+- [ ] Play Snake → game over → MintDialog opens with "0.01 STX" copy
+- [ ] Mint → wallet popup shows `Will transfer exactly 0.01 STX` post-condition → confirm
+- [ ] Balloon "Mint submitted" → wait ~30s → "NFT confirmed!"
+- [ ] My NFTs → score NFT renders with inline SVG + rarity badge
+- [ ] Leaderboard → top-10 shows real addresses + scores (no "undefined"/NaN); countdown ticks
+- [ ] If in top-10 of a *past* season: claim box appears with computed payout
 
-# After verifying preview URL:
-npx vercel deploy --prod
-```
+**As owner:**
+- [ ] Connect with `SP2C...3SV` → Start menu now shows 🛠️ "Season Admin"
+- [ ] Season Admin → current season + pool match on-chain (verify via `clarinet console` or Hiro Explorer)
+- [ ] Click End Season → confirm dialog → wallet popup → tx submits
+- [ ] After mine: window auto-reloads, Season 1 appears as past season with payout table
+- [ ] Click "Send STX" on a row → wallet popup for `openSTXTransfer` with correct amount → confirm
+- [ ] Recipient receives STX, claim ✓ updates after they call claim-prize
 
-If you want the deployed Vercel URL to also serve metadata for marketplaces, call `set-base-uri` from the deployer wallet (via Stacks explorer sandbox or `clarinet console`) once the Vercel URL is known:
+### 3. Demo prep
 
-```clarity
-(contract-call? .snake-score set-base-uri "https://<vercel-url>/api/metadata/score/")
-```
+- 2–3 min Loom of the full owner + player flow
+- Screenshot the README's "Live contracts" link working in Hiro Explorer
+- Note the Stacks-explorer URL pattern for judges: `explorer.hiro.so/txid/SP2CMK69...snake-score?chain=mainnet`
 
-### 5. Demo prep
+---
 
-- Record a 2–3 min Loom walking through the demo flow above
-- Take screenshots for `README.md`
-- Note the Stacks explorer link to your contract for judges to verify
+## Known limitations / quirks (carry forward)
 
-## Known limitations (mentioned in spec §12)
+1. **Off-chain payouts.** `claim-prize` records only. Owner must `stx-transfer` manually — Season Admin's "Send STX" button is the intended workflow.
+2. **`as-contract` not used.** All STX goes through the owner wallet, not the contract.
+3. **Score is client-trusted.** No on-chain anti-cheat. Mention in the demo.
+4. **Soft deadline only.** `NEXT_PUBLIC_SEASON_END_ISO` is display-only; doesn't block mints past the date. Owner must call `end-season` manually to honour it.
+5. **Owner detection heuristic.** "Season Admin" entry shows when `wallet.address === stacks.contractAddress`. Breaks if `transfer-ownership` is called (contract has no read-only for `contract-owner` — would need a redeploy to add). Acceptable for MVP.
+6. **Trophy code still on-chain.** `claim-trophy`, `get-trophy-data` etc. live in mainnet contract; we just don't expose them. If someone calls them directly the contract still works.
+7. **Mint fee → owner wallet, not contract.** Pool is a counter (`season-accumulated`), not a balance. Real STX accumulates in owner wallet.
+8. **No path with spaces.** Vitest's worker pool fails on URL-encoded paths.
 
-- **Score is client-trusted.** No on-chain verification of gameplay. Acceptable for hackathon MVP; surface this in the demo. Future: on-chain RNG + replay verification.
-- **Top-10 is unsorted on-chain.** Eviction works (lowest score gets bumped when 11th higher score arrives), but ordering is done client-side in `LeaderboardWindow`. `claim-trophy` rank is computed via fold counting higher scores — no sort needed.
-- **Trophy rank locked at claim time.** Documented behavior — if a player claims at rank 3 then gets bumped to rank 4, their trophy stays Bronze.
-- **No sound effects.** Spec §8 listed XP `ding`/`error`/`balloon` MP3s; skipped since I can't generate audio assets. To add: drop MP3s into `frontend/public/sounds/` and use the `lib/sounds.ts` snippet from the plan (Phase 8 task 8.2).
-- **Mobile is fallback only.** XP metaphor is desktop-first by design. Mobile users will see a janky responsive view.
+---
 
-## Environment quirks
+## Files / structure cheat-sheet
 
-- The project was renamed from `Desktop/untitled folder` → `Desktop/xp-snake` early on because **Vitest's worker pool cannot launch from paths containing spaces** (URL-encoded `%20` breaks worker thread spawn). Don't rename back.
-- Vitest 4 is incompatible with `vitest-environment-clarinet` 3 — the contract workspace pins `vitest@^3`. Same constraint applies if you regenerate the contract from `clarinet new`.
-- Clarinet rejects non-ASCII characters in `.clar` files (em-dash `—`, smart quotes, etc.). Use ASCII hyphens.
+| Where | What |
+|---|---|
+| `contract/contracts/snake-score.clar` | All on-chain logic |
+| `contract/contracts/nft-trait.clar` | SIP-009 trait |
+| `contract/tests/*.test.ts` | 34 Vitest tests |
+| `contract/deployments/default.mainnet-plan.yaml` | Mainnet plan (cost ~0.098 STX) |
+| `frontend/lib/contract-calls.ts` | All read/write contract helpers + `computePayoutUstx` + `transferStx` |
+| `frontend/lib/cv-unwrap.ts` | Client-neutral helper for `@stacks/transactions` v7 `cvToValue` |
+| `frontend/lib/season-countdown.ts` | `useSeasonCountdown` hook + `formatCountdown` |
+| `frontend/components/windows/SeasonAdminWindow.tsx` | Owner-only window (exports `isOwnerAddress`) |
+| `frontend/components/windows/LeaderboardWindow.tsx` | Top-10 + claim-prize discovery + countdown |
+| `frontend/.env.local` | Local mainnet config (gitignored) |
+
+---
 
 ## Pointers
 
-- Design spec: `docs/superpowers/specs/2026-05-13-xp-snake-stacks-design.md`
-- Implementation plan: `docs/superpowers/plans/2026-05-13-xp-snake-stacks.md`
-- Manual test checklist: see spec §8
-- Polish priorities (if more time): spec §10
+- README at the repo root has full project overview + commands
+- Design spec: `docs/superpowers/specs/2026-05-14-snake-score-nft-v2-design.md`
+- Implementation plan: `docs/superpowers/plans/2026-05-14-snake-score-nft-v2.md`
+- Repo conventions (for AI assistants): `CLAUDE.md`
