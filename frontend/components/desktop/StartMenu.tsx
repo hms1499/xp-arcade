@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useWindows } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
+import { AboutDialog } from "@/components/dialogs/AboutDialog";
 
 const menuItemBase: React.CSSProperties = {
   width: "100%",
@@ -56,6 +57,7 @@ export function StartMenu({
 }) {
   const openWin = useWindows((s) => s.open);
   const disconnect = useWallet((s) => s.disconnect);
+  const [showAbout, setShowAbout] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -67,6 +69,8 @@ export function StartMenu({
   if (!open) return null;
 
   return (
+    <>
+    {showAbout && <AboutDialog onClose={() => { setShowAbout(false); onClose(); }} />}
     <div
       style={{
         position: "absolute",
@@ -137,6 +141,20 @@ export function StartMenu({
           />
 
           <MenuItem
+            icon="ℹ️"
+            label="About XP Snake"
+            onClick={() => setShowAbout(true)}
+          />
+
+          <li
+            style={{
+              borderTop: "1px solid #808080",
+              borderBottom: "1px solid #ffffff",
+              margin: "4px 0",
+            }}
+          />
+
+          <MenuItem
             icon="🔌"
             label="Disconnect Wallet"
             onClick={() => { disconnect(); onClose(); }}
@@ -149,5 +167,6 @@ export function StartMenu({
         </ul>
       </div>
     </div>
+    </>
   );
 }
