@@ -243,6 +243,23 @@ describe("rarity", () => {
   });
 });
 
+describe("mint-fee", () => {
+  it("deducts 10000 µSTX from caller on mint", () => {
+    const before = simnet.getAssetsMap().get("STX")?.get(wallet1) ?? 0n;
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(42), Cl.stringAscii("a")], wallet1);
+    const after = simnet.getAssetsMap().get("STX")?.get(wallet1) ?? 0n;
+    // deducted: 10000 µSTX fee + tx fee (tx fee varies; just verify at least 10000 deducted)
+    expect(before - after).toBeGreaterThanOrEqual(10000n);
+  });
+
+  it("season-accumulated increases by 10000 per mint", () => {
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(10), Cl.stringAscii("a")], w(1));
+    simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(20), Cl.stringAscii("b")], w(2));
+    const bal = simnet.callReadOnlyFn("snake-score", "get-prize-pool-balance", [], w(1)).result;
+    expect(bal).toBeUint(20000);
+  });
+});
+
 describe("SIP-009", () => {
   it("transfer moves NFT to recipient", () => {
     simnet.callPublicFn("snake-score", "mint-score", [Cl.uint(10), Cl.stringAscii("a")], w(1));

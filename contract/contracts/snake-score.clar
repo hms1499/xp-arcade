@@ -85,6 +85,8 @@
   (let ((new-id (+ (var-get last-token-id) u1))
         (prev (map-get? best-score tx-sender)))
     (asserts! (<= score u9999) ERR-SCORE-TOO-HIGH)
+    (try! (stx-transfer? u10000 tx-sender (var-get contract-owner)))
+    (var-set season-accumulated (+ (var-get season-accumulated) u10000))
     (try! (nft-mint? snake-score new-id tx-sender))
     (map-set score-data new-id {
       player: tx-sender,
@@ -112,6 +114,9 @@
 
 (define-read-only (get-last-token-id)
   (ok (var-get last-token-id)))
+
+(define-read-only (get-prize-pool-balance)
+  (var-get season-accumulated))
 
 ;; --- Errors ---
 (define-constant ERR-NOT-IN-TOP-TEN (err u101))
