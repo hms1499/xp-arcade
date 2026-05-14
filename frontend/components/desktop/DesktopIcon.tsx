@@ -1,4 +1,6 @@
 "use client";
+import { useState, useEffect } from "react";
+
 export function DesktopIcon({
   label,
   emoji,
@@ -8,8 +10,23 @@ export function DesktopIcon({
   emoji: string;
   onOpen: () => void;
 }) {
+  const [selected, setSelected] = useState(false);
+
+  // Deselect when clicking anywhere outside
+  useEffect(() => {
+    if (!selected) return;
+    const handler = (e: MouseEvent) => {
+      const el = document.getElementById(`icon-${label}`);
+      if (el && !el.contains(e.target as Node)) setSelected(false);
+    };
+    window.addEventListener("mousedown", handler);
+    return () => window.removeEventListener("mousedown", handler);
+  }, [selected, label]);
+
   return (
     <button
+      id={`icon-${label}`}
+      onMouseDown={() => setSelected(true)}
       onDoubleClick={onOpen}
       style={{
         display: "flex",
@@ -25,13 +42,23 @@ export function DesktopIcon({
         fontSize: 11,
       }}
     >
-      <span style={{ fontSize: 36, lineHeight: "1" }}>{emoji}</span>
+      <span
+        style={{
+          fontSize: 36,
+          lineHeight: "1",
+          outline: selected ? "1px dotted #ffffff" : "none",
+          padding: 2,
+        }}
+      >
+        {emoji}
+      </span>
       <span
         style={{
           marginTop: 4,
           padding: "1px 2px",
           textAlign: "center",
-          textShadow: "1px 1px 0 #000000",
+          textShadow: selected ? "none" : "1px 1px 0 #000000",
+          background: selected ? "#000080" : "transparent",
           wordBreak: "break-word",
           lineHeight: 1.2,
         }}
