@@ -15,6 +15,7 @@ import {
 } from "@/lib/contract-calls";
 import { useToasts } from "@/state/toasts";
 import { watchTx } from "@/lib/tx-tracker";
+import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
 
 type PayoutRow = {
   player: string;
@@ -43,6 +44,7 @@ export function SeasonAdminWindow() {
   const [busyEnd, setBusyEnd] = useState(false);
   const [busyPay, setBusyPay] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const countdown = useSeasonCountdown();
 
   const loadPastSeasons = useCallback(async (cs: number) => {
     const results: SeasonView[] = [];
@@ -151,6 +153,14 @@ export function SeasonAdminWindow() {
           <p className="text-[10px] text-gray-500 px-1">
             Ending the season snapshots top-10 and pool total, then starts a fresh season.
           </p>
+          {countdown.state !== "unset" && (
+            <p className="text-[10px] px-1 mt-1" style={{ color: countdown.state === "expired" ? "#cc0000" : "#000080" }}>
+              ⏳ Soft deadline: <b>{formatCountdown(countdown)}</b>
+              {" · ends "}
+              {countdown.endsAt.toLocaleString()}
+              {countdown.state === "expired" && " — call End Season now to honour it."}
+            </p>
+          )}
         </fieldset>
 
         {seasons.length === 0 && (

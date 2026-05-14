@@ -15,6 +15,7 @@ import {
 } from "@/lib/contract-calls";
 import { useToasts } from "@/state/toasts";
 import { watchTx } from "@/lib/tx-tracker";
+import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
 
 type Claimable = { season: number; rank: number; payoutUstx: number };
 
@@ -28,6 +29,7 @@ export function LeaderboardWindow() {
   const [prizePool, setPrizePool] = useState<number | null>(null);
   const [currentSeason, setCurrentSeason] = useState<number | null>(null);
   const [claimable, setClaimable] = useState<Claimable[]>([]);
+  const countdown = useSeasonCountdown();
 
   useEffect(() => {
     if (!w) return;
@@ -118,6 +120,17 @@ export function LeaderboardWindow() {
             &#x1F3C6; Prize Pool: <b>{poolDisplay}</b>
             {currentSeason != null && <span className="text-gray-500"> — Season {currentSeason}</span>}
           </span>
+          {countdown.state !== "unset" && (
+            <span
+              style={{
+                fontFamily: "monospace",
+                color: countdown.state === "expired" ? "#cc0000" : "#000080",
+              }}
+              title={`Ends ${countdown.endsAt.toLocaleString()}`}
+            >
+              ⏳ {formatCountdown(countdown)}
+            </span>
+          )}
         </div>
 
         {claimable.length > 0 && (
