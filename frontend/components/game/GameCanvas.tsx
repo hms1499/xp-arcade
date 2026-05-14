@@ -4,7 +4,13 @@ import { createGame, type Direction, type Game } from "@/lib/snake-engine";
 
 const CELL = 16;
 const GRID = 20;
-const TICK_MS = 120;
+const BASE_TICK_MS = 120;
+const MIN_TICK_MS = 50;
+
+function tickMs(score: number) {
+  // Shave 4ms per point, floor at MIN_TICK_MS (~50ms ≈ 20fps)
+  return Math.max(MIN_TICK_MS, BASE_TICK_MS - score * 4);
+}
 
 export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -39,7 +45,7 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
 
     const loop = (t: number) => {
       if (stopped) return;
-      if (t - last >= TICK_MS) {
+      if (t - last >= tickMs(gameRef.current!.state.score)) {
         gameRef.current!.tick();
         last = t;
         const s = gameRef.current!.state;
@@ -74,7 +80,12 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
 
   return (
     <div>
-      <div className="text-xs mb-1 font-bold">Score: {score}</div>
+      <div className="text-xs mb-1 font-bold flex justify-between">
+        <span>Score: {score}</span>
+        <span style={{ color: tickMs(score) <= 60 ? "#ff4444" : tickMs(score) <= 90 ? "#ffaa00" : "#888" }}>
+          {tickMs(score) <= 60 ? "⚡ MAX SPEED" : tickMs(score) <= 90 ? "🔥 FAST" : ""}
+        </span>
+      </div>
       <canvas
         ref={canvasRef}
         width={GRID * CELL}
