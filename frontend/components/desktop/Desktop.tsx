@@ -1,6 +1,7 @@
 "use client";
 import { DesktopIcon } from "./DesktopIcon";
 import { Taskbar } from "./Taskbar";
+import { NightCityWallpaper } from "./NightCityWallpaper";
 import { useWindows } from "@/state/window-manager";
 import { unlockAudio } from "@/lib/sounds";
 
@@ -12,12 +13,10 @@ export function Desktop({ children }: { children: React.ReactNode }) {
       className="fixed inset-0"
       onMouseDown={unlockAudio}
       onTouchStart={unlockAudio}
-      style={{
-        background:
-          "linear-gradient(180deg, #4a90e2 0%, #7bb3e5 40%, #8fc859 60%, #4a8a3a 100%)",
-      }}
+      style={{ background: "#00030c" }}
     >
-      <div className="absolute top-4 left-4 grid grid-cols-1 gap-4">
+      <NightCityWallpaper />
+      <div className="absolute top-4 left-4 grid grid-cols-1 gap-4" style={{ zIndex: 1 }}>
         <DesktopIcon label="Snake.exe" emoji="🐍" onOpen={() => open("game")} />
         <DesktopIcon
           label="High Scores"
