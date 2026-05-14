@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository status
 
-**Phases 0–8 implemented and committed; testnet deploy + browser smoke test + Vercel deploy remain.** Read `HANDOFF.md` first for the live to-do list. The design spec is `docs/superpowers/specs/2026-05-13-xp-snake-stacks-design.md` and the full implementation plan is `docs/superpowers/plans/2026-05-13-xp-snake-stacks.md` — those are the source of truth for *intent*; the code is the source of truth for *current state*.
+**Phases 0–8 + contract v2 + frontend v2 implemented and committed. Testnet deploy + Vercel deploy remain.** Read `HANDOFF.md` first for the live to-do list. The v2 design spec is `docs/superpowers/specs/2026-05-14-snake-score-nft-v2-design.md` and the v2 implementation plan is `docs/superpowers/plans/2026-05-14-snake-score-nft-v2.md` — those are the source of truth for v2 intent.
 
 ## Workspaces
 
@@ -20,7 +20,7 @@ HANDOFF.md  user-facing to-do list (deploy, smoke test, Vercel)
 ### contract/
 ```bash
 cd contract
-npm test                       # all Clarinet tests (14 passing)
+npm test                       # all Clarinet tests (34 passing)
 clarinet check                 # syntax check the .clar contracts
 clarinet console               # REPL against simnet for ad-hoc calls
 clarinet deployments generate --testnet --low-cost
@@ -53,8 +53,9 @@ These are non-obvious choices baked in — preserve them unless the user explici
 - **Two NFT types in one contract.** `snake-score` exposes the SIP-009 surface (`transfer`, `get-owner`, `get-token-uri`). `snake-trophy` uses parallel non-trait functions (`transfer-trophy`-style intent — currently only `get-trophy-owner` + `get-trophy-data` since trophies are not transferable in the MVP). One contract per NFT type would be cleaner for marketplaces but duplicates state plumbing; we accepted the trade-off.
 - **Top-10 is unsorted on-chain.** Insertion-sort in Clarity 4 was attempted and abandoned for the simpler min-eviction approach. If a marketplace ever needs an authoritative ranked list on-chain, this is the place to revisit.
 - **Trophy rank is locked at claim time.** Documented in `HANDOFF.md` and the spec — do not "fix" by recomputing rank on transfer.
-- **Score is client-trusted.** No on-chain verification of gameplay. Documented limitation; do not invent anti-cheat scope without asking.
-- **Reward = NFT only.** No prize pool, no STX/sBTC payouts. Avoid scope creep into escrow logic.
+- **Score is client-trusted.** No on-chain verification of gameplay. Documented limitation; do not invent anti-cheat scope without asking. Score cap `u9999` reduces worst-case abuse.
+- **Prize pool is tracked, not held.** `claim-prize` records the owed payout amount and returns `(ok payout)` but does NOT transfer STX — `as-contract` is unsupported in the clarinet WASM simnet runtime. Actual distribution must be done off-chain by the contract owner. This is a known v2 limitation documented in `HANDOFF.md`.
+- **Mint fee goes to `contract-owner`, not contract address.** Same `as-contract` limitation — fees are paid directly to the deployer wallet.
 - **Token URIs point to Next.js API routes** at `/api/metadata/{score,trophy}/[id]`. They read on-chain data and return SIP-016 JSON with inline SVG `image` data-URLs — no external image hosting.
 - **Zustand state is split into focused stores.** `state/wallet.ts` (connect state), `state/window-manager.ts` (open windows, z-order, positions), `state/toasts.ts` (balloon notifications). Don't merge into one god-store.
 - **`@stacks/connect` v8 API.** Use `connect()` / `disconnect()` / `isConnected()` / `getLocalStorage()`. The plan's v7 references (`AppConfig`, `UserSession`, `showConnect`) were superseded.

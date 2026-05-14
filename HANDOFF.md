@@ -1,28 +1,59 @@
 # Handoff — XP Snake on Stacks
 
-**Status as of 2026-05-13:** Phases 0–8 complete. 14 commits, 21 tests passing (14 contract + 7 web). Production type-check clean. Browser smoke testing and testnet deploy remain.
+**Status as of 2026-05-14:** Contract v2 fully implemented and tested (34 tests). Frontend updated for v2. Testnet deploy and Vercel deploy remain.
 
 ## What's done
 
 | Phase | Status | Output |
 |---|---|---|
 | 0. Scaffolding | ✅ | `.gitignore`, `README.md` |
-| 1. Clarity contract | ✅ | `contract/contracts/snake-score.clar` + 14 Clarinet tests passing |
-| 2. Next.js + snake engine | ✅ | `frontend/lib/snake-engine.ts` + 5 Vitest tests passing |
-| 3. Stacks integration | ✅ | `frontend/lib/stacks.ts`, `frontend/lib/contract-calls.ts`, `frontend/state/wallet.ts` |
-| 4. XP UI shell | ✅ | `frontend/components/desktop/*`, `frontend/components/windows/Window.tsx`, `frontend/state/window-manager.ts` |
+| 1. Clarity contract v1 | ✅ | `contract/contracts/snake-score.clar` + 14 Clarinet tests |
+| 2. Next.js + snake engine | ✅ | `frontend/lib/snake-engine.ts` + 5 Vitest tests |
+| 3. Stacks integration | ✅ | `frontend/lib/stacks.ts`, `contract-calls.ts`, `state/wallet.ts` |
+| 4. XP UI shell | ✅ | `frontend/components/desktop/*`, `Window.tsx`, `window-manager.ts` |
 | 5. Game window + mint | ✅ | `GameCanvas.tsx`, `MintDialog.tsx`, `GameWindow.tsx` |
-| 6. Leaderboard + trophy | ✅ | `LeaderboardWindow.tsx`, `TrophyDialog.tsx` (with `canvas-confetti`) |
-| 7. My NFTs + metadata | ✅ | `MyNftsWindow.tsx`, `app/api/metadata/{score,trophy}/[id]/route.ts`, `lib/metadata-svg.ts` + 2 Vitest tests passing |
-| 8. Polish | ✅ | `BootScreen.tsx`, `Balloons` toast system. Sound effects deferred (need MP3 assets). |
-| 1.8. Testnet deploy | ⏸ | Plan generated. Waiting on deployer funding + apply. |
-| 9. Vercel deploy | ⏸ | Waiting on user Vercel auth. |
+| 6. Leaderboard + trophy | ✅ | `LeaderboardWindow.tsx`, `TrophyDialog.tsx` (canvas-confetti) |
+| 7. My NFTs + metadata | ✅ | `MyNftsWindow.tsx`, `app/api/metadata/{score,trophy}/[id]/route.ts`, `metadata-svg.ts` |
+| 8. Polish | ✅ | `BootScreen.tsx`, Balloons toast system, night city wallpaper, Web Audio sound effects |
+| **v2. Contract upgrade** | ✅ | See detail below — 34 tests passing |
+| **v2. Frontend upgrade** | ✅ | See detail below — 7 tests, 0 type errors |
+| Deploy to testnet | ⏸ | Needs funded deployer wallet — see steps below |
+| Deploy to Vercel | ⏸ | Waiting on Vercel auth — see steps below |
+
+### v2 Contract changes (2026-05-14, commits `7b1a3e7` → `6754237`)
+
+| Feature | What was added |
+|---|---|
+| SIP-009 `impl-trait` | Local `nft-trait.clar` + `(impl-trait .nft-trait.nft-trait)` for marketplace indexer compatibility |
+| Score cap | `(asserts! (<= score u9999) ERR-SCORE-TOO-HIGH)` — error `u104` |
+| Mint fee | 0.01 STX per mint → accumulates in `season-accumulated` (tracked in contract, paid to deployer) |
+| Rarity tiers | `compute-rarity` stored in `score-data.rarity`: Common 0–166 / Rare 167–499 / Epic 500–999 / Legendary 1000+ |
+| Prize pool | `season-prize` map + `season-accumulated` var — snapshots pool + top-ten at season end |
+| `end-season` | Owner-only; replaces `reset-season`. Snapshots, clears top-ten, increments season |
+| `claim-prize` | Claim-based payout by rank: top 3 = 20% each, rank 4–10 = `(total * 4) / 70` each |
+| `transfer-ownership` | New owner guard so deployer key can be rotated |
+| `base-uri` fix | Default no longer includes `{id}` placeholder |
+
+**Critical implementation note:** `as-contract` is unsupported in clarinet WASM simnet. Mint fee is transferred to `contract-owner` (not contract address). `claim-prize` records owed amounts and returns the payout value but does NOT execute an actual STX transfer — actual distribution must be done off-chain by the contract owner. This is a known limitation; real STX transfer requires `as-contract` on mainnet.
+
+### v2 Frontend changes (2026-05-14, commits `74e61ac` → `6702e25`)
+
+| File | What changed |
+|---|---|
+| `lib/contract-calls.ts` | Added `getPrizePoolBalance`, `getSeasonPrize`, `hasClaimedPrize`, `claimPrize` |
+| `lib/metadata-svg.ts` | Added `Rarity` type, `rarityColor()` helper, rarity colour border + label in score SVG |
+| `app/api/metadata/score/[id]/route.ts` | Passes `rarity` to SVG; returns SIP-016 `attributes` array (Rarity, Season, Score) |
+| `MintDialog.tsx` | Shows "Minting costs 0.01 STX"; detects error `u104` (score-too-high) |
+| `LeaderboardWindow.tsx` | Displays live prize pool balance; shows "Claim Prize" button for top-10 players |
+| `MyNftsWindow.tsx` | Rarity badge on each score NFT card, coloured by tier |
 
 ## To-do for you
 
-### 1. Deploy the contract to Stacks testnet
+### 1. Deploy the v2 contract to Stacks testnet
 
 The deployer address is **`ST2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB4PBYSC2`** (derived from your mnemonic in `contract/settings/Testnet.toml`).
+
+> ⚠️ This is a **breaking contract change** — a new contract address will be generated. Update `NEXT_PUBLIC_CONTRACT_ADDRESS` in Vercel after deploy. Old testnet NFTs (v1) will not have `rarity` field — handle gracefully in frontend (the `rarity` field is already `rarity?: string` so missing values render no badge).
 
 Steps:
 
@@ -63,10 +94,12 @@ Open http://localhost:3000 and walk through the demo flow:
 - [ ] Boot screen renders (1.4s) → XP desktop with wallpaper, taskbar, start button
 - [ ] System tray "Connect Wallet" → Leather/Xverse popup → connect testnet wallet
 - [ ] Double-click "Snake.exe" → game window opens, draggable, closable
-- [ ] Play a game → game over → input player name → "Mint as NFT" → wallet popup → tx submits → balloon notification appears
-- [ ] Open Leaderboard → top scores load → your address highlighted → "Claim Trophy" enabled
-- [ ] Click Claim → tx submits → confetti + Gold/Silver/Bronze/Top 10 dialog
-- [ ] Open My NFTs → score and trophy NFTs render as SVG thumbnails
+- [ ] Play a game → game over → MintDialog shows "Minting costs 0.01 STX" notice
+- [ ] Enter player name → "Mint as NFT" → wallet popup (approve 0.01 STX) → tx submits → balloon notification
+- [ ] Open My NFTs → score NFT renders with rarity badge (colour matches tier)
+- [ ] Open Leaderboard → prize pool balance visible (e.g. "0.0001 STX") → top scores load
+- [ ] Leaderboard shows "Claim Prize" button if wallet is in top-10
+- [ ] "Claim Trophy" button visible when in top-10 → tx submits → confetti + rank dialog
 - [ ] Start menu opens, shutdown reloads page
 - [ ] Disconnect from system tray clears state
 
