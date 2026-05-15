@@ -14,3 +14,8 @@ contract/deployments/*.local-plan.yaml
 *.png
 *.jpeg
 .playwright-mcp/
+
+# Brand assets — explicitly tracked despite the *.png catch-all above
+!frontend/app/icon.png
+!frontend/app/apple-icon.png
+!frontend/public/logo-game.png
