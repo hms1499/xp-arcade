@@ -35,6 +35,16 @@ export function PlayerProfile({ address }: { address: string }) {
         <p className="text-[10px] font-mono text-gray-700 mb-4 break-all">
           {address}
           <CopyAddressButton value={address} />
+          <a
+            href={`https://explorer.hiro.so/address/${address}?chain=${
+              address.startsWith("SP") ? "mainnet" : "testnet"
+            }`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[10px] ml-2 text-blue-700 underline"
+          >
+            Explorer ↗
+          </a>
         </p>
 
         {nfts && nfts.length > 0 && (
