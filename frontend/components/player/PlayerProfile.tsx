@@ -50,6 +50,11 @@ export function PlayerProfile({ address }: { address: string }) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={n.image} alt={n.name} className="w-full h-auto" />
                 <div className="mt-1 truncate">{n.name}</div>
+                {typeof n.score === "number" && (
+                  <div className="text-[10px] text-gray-700">
+                    score {n.score}
+                  </div>
+                )}
                 {n.rarity && (
                   <div
                     className="text-[9px] font-bold mt-0.5"
