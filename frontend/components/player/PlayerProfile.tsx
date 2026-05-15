@@ -38,7 +38,12 @@ export function PlayerProfile({ address }: { address: string }) {
         {nfts === null && !error && <p className="text-sm">Loading NFTs…</p>}
         {error && <p className="text-red-700 text-xs">⚠️ {error}</p>}
         {nfts && nfts.length === 0 && (
-          <p className="text-sm text-gray-600">No score NFTs minted yet.</p>
+          <div className="text-sm text-gray-700 border border-dashed border-gray-400 p-3 text-center">
+            No score NFTs minted yet by this player.{" "}
+            <a href="/" className="text-blue-700 underline">
+              Play Snake →
+            </a>
+          </div>
         )}
         {nfts && nfts.length > 0 && (
           <div className="grid grid-cols-4 gap-2">
