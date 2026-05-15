@@ -5,6 +5,7 @@ import { useWallet } from "@/state/wallet";
 import { Window } from "./Window";
 import { rarityColor } from "@/lib/metadata-svg";
 import { fetchScoreHoldings, type ScoreNft } from "@/lib/holdings";
+import Link from "next/link";
 
 type Nft = ScoreNft;
 
@@ -28,6 +29,17 @@ export function MyNftsWindow() {
   return (
     <Window id={w.id} title="My Snake NFTs" width={480}>
       <div className="p-2">
+        {address && (
+          <div className="mb-2 text-right">
+            <Link
+              href={`/player/${address}`}
+              target="_blank"
+              className="text-xs text-blue-700 underline"
+            >
+              Open public profile →
+            </Link>
+          </div>
+        )}
         {!address && (
           <p className="text-sm">Connect your wallet to see your NFTs.</p>
         )}
