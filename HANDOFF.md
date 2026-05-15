@@ -33,6 +33,9 @@ On-chain right now: 1 score NFT minted (token #1, score 2, player `SPV5...QFH8Y`
 | `b9825dc` | **Feat:** `SeasonAdminWindow` (owner-only, gated by `address === stacks.contractAddress`) — End Season button + per-row Send STX for past-season payouts. `LeaderboardWindow` now discovers claimable past seasons automatically (was hardcoded to `season=1` which always failed). |
 | `6a3c683` | **Feat:** soft countdown via `NEXT_PUBLIC_SEASON_END_ISO` shown in Leaderboard header + Season Admin |
 | `50c04d7` + `2c7c22f` | README rewrite |
+| (this session) | **Feat:** public player profile at `/player/[address]` — NFT grid, best/mints/seasons/fees stats, rarity breakdown, copy-address + explorer link, linked from every leaderboard row and from MyNftsWindow |
+| (this session) | **Perf:** 1y immutable `Cache-Control` on `/api/metadata/score/[id]` + 60-req/min/IP rate limit |
+| (this session) | **Refactor:** extracted `lib/holdings.ts`, `lib/player-stats.ts`, `lib/stacks-address.ts`, `lib/rate-limit.ts` (each with vitest coverage) |
 
 ---
 
