@@ -6,6 +6,7 @@ import { fetchScoreHoldings, type ScoreNft } from "@/lib/holdings";
 import { rarityColor } from "@/lib/metadata-svg";
 import { computePlayerStats } from "@/lib/player-stats";
 import { PlayerStatsPanel } from "./PlayerStatsPanel";
+import { RarityBreakdown } from "./RarityBreakdown";
 
 export function PlayerProfile({ address }: { address: string }) {
   const [nfts, setNfts] = useState<ScoreNft[] | null>(null);
@@ -26,7 +27,10 @@ export function PlayerProfile({ address }: { address: string }) {
         <p className="text-[10px] font-mono text-gray-700 mb-4 break-all">{address}</p>
 
         {nfts && nfts.length > 0 && (
-          <PlayerStatsPanel stats={computePlayerStats(nfts)} />
+          <>
+            <PlayerStatsPanel stats={computePlayerStats(nfts)} />
+            <RarityBreakdown counts={computePlayerStats(nfts).rarityCounts} />
+          </>
         )}
 
         {nfts === null && !error && <p className="text-sm">Loading NFTs…</p>}
