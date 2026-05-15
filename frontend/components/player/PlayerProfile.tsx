@@ -71,7 +71,7 @@ export function PlayerProfile({ address }: { address: string }) {
           </div>
         )}
         {nfts && nfts.length > 0 && (
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {nfts.map((n) => (
               <div
                 key={n.id}
