@@ -16,6 +16,8 @@ import {
 import { useToasts } from "@/state/toasts";
 import { watchTx } from "@/lib/tx-tracker";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
+import Link from "next/link";
+import { shortAddress } from "@/lib/stacks-address";
 
 type Claimable = { season: number; rank: number; payoutUstx: number };
 
@@ -182,7 +184,15 @@ export function LeaderboardWindow() {
                 style={r.player === address ? { fontWeight: "bold" } : undefined}
               >
                 <td>{i + 1}</td>
-                <td>{r.player.slice(0, 6)}…{r.player.slice(-4)}</td>
+                <td>
+                  <Link
+                    href={`/player/${r.player}`}
+                    className="text-blue-700 underline"
+                    target="_blank"
+                  >
+                    {shortAddress(r.player, 6, 4)}
+                  </Link>
+                </td>
                 <td>{r.score}</td>
               </tr>
             ))}
