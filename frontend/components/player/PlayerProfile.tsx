@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { shortAddress } from "@/lib/stacks-address";
 import { fetchScoreHoldings, type ScoreNft } from "@/lib/holdings";
 import { rarityColor } from "@/lib/metadata-svg";
+import { computePlayerStats } from "@/lib/player-stats";
+import { PlayerStatsPanel } from "./PlayerStatsPanel";
 
 export function PlayerProfile({ address }: { address: string }) {
   const [nfts, setNfts] = useState<ScoreNft[] | null>(null);
@@ -22,6 +24,10 @@ export function PlayerProfile({ address }: { address: string }) {
       <div className="bg-[#ece9d8] text-black border border-black/20 max-w-3xl mx-auto p-4">
         <h1 className="text-lg font-bold mb-2">Player {shortAddress(address)}</h1>
         <p className="text-[10px] font-mono text-gray-700 mb-4 break-all">{address}</p>
+
+        {nfts && nfts.length > 0 && (
+          <PlayerStatsPanel stats={computePlayerStats(nfts)} />
+        )}
 
         {nfts === null && !error && <p className="text-sm">Loading NFTs…</p>}
         {error && <p className="text-red-700 text-xs">⚠️ {error}</p>}
