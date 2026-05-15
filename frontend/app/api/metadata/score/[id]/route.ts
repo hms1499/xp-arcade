@@ -36,16 +36,23 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       playerName: String(v["player-name"]),
       rarity,
     });
-    return NextResponse.json({
-      name: `Snake Score #${tokenId}`,
-      description: `On-chain proof of a snake game score: ${v.score}.`,
-      image: "data:image/svg+xml;utf8," + encodeURIComponent(svg),
-      attributes: [
-        { trait_type: "Rarity", value: rarity },
-        { trait_type: "Season", value: String(season) },
-        { trait_type: "Score", value: String(Number(v.score)) },
-      ],
-    });
+    return NextResponse.json(
+      {
+        name: `Snake Score #${tokenId}`,
+        description: `On-chain proof of a snake game score: ${v.score}.`,
+        image: "data:image/svg+xml;utf8," + encodeURIComponent(svg),
+        attributes: [
+          { trait_type: "Rarity", value: rarity },
+          { trait_type: "Season", value: String(season) },
+          { trait_type: "Score", value: String(Number(v.score)) },
+        ],
+      },
+      {
+        headers: {
+          "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
+        },
+      }
+    );
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "lookup failed" },
