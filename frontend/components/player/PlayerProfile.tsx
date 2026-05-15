@@ -7,6 +7,7 @@ import { rarityColor } from "@/lib/metadata-svg";
 import { computePlayerStats } from "@/lib/player-stats";
 import { PlayerStatsPanel } from "./PlayerStatsPanel";
 import { RarityBreakdown } from "./RarityBreakdown";
+import { CopyAddressButton } from "./CopyAddressButton";
 
 export function PlayerProfile({ address }: { address: string }) {
   const [nfts, setNfts] = useState<ScoreNft[] | null>(null);
@@ -31,7 +32,10 @@ export function PlayerProfile({ address }: { address: string }) {
         <h1 className="text-lg font-bold mb-2 mt-2">
           Player {shortAddress(address)}
         </h1>
-        <p className="text-[10px] font-mono text-gray-700 mb-4 break-all">{address}</p>
+        <p className="text-[10px] font-mono text-gray-700 mb-4 break-all">
+          {address}
+          <CopyAddressButton value={address} />
+        </p>
 
         {nfts && nfts.length > 0 && (
           <>
