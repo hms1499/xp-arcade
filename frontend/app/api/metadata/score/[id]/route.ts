@@ -26,7 +26,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       rarity: string;
       season: string;
     }>(cvToValue(res));
-    if (!v) return NextResponse.json({ error: "not found" }, { status: 404 });
+    if (!v)
+      return NextResponse.json(
+        { error: "not found" },
+        { status: 404, headers: { "Cache-Control": "public, max-age=60" } }
+      );
 
     const rarity = String(v.rarity ?? "Common");
     const season = Number(v.season ?? 1);
