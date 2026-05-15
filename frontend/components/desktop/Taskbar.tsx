@@ -8,6 +8,8 @@ const TYPE_LABEL: Record<string, string> = {
   game: "Snake",
   leaderboard: "High Scores",
   "my-nfts": "My NFTs",
+  "season-admin": "Season Admin",
+  "player-profile": "Player Profile",
 };
 
 function Win95Flag() {
