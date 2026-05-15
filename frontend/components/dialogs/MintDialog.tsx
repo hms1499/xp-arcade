@@ -30,6 +30,7 @@ export function MintDialog({
   onPlayAgain: () => void;
 }) {
   const address = useWallet((s) => s.address);
+  const connect = useWallet((s) => s.connect);
   const [busy, setBusy] = useState(false);
   const [txId, setTxId] = useState<string | null>(null);
   const [txStatus, setTxStatus] = useState<TxStatus>("pending");
@@ -57,7 +58,7 @@ export function MintDialog({
   }, [txId, score]);
 
   async function handleMint() {
-    if (!address) { setError("Connect wallet first"); return; }
+    if (!address) return;
     setBusy(true);
     setError(null);
     try {
@@ -114,9 +115,13 @@ export function MintDialog({
         </div>
       ) : (
         <div className="flex gap-2">
-          <button onClick={handleMint} disabled={busy}>
-            {busy ? "Minting…" : "Mint as NFT"}
-          </button>
+          {address ? (
+            <button onClick={handleMint} disabled={busy}>
+              {busy ? "Minting…" : "Mint as NFT"}
+            </button>
+          ) : (
+            <button onClick={connect}>Connect Wallet to Mint</button>
+          )}
           <button onClick={onPlayAgain} disabled={busy}>Play Again</button>
           <button onClick={onClose} disabled={busy}>Close</button>
         </div>
