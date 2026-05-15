@@ -3,33 +3,10 @@ import { useEffect, useState } from "react";
 import { useWindows } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
 import { Window } from "./Window";
-import { stacks } from "@/lib/stacks";
 import { rarityColor } from "@/lib/metadata-svg";
+import { fetchScoreHoldings, type ScoreNft } from "@/lib/holdings";
 
-type Nft = {
-  id: number;
-  image: string;
-  name: string;
-  rarity?: string;
-};
-
-async function fetchHoldings(addr: string): Promise<Nft[]> {
-  const apiBase = stacks.network.client?.baseUrl ?? "https://api.hiro.so";
-  const scoreAsset = `${stacks.contractAddress}.${stacks.contractName}::snake-score`;
-  const url = `${apiBase}/extended/v1/tokens/nft/holdings?principal=${addr}&asset_identifiers=${scoreAsset}&limit=50`;
-  const data = await fetch(url).then((r) => r.json());
-  const results = (data.results ?? []) as Array<{ value: { repr: string } }>;
-  return Promise.all(
-    results.map(async (r) => {
-      const id = Number(r.value.repr.replace("u", ""));
-      const meta = await fetch(`/api/metadata/score/${id}`).then((x) => x.json());
-      const rarity = (
-        meta.attributes as Array<{ trait_type: string; value: string }> | undefined
-      )?.find((a) => a.trait_type === "Rarity")?.value;
-      return { id, image: meta.image, name: meta.name, rarity };
-    })
-  );
-}
+type Nft = ScoreNft;
 
 export function MyNftsWindow() {
   const w = useWindows((s) => s.windows.find((win) => win.type === "my-nfts"));
@@ -41,7 +18,7 @@ export function MyNftsWindow() {
     if (!w || !address) return;
     setNfts(null);
     setError(null);
-    fetchHoldings(address)
+    fetchScoreHoldings(address)
       .then(setNfts)
       .catch((e) => setError(e instanceof Error ? e.message : "Load failed"));
   }, [w, address]);
