@@ -1,7 +1,14 @@
 "use client";
 import { create } from "zustand";
 
-export type WindowType = "game" | "leaderboard" | "my-nfts" | "season-admin";
+export type WindowType =
+  | "game"
+  | "leaderboard"
+  | "my-nfts"
+  | "season-admin"
+  | "player-profile";
+
+export type WindowPayload = { address?: string };
 
 export type WindowEntry = {
   id: string;
@@ -10,12 +17,13 @@ export type WindowEntry = {
   y: number;
   z: number;
   minimized: boolean;
+  payload?: WindowPayload;
 };
 
 type S = {
   windows: WindowEntry[];
   topZ: number;
-  open: (type: WindowType) => void;
+  open: (type: WindowType, payload?: WindowPayload) => void;
   close: (id: string) => void;
   focus: (id: string) => void;
   minimize: (id: string) => void;
@@ -25,9 +33,16 @@ type S = {
 export const useWindows = create<S>((set, get) => ({
   windows: [],
   topZ: 10,
-  open: (type) => {
+  open: (type, payload) => {
     const existing = get().windows.find((w) => w.type === type);
     if (existing) {
+      if (payload) {
+        set((s) => ({
+          windows: s.windows.map((w) =>
+            w.id === existing.id ? { ...w, payload } : w
+          ),
+        }));
+      }
       get().focus(existing.id);
       return;
     }
@@ -43,6 +58,7 @@ export const useWindows = create<S>((set, get) => ({
           y: 80 + s.windows.length * 24,
           z,
           minimized: false,
+          payload,
         },
       ],
     }));
