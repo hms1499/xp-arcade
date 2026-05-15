@@ -16,7 +16,6 @@ import {
 import { useToasts } from "@/state/toasts";
 import { watchTx } from "@/lib/tx-tracker";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
-import Link from "next/link";
 import { shortAddress } from "@/lib/stacks-address";
 
 type Claimable = { season: number; rank: number; payoutUstx: number };
@@ -185,13 +184,16 @@ export function LeaderboardWindow() {
               >
                 <td>{i + 1}</td>
                 <td>
-                  <Link
-                    href={`/player/${r.player}`}
-                    className="text-blue-700 underline"
-                    target="_blank"
+                  <button
+                    onClick={() =>
+                      useWindows.getState().open("player-profile", {
+                        address: r.player,
+                      })
+                    }
+                    className="text-blue-700 underline bg-transparent border-0 p-0 cursor-pointer"
                   >
                     {shortAddress(r.player, 6, 4)}
-                  </Link>
+                  </button>
                 </td>
                 <td>{r.score}</td>
               </tr>
