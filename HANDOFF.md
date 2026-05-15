@@ -36,6 +36,7 @@ On-chain right now: 1 score NFT minted (token #1, score 2, player `SPV5...QFH8Y`
 | (this session) | **Feat:** public player profile at `/player/[address]` — NFT grid, best/mints/seasons/fees stats, rarity breakdown, copy-address + explorer link, linked from every leaderboard row and from MyNftsWindow |
 | (this session) | **Perf:** 1y immutable `Cache-Control` on `/api/metadata/score/[id]` + 60-req/min/IP rate limit |
 | (this session) | **Refactor:** extracted `lib/holdings.ts`, `lib/player-stats.ts`, `lib/stacks-address.ts`, `lib/rate-limit.ts` (each with vitest coverage) |
+| (this session) | **Feat:** PlayerProfileWindow — in-app XP window for player profiles. Leaderboard rows + MyNftsWindow now open the window in-place instead of redirecting. Window-manager extended with payload so the same window swaps between addresses. `/player/[address]` route still exists as the public shareable view (both wrap `PlayerProfileBody`). |
 
 ---
 
