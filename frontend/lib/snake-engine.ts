@@ -7,6 +7,7 @@ export type GameState = {
   direction: Direction;
   score: number;
   gameOver: boolean;
+  won: boolean;
   gridSize: number;
 };
 
@@ -28,33 +29,51 @@ function rng(seed: number) {
   return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 0x100000000);
 }
 
-function placeFood(rand: () => number, gridSize: number, snake: Cell[]): Cell {
-  while (true) {
-    const c = { x: Math.floor(rand() * gridSize), y: Math.floor(rand() * gridSize) };
-    if (!snake.some((s) => s.x === c.x && s.y === c.y)) return c;
+function placeFood(
+  rand: () => number,
+  gridSize: number,
+  snake: Cell[],
+): Cell | null {
+  const free: Cell[] = [];
+  for (let x = 0; x < gridSize; x++) {
+    for (let y = 0; y < gridSize; y++) {
+      if (!snake.some((s) => s.x === x && s.y === y)) free.push({ x, y });
+    }
   }
+  if (free.length === 0) return null;
+  return free[Math.floor(rand() * free.length)];
 }
 
 export function createGame(opts: { gridSize: number; seed: number }): Game {
   const rand = rng(opts.seed);
   const center = Math.floor(opts.gridSize / 2);
   const snake: Cell[] = [{ x: center, y: center }];
+  const initialFood = placeFood(rand, opts.gridSize, snake);
   const state: GameState = {
     snake,
-    food: placeFood(rand, opts.gridSize, snake),
+    food: initialFood ?? snake[0],
     direction: "right",
     score: 0,
-    gameOver: false,
+    gameOver: initialFood === null,
+    won: initialFood === null,
     gridSize: opts.gridSize,
   };
 
+  // Queued turn applied at the next tick, so multiple key presses between
+  // ticks can't chain into a 180° reversal against the actual heading.
+  let pending: Direction | null = null;
+
   function turn(d: Direction) {
     if (d === OPPOSITE[state.direction]) return;
-    state.direction = d;
+    pending = d;
   }
 
   function tick() {
     if (state.gameOver) return;
+    if (pending && pending !== OPPOSITE[state.direction]) {
+      state.direction = pending;
+    }
+    pending = null;
     const head = state.snake[0];
     const dx = state.direction === "left" ? -1 : state.direction === "right" ? 1 : 0;
     const dy = state.direction === "up" ? -1 : state.direction === "down" ? 1 : 0;
@@ -70,7 +89,13 @@ export function createGame(opts: { gridSize: number; seed: number }): Game {
     state.snake.unshift(next);
     if (next.x === state.food.x && next.y === state.food.y) {
       state.score += 1;
-      state.food = placeFood(rand, state.gridSize, state.snake);
+      const food = placeFood(rand, state.gridSize, state.snake);
+      if (food === null) {
+        state.won = true;
+        state.gameOver = true;
+      } else {
+        state.food = food;
+      }
     } else {
       state.snake.pop();
     }
