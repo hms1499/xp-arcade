@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { shortAddress } from "@/lib/stacks-address";
 import { fetchScoreHoldings, type ScoreNft } from "@/lib/holdings";
 import { rarityColor } from "@/lib/metadata-svg";
@@ -22,6 +22,8 @@ export function PlayerProfile({ address }: { address: string }) {
       )
       .catch((e) => setError(e instanceof Error ? e.message : "Load failed"));
   }, [address]);
+
+  const stats = useMemo(() => (nfts ? computePlayerStats(nfts) : null), [nfts]);
 
   return (
     <div className="min-h-screen p-4 bg-[#3a6ea5] text-white">
@@ -47,10 +49,10 @@ export function PlayerProfile({ address }: { address: string }) {
           </a>
         </p>
 
-        {nfts && nfts.length > 0 && (
+        {stats && nfts && nfts.length > 0 && (
           <>
-            <PlayerStatsPanel stats={computePlayerStats(nfts)} />
-            <RarityBreakdown counts={computePlayerStats(nfts).rarityCounts} />
+            <PlayerStatsPanel stats={stats} />
+            <RarityBreakdown counts={stats.rarityCounts} />
           </>
         )}
 
