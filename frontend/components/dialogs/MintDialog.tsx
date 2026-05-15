@@ -5,6 +5,7 @@ import { mintScore } from "@/lib/contract-calls";
 import { useToasts } from "@/state/toasts";
 import { watchTx, type TxStatus } from "@/lib/tx-tracker";
 import { playSuccess } from "@/lib/sounds";
+import { recordScore } from "@/lib/high-score";
 
 const STATUS_LABEL: Record<TxStatus, string> = {
   pending: "⏳ Confirming…",
@@ -36,6 +37,8 @@ export function MintDialog({
   const [txStatus, setTxStatus] = useState<TxStatus>("pending");
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // Record this run once on mount; lazy init runs exactly once per dialog.
+  const [hs] = useState(() => recordScore(score));
 
   useEffect(() => {
     if (!txId) return;
@@ -85,6 +88,13 @@ export function MintDialog({
     <div className="text-sm">
       <p className="mb-3">
         ⚠️ <b>Game Over</b> — Score: <b>{score}</b>
+        <span className="block text-xs mt-1">
+          {hs.isNewRecord ? (
+            <b style={{ color: "#007700" }}>🏅 New personal best!</b>
+          ) : (
+            <span className="text-gray-500">Personal best: <b>{hs.best}</b></span>
+          )}
+        </span>
         <span className="block text-xs text-gray-500 mt-1">
           Minting costs <b>0.01 STX</b> and records your score on-chain forever.
         </span>
