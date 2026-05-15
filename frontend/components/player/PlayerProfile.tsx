@@ -18,7 +18,11 @@ export function PlayerProfile({ address }: { address: string }) {
     setError(null);
     fetchScoreHoldings(address)
       .then((list) =>
-        setNfts([...list].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)))
+        setNfts(
+          [...list].sort(
+            (a, b) => (b.score ?? 0) - (a.score ?? 0) || b.id - a.id
+          )
+        )
       )
       .catch((e) => setError(e instanceof Error ? e.message : "Load failed"));
   }, [address]);
