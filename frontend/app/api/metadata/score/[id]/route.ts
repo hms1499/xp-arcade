@@ -3,12 +3,33 @@ import { fetchCallReadOnlyFunction, cvToValue, uintCV } from "@stacks/transactio
 import { stacks } from "@/lib/stacks";
 import { unwrap } from "@/lib/cv-unwrap";
 import { scoreSvg } from "@/lib/metadata-svg";
+import { rateLimit } from "@/lib/rate-limit";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+const RL_LIMIT = 60;
+const RL_WINDOW_MS = 60_000;
+
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const tokenId = Number(id);
   if (!Number.isFinite(tokenId) || tokenId <= 0) {
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
+  }
+
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "anon";
+  const rl = rateLimit(`metadata:${ip}`, RL_LIMIT, RL_WINDOW_MS);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "rate limited" },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": Math.ceil((rl.resetAt - Date.now()) / 1000).toString(),
+        },
+      }
+    );
   }
 
   try {
