@@ -40,6 +40,7 @@ Deployer / `contract-owner`: `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV`
 - 🛠️ **Season Admin (owner-only)** — desktop window visible only to the contract owner: see current season + accumulated pool, end the season, and send STX payouts to each top-10 player for past seasons.
 - ⏳ **Soft season countdown** — display-only deadline from `NEXT_PUBLIC_SEASON_END_ISO`, shown in Leaderboard + Season Admin.
 - 🪟 **XP desktop UX** — boot screen, taskbar, Start menu, draggable windows, balloon notifications.
+- 👤 **Public player profiles** — `/player/<stx-address>` shows that player's score NFTs, best score, total mints, seasons played, and mint-fee spend. Linked from every leaderboard row.
 
 ---
 
