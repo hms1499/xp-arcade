@@ -31,11 +31,11 @@ export function MyNftsWindow() {
         {address && (
           <div className="mb-2 text-right">
             <button
-              onClick={() =>
-                useWindows
-                  .getState()
-                  .open("player-profile", { address })
-              }
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                useWindows.getState().open("player-profile", { address });
+              }}
               className="text-xs"
             >
               Open my profile

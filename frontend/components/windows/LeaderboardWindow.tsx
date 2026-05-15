@@ -185,11 +185,13 @@ export function LeaderboardWindow() {
                 <td>{i + 1}</td>
                 <td>
                   <button
-                    onClick={() =>
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
                       useWindows.getState().open("player-profile", {
                         address: r.player,
-                      })
-                    }
+                      });
+                    }}
                     className="text-blue-700 underline bg-transparent border-0 p-0 cursor-pointer"
                   >
                     {shortAddress(r.player, 6, 4)}
