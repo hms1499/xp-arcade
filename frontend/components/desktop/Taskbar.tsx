@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useWindows } from "@/state/window-manager";
+import { useWallet } from "@/state/wallet";
 import { SystemTray } from "./SystemTray";
 import { StartMenu } from "./StartMenu";
 
@@ -11,6 +12,10 @@ const TYPE_LABEL: Record<string, string> = {
   "season-admin": "Season Admin",
   "player-profile": "Player Profile",
 };
+
+function shortAddr(addr: string) {
+  return `${addr.slice(0, 4)}…${addr.slice(-3)}`;
+}
 
 function Win95Flag() {
   return (
@@ -33,6 +38,7 @@ export function Taskbar() {
   const [open, setOpen] = useState(false);
   const windows = useWindows((s) => s.windows);
   const focus = useWindows((s) => s.focus);
+  const walletAddress = useWallet((s) => s.address);
 
   return (
     <div
@@ -78,6 +84,25 @@ export function Taskbar() {
           margin: "0 2px",
         }}
       />
+
+      {walletAddress && (
+        <button
+          onClick={() => useWindows.getState().open("player-profile", { address: walletAddress })}
+          style={{
+            height: 22,
+            padding: "0 8px",
+            fontSize: 11,
+            fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            flexShrink: 0,
+          }}
+        >
+          <span style={{ color: "#00aa00", fontSize: 8 }}>●</span>
+          {shortAddr(walletAddress)}
+        </button>
+      )}
 
       <div style={{ display: "flex", gap: 2, flex: 1, overflow: "hidden" }}>
         {windows.map((w) => (
