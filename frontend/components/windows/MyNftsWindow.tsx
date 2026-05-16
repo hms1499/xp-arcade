@@ -45,7 +45,19 @@ export function MyNftsWindow() {
         {!address && (
           <p className="text-sm">Connect your wallet to see your NFTs.</p>
         )}
-        {address && nfts === null && !error && <p className="text-sm">Loading…</p>}
+        {address && nfts === null && !error && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(72px, 1fr))", gap: 8 }}>
+            {[0,1,2,3].map((i) => (
+              <div
+                key={i}
+                style={{
+                  height: 72, background: "#111", border: "1px solid #1a3a1a", borderRadius: 4,
+                  animation: "shimmer 1.2s linear infinite",
+                }}
+              />
+            ))}
+          </div>
+        )}
         {error && <p className="text-red-600 text-xs">⚠️ {error}</p>}
         {nfts?.length === 0 && (
           <p className="text-sm text-gray-600">
@@ -53,23 +65,33 @@ export function MyNftsWindow() {
           </p>
         )}
         {nfts && nfts.length > 0 && (
-          <div className="grid grid-cols-4 gap-2">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(72px, 1fr))", gap: 8 }}>
             {nfts.map((n) => (
               <div
                 key={n.id}
-                className="text-center text-xs border border-gray-300 p-1"
+                style={{
+                  background: "#000",
+                  border: "1px solid #1a3a1a",
+                  borderRadius: 4,
+                  padding: 6,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 3,
+                  fontFamily: "monospace",
+                }}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={n.image} alt={n.name} className="w-full h-auto" />
-                <div className="mt-1 truncate">{n.name}</div>
+                {/* Score value */}
+                <div style={{ color: "#0f0", fontWeight: "bold", fontSize: 14 }}>
+                  {n.score ?? "?"}
+                </div>
+                <div style={{ color: "#555", fontSize: 8 }}>SCORE</div>
                 {n.rarity && (
-                  <div
-                    className="text-[9px] font-bold mt-0.5"
-                    style={{ color: rarityColor(n.rarity) }}
-                  >
+                  <div style={{ color: rarityColor(n.rarity), fontSize: 8, fontWeight: "bold" }}>
                     {n.rarity}
                   </div>
                 )}
+                <div style={{ color: "#333", fontSize: 8 }}>#{n.id}</div>
               </div>
             ))}
           </div>
