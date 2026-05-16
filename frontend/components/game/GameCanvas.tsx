@@ -36,6 +36,7 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
   const flashUntilRef = useRef(0);
   const foodPulseRef = useRef(0);
   const foodGlowRef  = useRef(8);
+  const popupsRef = useRef<{ x: number; y: number; born: number }[]>([]);
   const [score, setScore] = useState(0);
   const [paused, setPaused] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
@@ -179,10 +180,32 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
             ctx.fillStyle = `rgba(160,255,160,${(remaining / FLASH_MS) * 0.22})`;
             ctx.fillRect(0, 0, GRID * CELL, GRID * CELL);
           }
+          const POPUP_MS = 500;
+          popupsRef.current = popupsRef.current.filter((p) => t - p.born < POPUP_MS);
+          ctx.font = "bold 10px monospace";
+          ctx.textAlign = "center";
+          for (const p of popupsRef.current) {
+            const elapsed = t - p.born;
+            const alpha = 1 - elapsed / POPUP_MS;
+            const yOff  = -elapsed * 0.04;
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = "#7fff7f";
+            ctx.fillText("+1", p.x, p.y + yOff);
+          }
+          ctx.globalAlpha = 1;
+          ctx.textAlign = "left";
         }
         if (s.score > prevScore) {
           setScore(s.score);
           playEat();
+          if (!reduceMotion) {
+            const head = s.snake[0];
+            popupsRef.current.push({
+              x: head.x * CELL + CELL / 2,
+              y: head.y * CELL,
+              born: t,
+            });
+          }
         }
         if (s.gameOver) {
           stopped = true;
