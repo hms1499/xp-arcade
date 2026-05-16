@@ -20,10 +20,37 @@ import { shortAddress } from "@/lib/stacks-address";
 
 type Claimable = { season: number; rank: number; payoutUstx: number };
 
+type RankSnapshot = Record<string, number>;
+
+function loadSnapshot(): RankSnapshot {
+  try {
+    return JSON.parse(sessionStorage.getItem("lb-snapshot") ?? "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveSnapshot(rows: { player: string; score: number }[]) {
+  const snap: RankSnapshot = {};
+  rows.forEach((r) => { snap[r.player] = r.score; });
+  sessionStorage.setItem("lb-snapshot", JSON.stringify(snap));
+}
+
+function rankChange(player: string, currentRank: number, snapshot: RankSnapshot, sortedRows: { player: string; score: number }[]): "up" | "down" | "same" | "new" {
+  if (!(player in snapshot)) return "new";
+  const prevEntries = Object.entries(snapshot).sort((a, b) => b[1] - a[1]);
+  const prevRank = prevEntries.findIndex(([addr]) => addr === player) + 1;
+  if (prevRank === 0) return "new";
+  if (currentRank < prevRank) return "up";
+  if (currentRank > prevRank) return "down";
+  return "same";
+}
+
 export function LeaderboardWindow() {
   const w = useWindows((s) => s.windows.find((win) => win.type === "leaderboard"));
   const address = useWallet((s) => s.address);
   const [rows, setRows] = useState<TopEntry[] | null>(null);
+  const [snapshot, setSnapshot] = useState<RankSnapshot>(() => loadSnapshot());
   const [error, setError] = useState<string | null>(null);
   const [busyPrize, setBusyPrize] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -42,6 +69,17 @@ export function LeaderboardWindow() {
           setRows(sorted);
           setError(null);
           setLastUpdated(new Date());
+          setSnapshot(loadSnapshot()); // read before saving
+          saveSnapshot(sorted);
+          // reset snapshot if season changed
+          getCurrentSeason().then((season) => {
+            const storedSeason = sessionStorage.getItem("lb-season");
+            if (storedSeason && storedSeason !== String(season)) {
+              sessionStorage.removeItem("lb-snapshot");
+              setSnapshot({});
+            }
+            sessionStorage.setItem("lb-season", String(season));
+          }).catch(() => {});
         })
         .catch((e) => setError(e instanceof Error ? e.message : "Load failed"));
 
