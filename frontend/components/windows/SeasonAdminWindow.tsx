@@ -209,7 +209,7 @@ export function SeasonAdminWindow() {
               </table>
             )}
             <p className="text-[10px] text-gray-500 px-1 mt-1">
-              ✓ = player called claim-prize on-chain. You can pay regardless; tracking sent payouts is off-chain.
+              ✓ = player called claim-prize directly on-chain. Payouts are owner-initiated — send STX regardless of claim status; tracking is off-chain.
             </p>
           </fieldset>
         ))}
