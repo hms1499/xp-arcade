@@ -22,6 +22,8 @@ export function Window({
     Math.max(...s.windows.filter((w) => !w.minimized).map((w) => w.z), 0)
   );
   const dragRef = useRef<{ ox: number; oy: number } | null>(null);
+  const flashingRef = useRef(false);
+  const titlebarRef = useRef<HTMLDivElement>(null);
   const [closing, setClosing] = useState(false);
 
   if (!win || win.minimized) return null;
@@ -38,12 +40,28 @@ export function Window({
       }}
     >
       <div
+        ref={titlebarRef}
         className={`title-bar${isActive ? "" : " inactive"}`}
         onMouseDown={(e) => {
+          // Flash only when window becomes active (was not active before)
+          if (!isActive && titlebarRef.current && !flashingRef.current) {
+            flashingRef.current = true;
+            titlebarRef.current.style.filter = "brightness(1.4)";
+            setTimeout(() => {
+              if (titlebarRef.current) titlebarRef.current.style.filter = "";
+              flashingRef.current = false;
+            }, 80);
+          }
           dragRef.current = { ox: e.clientX - win.x, oy: e.clientY - win.y };
+          const vw = window.innerWidth;
+          const vh = window.innerHeight;
           const onMove = (ev: MouseEvent) => {
             if (!dragRef.current) return;
-            move(id, ev.clientX - dragRef.current.ox, ev.clientY - dragRef.current.oy);
+            const rawX = ev.clientX - dragRef.current.ox;
+            const rawY = ev.clientY - dragRef.current.oy;
+            const clampedX = Math.max(-width + 60, Math.min(rawX, vw - 60));
+            const clampedY = Math.max(0, Math.min(rawY, vh - 28));
+            move(id, clampedX, clampedY);
           };
           const onUp = () => {
             dragRef.current = null;
