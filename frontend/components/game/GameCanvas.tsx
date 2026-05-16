@@ -28,12 +28,20 @@ function tickMs(score: number) {
   return Math.max(MIN_TICK_MS, BASE_TICK_MS - score * 4);
 }
 
-export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void }) {
+export function GameCanvas({
+  onGameOver,
+  isTopScore = false,
+}: {
+  onGameOver: (score: number) => void;
+  isTopScore?: boolean;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gridCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const gameRef = useRef<Game | null>(null);
   const pausedRef = useRef(false);
   const flashUntilRef = useRef(0);
+  const gameOverPhaseRef = useRef<null | "flash" | "overlay">(null);
+  const finalScoreRef    = useRef<number>(0);
   const foodPulseRef = useRef(0);
   const foodGlowRef  = useRef(6);
   const popupsRef = useRef<{ x: number; y: number; born: number }[]>([]);
@@ -79,7 +87,23 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
     let raf = 0;
     let stopped = false;
 
+    const canvasEl = canvasRef.current;
+    const onTouch = () => {
+      if (gameOverPhaseRef.current === "overlay") {
+        gameOverPhaseRef.current = null;
+        stopped = true;
+        onGameOver(finalScoreRef.current);
+      }
+    };
+    canvasEl?.addEventListener("touchstart", onTouch);
+
     const onKey = (e: KeyboardEvent) => {
+      if (gameOverPhaseRef.current === "overlay") {
+        gameOverPhaseRef.current = null;
+        stopped = true;
+        onGameOver(finalScoreRef.current);
+        return;
+      }
       if (e.key === "Escape") {
         if (!stopped) setPausedBoth(!pausedRef.current);
         return;
@@ -112,6 +136,42 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
     document.addEventListener("visibilitychange", onHide);
     window.addEventListener("blur", onBlur);
 
+    const drawOverlays = (ctx: CanvasRenderingContext2D) => {
+      if (gameOverPhaseRef.current === "flash") {
+        ctx.fillStyle = "rgba(255,0,0,0.35)";
+        ctx.fillRect(0, 0, GRID * CELL, GRID * CELL);
+      }
+
+      if (gameOverPhaseRef.current === "overlay") {
+        const W = GRID * CELL;
+        const H = GRID * CELL;
+        ctx.fillStyle = "rgba(0,0,0,0.72)";
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 16px monospace";
+        ctx.fillText("GAME OVER", W / 2, H / 2 - 24);
+
+        ctx.fillStyle = "#7fff7f";
+        ctx.font = "13px monospace";
+        ctx.fillText(`SCORE: ${finalScoreRef.current}`, W / 2, H / 2);
+
+        if (isTopScore) {
+          ctx.fillStyle = "#ffd700";
+          ctx.font = "11px monospace";
+          ctx.fillText("NEW HIGH SCORE", W / 2, H / 2 + 18);
+        }
+
+        ctx.fillStyle = "#555555";
+        ctx.font = "10px monospace";
+        ctx.fillText("Press any key...", W / 2, H / 2 + (isTopScore ? 36 : 22));
+
+        ctx.textAlign = "left";
+        ctx.font = "10px sans-serif";
+      }
+    };
+
     const loop = (t: number) => {
       if (stopped) return;
       if (pausedRef.current) {
@@ -119,6 +179,15 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
         raf = requestAnimationFrame(loop);
         return;
       }
+
+      // During game-over phases, keep the RAF alive but skip game ticks
+      if (gameOverPhaseRef.current !== null) {
+        const ctx = canvasRef.current?.getContext("2d");
+        if (ctx) drawOverlays(ctx);
+        raf = requestAnimationFrame(loop);
+        return;
+      }
+
       if (t - last >= tickMs(gameRef.current!.state.score)) {
         const prevScore = gameRef.current!.state.score;
         gameRef.current!.tick();
@@ -208,11 +277,20 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
             });
           }
         }
-        if (s.gameOver) {
-          stopped = true;
+        if (s.gameOver && gameOverPhaseRef.current === null) {
           playDead();
-          onGameOver(s.score);
-          return;
+          finalScoreRef.current = s.score;
+          gameOverPhaseRef.current = "flash";
+          setTimeout(() => {
+            gameOverPhaseRef.current = "overlay";
+          }, 200);
+          setTimeout(() => {
+            if (gameOverPhaseRef.current === "overlay") {
+              gameOverPhaseRef.current = null;
+              stopped = true;
+              onGameOver(finalScoreRef.current);
+            }
+          }, 3000);
         }
       }
       raf = requestAnimationFrame(loop);
@@ -225,8 +303,9 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
       window.removeEventListener("keydown", onKey);
       document.removeEventListener("visibilitychange", onHide);
       window.removeEventListener("blur", onBlur);
+      canvasEl?.removeEventListener("touchstart", onTouch);
     };
-  }, [onGameOver, setPausedBoth]);
+  }, [onGameOver, setPausedBoth, isTopScore]);
 
   return (
     <div>
