@@ -17,7 +17,10 @@ export function WalletBalloon() {
 
   useEffect(() => {
     if (!visible) return;
-    const t = setTimeout(() => dismiss(), 8000);
+    const t = setTimeout(() => {
+      setVisible(false);
+      sessionStorage.setItem("balloon-dismissed", "1");
+    }, 8000);
     return () => clearTimeout(t);
   }, [visible]);
 
