@@ -35,7 +35,7 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
   const pausedRef = useRef(false);
   const flashUntilRef = useRef(0);
   const foodPulseRef = useRef(0);
-  const foodGlowRef  = useRef(8);
+  const foodGlowRef  = useRef(6);
   const popupsRef = useRef<{ x: number; y: number; born: number }[]>([]);
   const [score, setScore] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -165,7 +165,7 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
             }
           }
           ctx.fillStyle = "#ff8800";
-          ctx.shadowBlur   = reduceMotion ? 6 : foodGlowRef.current;
+          ctx.shadowBlur   = reduceMotion ? 0 : foodGlowRef.current;
           ctx.shadowColor  = "#ff8800";
           const fx = s.food.x * CELL + (CELL - 1) / 2;
           const fy = s.food.y * CELL + (CELL - 1) / 2;
