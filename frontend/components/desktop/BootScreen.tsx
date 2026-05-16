@@ -24,10 +24,11 @@ export function BootScreen({ children }: { children: React.ReactNode }) {
       setStatusIdx((i) => (i + 1) % STATUS_MESSAGES.length);
     }, 800);
 
+    let innerTimer: ReturnType<typeof setTimeout>;
     const fadeTimeout = setTimeout(() => {
       clearInterval(msgInterval);
       setFading(true);
-      setTimeout(() => {
+      innerTimer = setTimeout(() => {
         sessionStorage.setItem("xp-booted", "1");
         setBooted(true);
       }, 400);
@@ -36,12 +37,13 @@ export function BootScreen({ children }: { children: React.ReactNode }) {
     return () => {
       clearInterval(msgInterval);
       clearTimeout(fadeTimeout);
+      clearTimeout(innerTimer);
     };
   }, []);
 
   if (booted) {
     return (
-      <div className="desktop-fade-in" style={{ animation: "desktop-fade-in 300ms ease-out both" }}>
+      <div className="desktop-fade-in">
         {children}
       </div>
     );
@@ -59,7 +61,6 @@ export function BootScreen({ children }: { children: React.ReactNode }) {
         alignItems: "center",
         justifyContent: "center",
         gap: 14,
-        animation: fading ? "boot-fade-out 400ms ease-in both" : undefined,
       }}
     >
       {/* Logo */}
