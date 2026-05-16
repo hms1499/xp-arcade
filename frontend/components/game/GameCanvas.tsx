@@ -17,6 +17,7 @@ function tickMs(score: number) {
 
 export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const gridCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const gameRef = useRef<Game | null>(null);
   const pausedRef = useRef(false);
   const flashUntilRef = useRef(0);
@@ -41,6 +42,19 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
   useEffect(() => {
     gameRef.current = createGame({ gridSize: GRID, seed: Date.now() });
     playStart();
+
+    const gridCanvas = document.createElement("canvas");
+    gridCanvas.width = GRID * CELL;
+    gridCanvas.height = GRID * CELL;
+    const gCtx = gridCanvas.getContext("2d")!;
+    gCtx.fillStyle = "#0a2a0a";
+    for (let gx = 0; gx <= GRID; gx++) {
+      for (let gy = 0; gy <= GRID; gy++) {
+        gCtx.fillRect(gx * CELL, gy * CELL, 1, 1);
+      }
+    }
+    gridCanvasRef.current = gridCanvas;
+
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
@@ -99,8 +113,11 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
         }
         const ctx = canvasRef.current?.getContext("2d");
         if (ctx) {
-          ctx.fillStyle = "#000";
+          ctx.fillStyle = "#050f05";
           ctx.fillRect(0, 0, GRID * CELL, GRID * CELL);
+          if (gridCanvasRef.current) {
+            ctx.drawImage(gridCanvasRef.current, 0, 0);
+          }
           s.snake.forEach((c, i) => {
             ctx.fillStyle = i === 0 ? "#7fff7f" : "#0f0";
             ctx.fillRect(c.x * CELL, c.y * CELL, CELL - 1, CELL - 1);
