@@ -3,6 +3,12 @@ import { useEffect, useRef } from "react";
 import { useToasts } from "@/state/toasts";
 import { playBalloon } from "@/lib/sounds";
 
+const TYPE_ICON: Record<string, string> = {
+  info:    "ℹ️",
+  success: "✅",
+  error:   "❌",
+};
+
 export function Balloons() {
   const toasts = useToasts((s) => s.toasts);
   const dismiss = useToasts((s) => s.dismiss);
@@ -39,7 +45,10 @@ export function Balloons() {
             fontSize: 11,
           }}
         >
-          <div style={{ fontWeight: "bold", marginBottom: 2 }}>{t.title}</div>
+          <div style={{ fontWeight: "bold", marginBottom: 2, display: "flex", gap: 4, alignItems: "center" }}>
+            <span>{TYPE_ICON[t.type] ?? TYPE_ICON.info}</span>
+            {t.title}
+          </div>
           <div style={{ color: "#000000" }}>{t.body}</div>
         </div>
       ))}

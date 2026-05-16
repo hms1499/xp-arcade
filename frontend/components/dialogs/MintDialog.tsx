@@ -49,11 +49,15 @@ export function MintDialog({
         useToasts.getState().push({
           title: "NFT confirmed!",
           body: `Score #${score} NFT is on-chain.`,
+          type: "success",
+          duration: 6000,
         });
       } else if (s !== "pending") {
         useToasts.getState().push({
           title: "Mint failed",
           body: "Transaction was rejected on-chain.",
+          type: "error",
+          duration: 5000,
         });
       }
     });
