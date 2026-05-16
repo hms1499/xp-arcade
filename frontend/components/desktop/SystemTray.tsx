@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, type CSSProperties } from "react";
 import { useWallet } from "@/state/wallet";
+import { WalletBalloon } from "./WalletBalloon";
 
 const sunken: CSSProperties = {
   border: "1px solid",
@@ -68,6 +69,7 @@ export function SystemTray() {
       <div style={sunken}>
         {now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
       </div>
+      <WalletBalloon />
     </div>
   );
 }
