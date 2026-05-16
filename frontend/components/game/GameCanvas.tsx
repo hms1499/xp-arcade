@@ -114,8 +114,10 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
             ctx.fillRect(0, 0, GRID * CELL, GRID * CELL);
           }
         }
-        setScore(s.score);
-        if (s.score > prevScore) playEat();
+        if (s.score > prevScore) {
+          setScore(s.score);
+          playEat();
+        }
         if (s.gameOver) {
           stopped = true;
           playDead();
