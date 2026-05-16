@@ -33,8 +33,8 @@ export function Window({
       className={`window window-opening${closing ? " window-closing" : ""}`}
       style={{ position: "absolute", left: win.x, top: win.y, zIndex: win.z, width }}
       onMouseDown={() => focus(id)}
-      onAnimationEnd={() => {
-        if (closing) close(id);
+      onAnimationEnd={(e) => {
+        if (closing && e.target === e.currentTarget) close(id);
       }}
     >
       <div
