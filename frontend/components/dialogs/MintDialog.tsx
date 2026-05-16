@@ -36,6 +36,7 @@ export function MintDialog({
   const [busy, setBusy] = useState(false);
   const [txId, setTxId] = useState<string | null>(null);
   const [txStatus, setTxStatus] = useState<TxStatus>("pending");
+  const defaultName = address ? address.slice(-8) : "anon";
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   // Record this run once on mount; lazy init runs exactly once per dialog.
@@ -75,7 +76,7 @@ export function MintDialog({
     setBusy(true);
     setError(null);
     try {
-      const tx = await mintScore(score, name || "anon", address);
+      const tx = await mintScore(score, name || defaultName, address);
       setTxId(tx);
       setTxStatus("pending");
       setMintPending(true);
@@ -119,7 +120,7 @@ export function MintDialog({
             value={name}
             maxLength={24}
             onChange={(e) => setName(e.target.value)}
-            placeholder="anon"
+            placeholder={defaultName}
             disabled={busy}
           />
         </fieldset>
