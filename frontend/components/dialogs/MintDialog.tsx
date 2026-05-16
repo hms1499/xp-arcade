@@ -32,6 +32,7 @@ export function MintDialog({
 }) {
   const address = useWallet((s) => s.address);
   const connect = useWallet((s) => s.connect);
+  const setMintPending = useWallet((s) => s.setMintPending);
   const [busy, setBusy] = useState(false);
   const [txId, setTxId] = useState<string | null>(null);
   const [txStatus, setTxStatus] = useState<TxStatus>("pending");
@@ -45,6 +46,7 @@ export function MintDialog({
     const stop = watchTx(txId, (s) => {
       setTxStatus(s);
       if (s === "success") {
+        setMintPending(false);
         playSuccess();
         useToasts.getState().push({
           title: "NFT confirmed!",
@@ -53,6 +55,7 @@ export function MintDialog({
           duration: 6000,
         });
       } else if (s !== "pending") {
+        setMintPending(false);
         useToasts.getState().push({
           title: "Mint failed",
           body: "Transaction was rejected on-chain.",
@@ -62,7 +65,7 @@ export function MintDialog({
       }
     });
     return stop;
-  }, [txId, score]);
+  }, [txId, score, setMintPending]);
 
   async function handleMint() {
     if (!address) return;
@@ -72,9 +75,12 @@ export function MintDialog({
       const tx = await mintScore(score, name || "anon", address);
       setTxId(tx);
       setTxStatus("pending");
+      setMintPending(true);
       useToasts.getState().push({
-        title: "Mint submitted",
-        body: `Score NFT (${score}) broadcast — watching for confirmation.`,
+        title: "Minting…",
+        body: "Waiting for on-chain confirmation",
+        type: "info",
+        duration: 30_000,
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Mint failed";

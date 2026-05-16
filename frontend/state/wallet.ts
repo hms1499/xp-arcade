@@ -9,9 +9,11 @@ import {
 
 type WalletState = {
   address: string | null;
+  mintPending: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
   hydrate: () => void;
+  setMintPending: (v: boolean) => void;
 };
 
 function readStoredAddress(): string | null {
@@ -22,6 +24,7 @@ function readStoredAddress(): string | null {
 
 export const useWallet = create<WalletState>((set) => ({
   address: null,
+  mintPending: false,
   connect: async () => {
     await connectWallet();
     set({ address: readStoredAddress() });
@@ -35,4 +38,5 @@ export const useWallet = create<WalletState>((set) => ({
       set({ address: readStoredAddress() });
     }
   },
+  setMintPending: (v) => set({ mintPending: v }),
 }));
