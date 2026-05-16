@@ -85,7 +85,7 @@ export function MintDialog({
   }
 
   return (
-    <div className="text-sm">
+    <div className="text-sm mint-dialog-enter">
       <p className="mb-3">
         ⚠️ <b>Game Over</b> — Score: <b>{score}</b>
         <span className="block text-xs mt-1">

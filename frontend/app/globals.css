@@ -13,3 +13,16 @@ body {
   overflow: hidden;
   background: #008080;
 }
+
+@keyframes slide-up-in {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.mint-dialog-enter {
+  animation: slide-up-in 180ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mint-dialog-enter { animation: none; }
+}
