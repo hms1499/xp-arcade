@@ -135,18 +135,6 @@ export async function getCurrentSeason(): Promise<number> {
   return Number(unwrap(cvToValue(res)));
 }
 
-export async function setBaseUri(uri: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    openContractCall({
-      ...base,
-      functionName: "set-base-uri",
-      functionArgs: [stringAsciiCV(uri.slice(0, 80))],
-      onFinish: (data) => resolve(data.txId),
-      onCancel: () => reject(new Error("cancelled")),
-    });
-  });
-}
-
 export async function endSeason(): Promise<string> {
   return new Promise((resolve, reject) => {
     openContractCall({
