@@ -64,7 +64,10 @@ export function MintDialog({
         });
       }
     });
-    return stop;
+    return () => {
+      stop();
+      setMintPending(false);
+    };
   }, [txId, score, setMintPending]);
 
   async function handleMint() {
