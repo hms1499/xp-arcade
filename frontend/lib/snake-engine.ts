@@ -34,10 +34,11 @@ function placeFood(
   gridSize: number,
   snake: Cell[],
 ): Cell | null {
+  const occupied = new Set(snake.map((s) => s.x * gridSize + s.y));
   const free: Cell[] = [];
   for (let x = 0; x < gridSize; x++) {
     for (let y = 0; y < gridSize; y++) {
-      if (!snake.some((s) => s.x === x && s.y === y)) free.push({ x, y });
+      if (!occupied.has(x * gridSize + y)) free.push({ x, y });
     }
   }
   if (free.length === 0) return null;
