@@ -231,9 +231,30 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
     <div>
       <div className="text-xs mb-1 font-bold flex justify-between">
         <span>Score: {score}</span>
-        <span style={{ color: tickMs(score) <= 60 ? "#ff4444" : tickMs(score) <= 90 ? "#ffaa00" : "#888" }}>
-          {tickMs(score) <= 60 ? "⚡ MAX SPEED" : tickMs(score) <= 90 ? "🔥 FAST" : ""}
-        </span>
+        <div
+          style={{
+            flex: 1,
+            height: 5,
+            background: "#222",
+            borderRadius: 2,
+            overflow: "hidden",
+            margin: "0 4px",
+            alignSelf: "center",
+          }}
+        >
+          <div
+            style={{
+              height: "100%",
+              width: `${Math.round(lerp(0, 100, (BASE_TICK_MS - tickMs(score)) / (BASE_TICK_MS - MIN_TICK_MS)))}%`,
+              background: tickMs(score) <= 60
+                ? "#ff4444"
+                : tickMs(score) <= 90
+                ? "#ffaa00"
+                : "#4aee4a",
+              transition: "width 120ms linear, background 120ms linear",
+            }}
+          />
+        </div>
       </div>
       <div style={{ position: "relative", width: GRID * CELL, height: GRID * CELL }}>
         <canvas
