@@ -43,16 +43,7 @@ export function SystemTray() {
             justifyContent: "center",
           }}
         >
-          <div
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              border: "2px solid #808080",
-              borderTopColor: "#000080",
-              animation: "spin 0.7s linear infinite",
-            }}
-          />
+          <div className="tray-spinner" />
         </div>
       )}
       <div style={sunken}>

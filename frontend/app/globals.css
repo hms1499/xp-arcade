@@ -46,6 +46,19 @@ body {
   to { transform: rotate(360deg); }
 }
 
+.tray-spinner {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #808080;
+  border-top-color: #000080;
+  animation: spin 0.7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tray-spinner { animation: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .xp-bar-slider    { animation: none !important; }
   .boot-fade-out    { animation: none !important; }
