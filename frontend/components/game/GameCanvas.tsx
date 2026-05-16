@@ -34,6 +34,8 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
   const gameRef = useRef<Game | null>(null);
   const pausedRef = useRef(false);
   const flashUntilRef = useRef(0);
+  const foodPulseRef = useRef(0);
+  const foodGlowRef  = useRef(8);
   const [score, setScore] = useState(0);
   const [paused, setPaused] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
@@ -155,8 +157,22 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
             ctx.fill();
           });
           ctx.shadowBlur = 0;
-          ctx.fillStyle = "#f80";
-          ctx.fillRect(s.food.x * CELL, s.food.y * CELL, CELL - 1, CELL - 1);
+          if (!reduceMotion) {
+            if (t - foodPulseRef.current >= 600) {
+              foodGlowRef.current = foodGlowRef.current === 6 ? 12 : 6;
+              foodPulseRef.current = t;
+            }
+          }
+          ctx.fillStyle = "#ff8800";
+          ctx.shadowBlur   = reduceMotion ? 6 : foodGlowRef.current;
+          ctx.shadowColor  = "#ff8800";
+          const fx = s.food.x * CELL + (CELL - 1) / 2;
+          const fy = s.food.y * CELL + (CELL - 1) / 2;
+          const fr = (CELL - 1) / 2 - 1;
+          ctx.beginPath();
+          ctx.arc(fx, fy, fr, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
           const remaining = flashUntilRef.current - t;
           if (remaining > 0) {
             // Subtle green pulse that fades over FLASH_MS.
