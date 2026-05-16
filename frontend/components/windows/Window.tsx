@@ -76,7 +76,16 @@ export function Window({
         <div className="title-bar-controls">
           <button aria-label="Minimize" onClick={() => minimize(id)} />
           <button aria-label="Maximize" />
-          <button aria-label="Close" onClick={() => setClosing(true)} />
+          <button
+            aria-label="Close"
+            onClick={() => {
+              if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+                close(id);
+              } else {
+                setClosing(true);
+              }
+            }}
+          />
         </div>
       </div>
       <div className="window-body">{children}</div>
