@@ -46,6 +46,12 @@ body {
   to { transform: rotate(360deg); }
 }
 
+@keyframes shimmer {
+  0%   { background-color: #e0e0e0; }
+  50%  { background-color: #f0f0f0; }
+  100% { background-color: #e0e0e0; }
+}
+
 .tray-spinner {
   width: 10px;
   height: 10px;
