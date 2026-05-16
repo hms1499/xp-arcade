@@ -135,13 +135,13 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
             ctx.drawImage(gridCanvasRef.current, 0, 0);
           }
           s.snake.forEach((c, i) => {
-            const t = s.snake.length > 1 ? i / (s.snake.length - 1) : 0;
+            const frac = s.snake.length > 1 ? i / (s.snake.length - 1) : 0;
             if (reduceMotion) {
               ctx.fillStyle = "#0f0";
             } else {
               ctx.fillStyle = i === 0
                 ? "#7fff7f"
-                : lerpHex("#4aee4a", "#0f660f", t);
+                : lerpHex("#4aee4a", "#0f660f", frac);
             }
             if (i === 0 && !reduceMotion) {
               ctx.shadowBlur = 4;
@@ -194,6 +194,7 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
           }
           ctx.globalAlpha = 1;
           ctx.textAlign = "left";
+          ctx.font = "10px sans-serif";
         }
         if (s.score > prevScore) {
           setScore(s.score);
