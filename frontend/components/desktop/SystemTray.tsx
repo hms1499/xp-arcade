@@ -20,6 +20,7 @@ export function SystemTray() {
   const connect = useWallet((s) => s.connect);
   const disconnect = useWallet((s) => s.disconnect);
   const hydrate = useWallet((s) => s.hydrate);
+  const mintPending = useWallet((s) => s.mintPending);
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -33,6 +34,27 @@ export function SystemTray() {
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 2, paddingRight: 4 }}>
+      {mintPending && (
+        <div
+          style={{
+            ...sunken,
+            width: 20,
+            padding: 0,
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: "50%",
+              border: "2px solid #808080",
+              borderTopColor: "#000080",
+              animation: "spin 0.7s linear infinite",
+            }}
+          />
+        </div>
+      )}
       <div style={sunken}>
         {address ? (
           <button

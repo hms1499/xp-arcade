@@ -42,6 +42,10 @@ body {
   to   { opacity: 1; }
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .xp-bar-slider    { animation: none !important; }
   .boot-fade-out    { animation: none !important; }
