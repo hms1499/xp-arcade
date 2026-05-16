@@ -1,5 +1,5 @@
 "use client";
-import { ReactNode, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { useWindows } from "@/state/window-manager";
 
 export function Window({
@@ -25,6 +25,13 @@ export function Window({
   const flashingRef = useRef(false);
   const titlebarRef = useRef<HTMLDivElement>(null);
   const [closing, setClosing] = useState(false);
+
+  // Safety net: close after animation duration even if animationend doesn't fire
+  useEffect(() => {
+    if (!closing) return;
+    const t = setTimeout(() => close(id), 150);
+    return () => clearTimeout(t);
+  }, [closing, close, id]);
 
   if (!win || win.minimized) return null;
 
@@ -76,16 +83,7 @@ export function Window({
         <div className="title-bar-controls">
           <button aria-label="Minimize" onClick={() => minimize(id)} />
           <button aria-label="Maximize" />
-          <button
-            aria-label="Close"
-            onClick={() => {
-              if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-                close(id);
-              } else {
-                setClosing(true);
-              }
-            }}
-          />
+          <button aria-label="Close" onClick={() => setClosing(true)} />
         </div>
       </div>
       <div className="window-body">{children}</div>
