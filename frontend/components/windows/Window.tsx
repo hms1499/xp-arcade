@@ -1,5 +1,5 @@
 "use client";
-import { ReactNode, useRef } from "react";
+import { ReactNode, useRef, useState } from "react";
 import { useWindows } from "@/state/window-manager";
 
 export function Window({
@@ -22,6 +22,7 @@ export function Window({
     Math.max(...s.windows.filter((w) => !w.minimized).map((w) => w.z), 0)
   );
   const dragRef = useRef<{ ox: number; oy: number } | null>(null);
+  const [closing, setClosing] = useState(false);
 
   if (!win || win.minimized) return null;
 
@@ -29,9 +30,12 @@ export function Window({
 
   return (
     <div
-      className="window"
+      className={`window window-opening${closing ? " window-closing" : ""}`}
       style={{ position: "absolute", left: win.x, top: win.y, zIndex: win.z, width }}
       onMouseDown={() => focus(id)}
+      onAnimationEnd={() => {
+        if (closing) close(id);
+      }}
     >
       <div
         className={`title-bar${isActive ? "" : " inactive"}`}
@@ -54,7 +58,7 @@ export function Window({
         <div className="title-bar-controls">
           <button aria-label="Minimize" onClick={() => minimize(id)} />
           <button aria-label="Maximize" />
-          <button aria-label="Close" onClick={() => close(id)} />
+          <button aria-label="Close" onClick={() => setClosing(true)} />
         </div>
       </div>
       <div className="window-body">{children}</div>
