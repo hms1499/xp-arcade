@@ -10,6 +10,19 @@ const BASE_TICK_MS = 120;
 const MIN_TICK_MS = 50;
 const FLASH_MS = 140;
 
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t;
+}
+
+function lerpHex(fromHex: string, toHex: string, t: number): string {
+  const from = parseInt(fromHex.slice(1), 16);
+  const to   = parseInt(toHex.slice(1), 16);
+  const r = Math.round(lerp((from >> 16) & 0xff, (to >> 16) & 0xff, t));
+  const g = Math.round(lerp((from >> 8)  & 0xff, (to >> 8)  & 0xff, t));
+  const b = Math.round(lerp( from        & 0xff,  to        & 0xff, t));
+  return `#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${b.toString(16).padStart(2,"0")}`;
+}
+
 function tickMs(score: number) {
   // Shave 4ms per point, floor at MIN_TICK_MS (~50ms ≈ 20fps)
   return Math.max(MIN_TICK_MS, BASE_TICK_MS - score * 4);
@@ -119,9 +132,29 @@ export function GameCanvas({ onGameOver }: { onGameOver: (score: number) => void
             ctx.drawImage(gridCanvasRef.current, 0, 0);
           }
           s.snake.forEach((c, i) => {
-            ctx.fillStyle = i === 0 ? "#7fff7f" : "#0f0";
-            ctx.fillRect(c.x * CELL, c.y * CELL, CELL - 1, CELL - 1);
+            const t = s.snake.length > 1 ? i / (s.snake.length - 1) : 0;
+            if (reduceMotion) {
+              ctx.fillStyle = "#0f0";
+            } else {
+              ctx.fillStyle = i === 0
+                ? "#7fff7f"
+                : lerpHex("#4aee4a", "#0f660f", t);
+            }
+            if (i === 0 && !reduceMotion) {
+              ctx.shadowBlur = 4;
+              ctx.shadowColor = "#7fff7f";
+            } else {
+              ctx.shadowBlur = 0;
+            }
+            const x = c.x * CELL;
+            const y = c.y * CELL;
+            const size = CELL - 1;
+            const r = 2;
+            ctx.beginPath();
+            ctx.roundRect(x, y, size, size, r);
+            ctx.fill();
           });
+          ctx.shadowBlur = 0;
           ctx.fillStyle = "#f80";
           ctx.fillRect(s.food.x * CELL, s.food.y * CELL, CELL - 1, CELL - 1);
           const remaining = flashUntilRef.current - t;
