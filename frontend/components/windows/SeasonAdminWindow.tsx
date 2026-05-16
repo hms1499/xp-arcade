@@ -12,7 +12,6 @@ import {
   endSeason,
   transferStx,
   computePayoutUstx,
-  setBaseUri,
 } from "@/lib/contract-calls";
 import { useToasts } from "@/state/toasts";
 import { watchTx } from "@/lib/tx-tracker";
@@ -44,10 +43,6 @@ export function SeasonAdminWindow() {
   const [seasons, setSeasons] = useState<SeasonView[]>([]);
   const [busyEnd, setBusyEnd] = useState(false);
   const [busyPay, setBusyPay] = useState<string | null>(null);
-  const [busyUri, setBusyUri] = useState(false);
-  const [uriInput, setUriInput] = useState(
-    `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/metadata/score/`,
-  );
   const [error, setError] = useState<string | null>(null);
   const countdown = useSeasonCountdown();
 
@@ -94,24 +89,6 @@ export function SeasonAdminWindow() {
         </div>
       </Window>
     );
-  }
-
-  async function handleSetBaseUri() {
-    if (!uriInput.trim()) return;
-    if (!confirm(`Set base URI to:\n${uriInput}\n\nThis updates where marketplaces fetch NFT metadata.`)) return;
-    setBusyUri(true);
-    try {
-      const txId = await setBaseUri(uriInput.trim());
-      useToasts.getState().push({ title: "set-base-uri submitted", body: "Waiting for confirmation…" });
-      watchTx(txId, (s) => {
-        if (s === "success") useToasts.getState().push({ title: "Base URI updated", body: uriInput.trim() });
-        else if (s !== "pending") useToasts.getState().push({ title: "set-base-uri failed", body: "Transaction rejected." });
-      });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "set-base-uri failed");
-    } finally {
-      setBusyUri(false);
-    }
   }
 
   async function handleEndSeason() {
@@ -161,25 +138,6 @@ export function SeasonAdminWindow() {
     <Window id={w.id} title="Season Admin" width={560}>
       <div className="p-2 text-xs">
         {error && <p className="text-red-600 mb-2">&#x26A0;&#xFE0F; {error}</p>}
-
-        <fieldset className="mb-3">
-          <legend>NFT Base URI</legend>
-          <div className="flex gap-1 p-1 items-center">
-            <input
-              type="text"
-              value={uriInput}
-              onChange={(e) => setUriInput(e.target.value)}
-              style={{ flex: 1, fontSize: 10, fontFamily: "monospace" }}
-              maxLength={80}
-            />
-            <button onClick={handleSetBaseUri} disabled={busyUri || !uriInput.trim()}>
-              {busyUri ? "…" : "Set URI"}
-            </button>
-          </div>
-          <p className="text-[10px] text-gray-500 px-1">
-            Updates the on-chain token URI prefix. Max 80 chars. Must end with <code>/</code>.
-          </p>
-        </fieldset>
 
         <fieldset className="mb-3">
           <legend>Current Season</legend>
