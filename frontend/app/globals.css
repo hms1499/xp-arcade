@@ -95,20 +95,22 @@ body {
 }
 
 /* ── Windows 95 style cursors ──────────────────────────────────── */
-/* Default arrow: white fill, black 1px outline, tip at (0,0)      */
-html {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='19'%3E%3Cpath d='M0 0L0 16L4 12L7 19L10 18L7 11L12 11Z' fill='white' stroke='black' stroke-width='1.2' stroke-linejoin='miter'/%3E%3C/svg%3E") 0 0, default;
+/* Use * + !important to override xp.css and browser UA defaults   */
+
+/* Default arrow — white fill, black outline, tip at (2,2)         */
+*, *::before, *::after {
+  cursor: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='24'%3E%3Cpath d='M2 2L2 20L6 16L9 23L12 22L9 15L15 15Z' fill='white' stroke='black' stroke-width='1.5' stroke-linejoin='miter'/%3E%3C/svg%3E") 2 2, default !important;
 }
 
-/* Pointer (hand): finger tip at (7,0) */
+/* Pointer (hand) — finger tip at (7,1) */
 a, button, [role='button'], select,
 input[type='submit'], input[type='button'], input[type='reset'],
 input[type='checkbox'], input[type='radio'], label[for] {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='20'%3E%3Crect x='5' y='0' width='4' height='11' rx='2' fill='white' stroke='black' stroke-width='1'/%3E%3Crect x='1' y='9' width='12' height='11' rx='3' fill='white' stroke='black' stroke-width='1'/%3E%3C/svg%3E") 7 0, pointer;
+  cursor: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='21'%3E%3Crect x='5' y='1' width='4' height='11' rx='2' fill='white' stroke='black' stroke-width='1'/%3E%3Crect x='1' y='10' width='12' height='10' rx='3' fill='white' stroke='black' stroke-width='1'/%3E%3C/svg%3E") 7 1, pointer !important;
 }
 
-/* I-beam text cursor: hotspot centred */
+/* I-beam — hotspot centred */
 input[type='text'], input[type='password'], input[type='number'],
 input[type='email'], input[type='search'], textarea {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='18'%3E%3Cline x1='1' y1='1' x2='8' y2='1' stroke='black' stroke-width='1.2'/%3E%3Cline x1='4.5' y1='1' x2='4.5' y2='17' stroke='black' stroke-width='1.5'/%3E%3Cline x1='1' y1='17' x2='8' y2='17' stroke='black' stroke-width='1.2'/%3E%3C/svg%3E") 4 9, text;
+  cursor: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='20'%3E%3Cline x1='2' y1='1' x2='9' y2='1' stroke='black' stroke-width='1.5'/%3E%3Cline x1='5.5' y1='1' x2='5.5' y2='19' stroke='black' stroke-width='1.5'/%3E%3Cline x1='2' y1='19' x2='9' y2='19' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E") 5 10, text !important;
 }
