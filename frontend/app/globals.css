@@ -97,9 +97,9 @@ body {
 /* ── Windows 95 style cursors ──────────────────────────────────── */
 /* Use * + !important to override xp.css and browser UA defaults   */
 
-/* Default arrow — white fill, black outline, tip at (2,2)         */
+/* Default arrow — Win XP style: white fill + dark shadow, tip at (2,2) */
 *, *::before, *::after {
-  cursor: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='24'%3E%3Cpath d='M2 2L2 20L6 16L9 23L12 22L9 15L15 15Z' fill='white' stroke='black' stroke-width='1.5' stroke-linejoin='miter'/%3E%3C/svg%3E") 2 2, default !important;
+  cursor: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='26'%3E%3Cpath d='M4 4L4 22L8 18L11 25L14 24L11 17L17 17Z' fill='black' fill-opacity='0.35'/%3E%3Cpath d='M2 2L2 20L6 16L9 23L12 22L9 15L15 15Z' fill='white' stroke='black' stroke-width='1.5' stroke-linejoin='miter'/%3E%3C/svg%3E") 2 2, default !important;
 }
 
 /* Pointer (hand) — finger tip at (7,1) */
