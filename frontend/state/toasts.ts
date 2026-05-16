@@ -23,7 +23,7 @@ export const useToasts = create<S>((set, get) => ({
     const id = Date.now() + Math.random();
     const type: ToastType = t.type ?? "info";
     const duration = t.duration ?? 6000;
-    set((s) => ({ toasts: [...s.toasts, { ...t, id, type, duration }] }));
+    set((s) => ({ toasts: [...s.toasts, { title: t.title, body: t.body, id, type, duration }] }));
     setTimeout(() => get().dismiss(id), duration);
   },
   dismiss: (id) =>

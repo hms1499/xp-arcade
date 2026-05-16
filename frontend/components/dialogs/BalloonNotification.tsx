@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { useToasts } from "@/state/toasts";
+import type { ToastType } from "@/state/toasts";
 import { playBalloon } from "@/lib/sounds";
 
-const TYPE_ICON: Record<string, string> = {
+const TYPE_ICON: Record<ToastType, string> = {
   info:    "ℹ️",
   success: "✅",
   error:   "❌",
