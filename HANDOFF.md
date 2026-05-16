@@ -1,6 +1,6 @@
 # Handoff — XP Snake on Stacks
 
-**Status as of 2026-05-14 (end of session 3):** Contract **deployed to Stacks mainnet**. Frontend wired to mainnet, Trophy UI removed, Season Admin window built, prize-claim discovery wired, soft countdown via env var. Repo pushed to `github.com/hms1499/xp-snake`. **Vercel deploy + end-to-end smoke test on production remain.**
+**Status as of 2026-05-16:** Contract **deployed to Stacks mainnet**. Frontend live at **https://xp-snake.vercel.app**. Trophy UI removed, claim-prize UI removed, Season Admin window built, soft countdown via env var. Repo pushed to `github.com/hms1499/xp-snake`. **Production smoke test remains.**
 
 ---
 
@@ -42,32 +42,7 @@ On-chain right now: 1 score NFT minted (token #1, score 2, player `SPV5...QFH8Y`
 
 ## To-do for next session
 
-### 1. Deploy to Vercel (the only blocker left)
-
-```bash
-cd frontend
-vercel link            # if not linked yet
-```
-
-Set the four env vars (Production + Preview):
-
-| Key | Value |
-|---|---|
-| `NEXT_PUBLIC_CONTRACT_ADDRESS` | `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.snake-score` |
-| `NEXT_PUBLIC_NETWORK` | `mainnet` |
-| `NEXT_PUBLIC_APP_URL` | the Vercel domain after first deploy |
-| `NEXT_PUBLIC_SEASON_END_ISO` | `2026-06-01T00:00:00Z` (or pick another date) |
-
-```bash
-vercel deploy            # preview
-# verify it loads, then:
-vercel deploy --prod
-# go back and update NEXT_PUBLIC_APP_URL to the prod domain, redeploy
-```
-
-Vercel CLI is at v52 locally; consider `npm i -g vercel@latest` for v54+.
-
-### 2. Production smoke test
+### 1. Production smoke test
 
 After Vercel is live, walk through every flow with the **owner wallet** and a **second non-owner wallet**:
 
@@ -80,7 +55,7 @@ After Vercel is live, walk through every flow with the **owner wallet** and a **
 - [ ] Balloon "Mint submitted" → wait ~30s → "NFT confirmed!"
 - [ ] My NFTs → score NFT renders with inline SVG + rarity badge
 - [ ] Leaderboard → top-10 shows real addresses + scores (no "undefined"/NaN); countdown ticks
-- [ ] If in top-10 of a *past* season: claim box appears with computed payout
+- [ ] ~~If in top-10 of a *past* season: claim box appears with computed payout~~ *(claim-prize UI removed — see Known limitations)*
 
 **As owner:**
 - [ ] Connect with `SP2C...3SV` → Start menu now shows 🛠️ "Season Admin"
@@ -88,9 +63,9 @@ After Vercel is live, walk through every flow with the **owner wallet** and a **
 - [ ] Click End Season → confirm dialog → wallet popup → tx submits
 - [ ] After mine: window auto-reloads, Season 1 appears as past season with payout table
 - [ ] Click "Send STX" on a row → wallet popup for `openSTXTransfer` with correct amount → confirm
-- [ ] Recipient receives STX, claim ✓ updates after they call claim-prize
+- [ ] Recipient receives STX *(no in-app claim flow — payouts are owner-initiated only)*
 
-### 3. Demo prep
+### 2. Demo prep
 
 - 2–3 min Loom of the full owner + player flow
 - Screenshot the README's "Live contracts" link working in Hiro Explorer
@@ -100,7 +75,7 @@ After Vercel is live, walk through every flow with the **owner wallet** and a **
 
 ## Known limitations / quirks (carry forward)
 
-1. **Off-chain payouts.** `claim-prize` records only. Owner must `stx-transfer` manually — Season Admin's "Send STX" button is the intended workflow.
+1. **Claim-prize UI removed.** The `claim-prize` contract function and `hasClaimedPrize` / `getSeasonPrize` helpers remain on-chain and in `contract-calls.ts`, but the in-app claim flow (prize discovery in LeaderboardWindow, claim button, payout display) has been dropped. Payouts are owner-initiated: the Season Admin "Send STX" button is the only workflow. Players are not expected to trigger anything.
 2. **`as-contract` not used.** All STX goes through the owner wallet, not the contract.
 3. **Score is client-trusted.** No on-chain anti-cheat. Mention in the demo.
 4. **Soft deadline only.** `NEXT_PUBLIC_SEASON_END_ISO` is display-only; doesn't block mints past the date. Owner must call `end-season` manually to honour it.
