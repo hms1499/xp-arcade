@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createGame, type Direction, type Game } from "@/lib/snake-engine";
 import { TouchControls } from "./TouchControls";
 import { playEat, playDead, playStart } from "@/lib/sounds";
+import { getBestScore } from "@/lib/high-score";
 
 const CELL = 16;
 const GRID = 20;
@@ -44,10 +45,12 @@ export function GameCanvas({
   const flashUntilRef = useRef(0);
   const gameOverPhaseRef = useRef<null | "flash" | "overlay">(null);
   const finalScoreRef    = useRef<number>(0);
+  const gameOverBestRef  = useRef<number>(0);
   const foodPulseRef = useRef(0);
   const foodGlowRef  = useRef(6);
   const popupsRef = useRef<{ x: number; y: number; born: number }[]>([]);
   const [score, setScore] = useState(0);
+  const [best] = useState(() => getBestScore());
   const [paused, setPaused] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
 
@@ -170,15 +173,28 @@ export function GameCanvas({
         ctx.font = "13px monospace";
         ctx.fillText(`SCORE: ${finalScoreRef.current}`, W / 2, H / 2);
 
+        let y = H / 2 + 18;
+        if (finalScoreRef.current > gameOverBestRef.current) {
+          ctx.fillStyle = "#ffd700";
+          ctx.font = "11px monospace";
+          ctx.fillText("NEW PERSONAL BEST!", W / 2, y);
+        } else {
+          ctx.fillStyle = "#7fff7f";
+          ctx.font = "11px monospace";
+          ctx.fillText(`BEST: ${gameOverBestRef.current}`, W / 2, y);
+        }
+        y += 18;
+
         if (isTopScore) {
           ctx.fillStyle = "#ffd700";
           ctx.font = "11px monospace";
-          ctx.fillText("NEW HIGH SCORE", W / 2, H / 2 + 18);
+          ctx.fillText("NEW HIGH SCORE", W / 2, y);
+          y += 18;
         }
 
         ctx.fillStyle = "#555555";
         ctx.font = "10px monospace";
-        ctx.fillText("Press any key...", W / 2, H / 2 + (isTopScore ? 36 : 22));
+        ctx.fillText("Press any key...", W / 2, y + 4);
 
         ctx.textAlign = "left";
         ctx.font = "10px sans-serif";
@@ -293,6 +309,7 @@ export function GameCanvas({
         if (s.gameOver && gameOverPhaseRef.current === null) {
           playDead();
           finalScoreRef.current = s.score;
+          gameOverBestRef.current = getBestScore();
           gameOverPhaseRef.current = "flash";
           setTimeout(() => {
             gameOverPhaseRef.current = "overlay";
@@ -323,7 +340,7 @@ export function GameCanvas({
   return (
     <div>
       <div className="text-xs mb-1 font-bold flex justify-between">
-        <span>Score: {score}</span>
+        <span>Score: {score} · Best: {Math.max(best, score)}</span>
         <div
           style={{
             flex: 1,
