@@ -51,6 +51,9 @@ After Vercel is live, walk through every flow with the **owner wallet** and a **
 - [ ] Start → no "Season Admin" entry (correct — hidden from non-owners)
 - [ ] Connect wallet (Leather / Xverse mainnet) → tray shows address
 - [ ] Play Snake → game over → MintDialog opens with "0.01 STX" copy
+- [ ] While playing, click another XP window → Snake auto-pauses ("⏸ PAUSED"); clicking back does NOT auto-resume; Esc/Resume continues
+- [ ] HUD shows `Score: n · Best: m`; beating the stored best makes `Best` climb live
+- [ ] Game-over overlay shows gold `NEW PERSONAL BEST!` on a record, else white `BEST: n`; on-chain `NEW HIGH SCORE` line (if top-10) still appears separately without overlapping `Press any key...`
 - [ ] Mint → wallet popup shows `Will transfer exactly 0.01 STX` post-condition → confirm
 - [ ] Balloon "Mint submitted" → wait ~30s → "NFT confirmed!"
 - [ ] My NFTs → score NFT renders with inline SVG + rarity badge
