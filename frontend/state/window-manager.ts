@@ -17,6 +17,7 @@ export type WindowEntry = {
   y: number;
   z: number;
   minimized: boolean;
+  maximized?: boolean;
   payload?: WindowPayload;
 };
 
@@ -28,6 +29,7 @@ type S = {
   focus: (id: string) => void;
   minimize: (id: string) => void;
   move: (id: string, x: number, y: number) => void;
+  toggleMaximize: (id: string) => void;
 };
 
 export const useWindows = create<S>((set, get) => ({
@@ -83,6 +85,18 @@ export const useWindows = create<S>((set, get) => ({
     set((s) => ({
       windows: s.windows.map((w) => (w.id === id ? { ...w, x, y } : w)),
     })),
+  toggleMaximize: (id) =>
+    set((s) => {
+      // no-op: unknown id — return same state ref so Zustand skips re-render
+      if (!s.windows.some((w) => w.id === id)) return s;
+      const z = s.topZ + 1;
+      return {
+        topZ: z,
+        windows: s.windows.map((w) =>
+          w.id === id ? { ...w, maximized: !w.maximized, z } : w,
+        ),
+      };
+    }),
 }));
 
 /**
