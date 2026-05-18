@@ -84,3 +84,19 @@ export const useWindows = create<S>((set, get) => ({
       windows: s.windows.map((w) => (w.id === id ? { ...w, x, y } : w)),
     })),
 }));
+
+/**
+ * A window is "active" (the one the player is interacting with) when it
+ * exists, is not minimized, and sits at the top of the z-order. Mirrors the
+ * isActive logic in Window.tsx. Pure so it can be unit-tested.
+ *
+ * `topZ` must be the current top z-order value (e.g. the store's `topZ`).
+ * Note `s.topZ` is a monotonic high-water mark and is not decremented when
+ * the top window closes; treat a stale-topZ false-negative as "inactive".
+ */
+export function isWindowActive(
+  entry: WindowEntry | undefined,
+  topZ: number,
+): boolean {
+  return !!entry && !entry.minimized && entry.z === topZ;
+}
