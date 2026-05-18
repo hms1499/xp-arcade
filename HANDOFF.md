@@ -58,6 +58,9 @@ After Vercel is live, walk through every flow with the **owner wallet** and a **
 - [ ] Balloon "Mint submitted" → wait ~30s → "NFT confirmed!"
 - [ ] My NFTs → score NFT renders with inline SVG + rarity badge
 - [ ] Leaderboard → top-10 shows real addresses + scores (no "undefined"/NaN); countdown ticks
+- [ ] Any window: click the middle titlebar button → fills desktop, stops above taskbar, button shows Restore glyph; click again restores exact prior position/size
+- [ ] Double-click a titlebar → toggles maximize/restore; titlebar drag is disabled while maximized
+- [ ] Maximize then minimize to taskbar then reopen → window is still maximized; maximizing the Snake window keeps the game playable; a maximized window with tall content scrolls (no clip behind taskbar)
 - [ ] ~~If in top-10 of a *past* season: claim box appears with computed payout~~ *(claim-prize UI removed — see Known limitations)*
 
 **As owner:**
