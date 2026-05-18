@@ -31,9 +31,11 @@ function tickMs(score: number) {
 export function GameCanvas({
   onGameOver,
   isTopScore = false,
+  windowActive = true,
 }: {
   onGameOver: (score: number) => void;
   isTopScore?: boolean;
+  windowActive?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gridCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -58,6 +60,17 @@ export function GameCanvas({
     pausedRef.current = v;
     setPaused(v);
   }, []);
+
+  // Pause when this Snake window is no longer the active XP window. Covers
+  // the same-tab case the browser blur/visibilitychange handlers miss
+  // (clicking another XP window does not blur the browser window). Resume
+  // stays manual, consistent with those handlers. Skipped during the
+  // game-over splash so the overlay keeps drawing.
+  useEffect(() => {
+    if (!windowActive && gameOverPhaseRef.current === null) {
+      setPausedBoth(true);
+    }
+  }, [windowActive, setPausedBoth]);
 
   function handleDir(d: Direction) {
     if (!pausedRef.current) gameRef.current?.turn(d);

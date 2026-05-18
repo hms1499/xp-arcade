@@ -1,6 +1,6 @@
 "use client";
 import { useState, useCallback } from "react";
-import { useWindows } from "@/state/window-manager";
+import { useWindows, isWindowActive } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
 import { Window } from "./Window";
 import { GameCanvas } from "@/components/game/GameCanvas";
@@ -9,6 +9,9 @@ import { getTopTen } from "@/lib/contract-calls";
 
 export function GameWindow() {
   const w = useWindows((s) => s.windows.find((win) => win.type === "game"));
+  const maxZ = useWindows((s) =>
+    Math.max(...s.windows.filter((win) => !win.minimized).map((win) => win.z), 0)
+  );
   const address = useWallet((s) => s.address);
   const [finalScore, setFinalScore] = useState<number | null>(null);
   const [resetKey, setResetKey] = useState(0);
@@ -33,7 +36,12 @@ export function GameWindow() {
     <Window id={w.id} title="Snake — Untitled">
       <div className="p-2">
         {finalScore === null ? (
-          <GameCanvas key={resetKey} onGameOver={handleGameOver} isTopScore={isTopScore} />
+          <GameCanvas
+            key={resetKey}
+            onGameOver={handleGameOver}
+            isTopScore={isTopScore}
+            windowActive={isWindowActive(w, maxZ)}
+          />
         ) : (
           <MintDialog
             score={finalScore}

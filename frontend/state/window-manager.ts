@@ -90,9 +90,9 @@ export const useWindows = create<S>((set, get) => ({
  * exists, is not minimized, and sits at the top of the z-order. Mirrors the
  * isActive logic in Window.tsx. Pure so it can be unit-tested.
  *
- * `topZ` must be the current top z-order value (e.g. the store's `topZ`).
- * Note `s.topZ` is a monotonic high-water mark and is not decremented when
- * the top window closes; treat a stale-topZ false-negative as "inactive".
+ * Pass the live max z among non-minimized windows (as Window.tsx computes
+ * it), NOT the store's monotonic `topZ` — `topZ` is never decremented when
+ * the top window closes, which would yield false negatives.
  */
 export function isWindowActive(
   entry: WindowEntry | undefined,
