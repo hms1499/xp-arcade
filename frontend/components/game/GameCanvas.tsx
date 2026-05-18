@@ -5,7 +5,7 @@ import { TouchControls } from "./TouchControls";
 import { playEat, playDead, playStart } from "@/lib/sounds";
 import { getBestScore } from "@/lib/high-score";
 
-const CELL = 16;
+const CELL = 24;
 const GRID = 20;
 const BASE_TICK_MS = 120;
 const MIN_TICK_MS = 50;
