@@ -1,10 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useWallet } from "@/state/wallet";
 import { mintScore } from "@/lib/contract-calls";
-import { useToasts } from "@/state/toasts";
-import { watchTx, type TxStatus } from "@/lib/tx-tracker";
-import { playSuccess } from "@/lib/sounds";
+import { useMintTx } from "@/state/mint-tx";
+import { type TxStatus } from "@/lib/tx-tracker";
 import { recordScore } from "@/lib/high-score";
 
 const STATUS_LABEL: Record<TxStatus, string> = {
@@ -12,6 +11,7 @@ const STATUS_LABEL: Record<TxStatus, string> = {
   success: "✓ Confirmed!",
   abort_by_response: "✗ Failed (contract error)",
   abort_by_post_condition: "✗ Failed (post-condition)",
+  failed: "✗ Failed",
 };
 
 const STATUS_COLOR: Record<TxStatus, string> = {
@@ -19,6 +19,7 @@ const STATUS_COLOR: Record<TxStatus, string> = {
   success: "#007700",
   abort_by_response: "#cc0000",
   abort_by_post_condition: "#cc0000",
+  failed: "#cc0000",
 };
 
 export function MintDialog({
@@ -32,44 +33,15 @@ export function MintDialog({
 }) {
   const address = useWallet((s) => s.address);
   const connect = useWallet((s) => s.connect);
-  const setMintPending = useWallet((s) => s.setMintPending);
+  const mintStatus = useMintTx((s) => s.status);
+  const startMintTx = useMintTx((s) => s.start);
   const [busy, setBusy] = useState(false);
   const [txId, setTxId] = useState<string | null>(null);
-  const [txStatus, setTxStatus] = useState<TxStatus>("pending");
   const defaultName = address ? address.slice(-8) : "anon";
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   // Record this run once on mount; lazy init runs exactly once per dialog.
   const [hs] = useState(() => recordScore(score));
-
-  useEffect(() => {
-    if (!txId) return;
-    const stop = watchTx(txId, (s) => {
-      setTxStatus(s);
-      if (s === "success") {
-        setMintPending(false);
-        playSuccess();
-        useToasts.getState().push({
-          title: "NFT confirmed!",
-          body: `Score #${score} NFT is on-chain.`,
-          type: "success",
-          duration: 6000,
-        });
-      } else if (s !== "pending") {
-        setMintPending(false);
-        useToasts.getState().push({
-          title: "Mint failed",
-          body: "Transaction was rejected on-chain.",
-          type: "error",
-          duration: 5000,
-        });
-      }
-    });
-    return () => {
-      stop();
-      setMintPending(false);
-    };
-  }, [txId, score, setMintPending]);
 
   async function handleMint() {
     if (!address) return;
@@ -78,14 +50,7 @@ export function MintDialog({
     try {
       const tx = await mintScore(score, name || defaultName, address);
       setTxId(tx);
-      setTxStatus("pending");
-      setMintPending(true);
-      useToasts.getState().push({
-        title: "Minting…",
-        body: "Waiting for on-chain confirmation",
-        type: "info",
-        duration: 30_000,
-      });
+      startMintTx(tx, score);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Mint failed";
       if (msg.includes("104") || msg.toLowerCase().includes("score-too-high")) {
@@ -128,8 +93,8 @@ export function MintDialog({
       {error && <p className="text-red-600 text-xs mb-2">⚠️ {error}</p>}
       {txId ? (
         <div>
-          <p style={{ color: STATUS_COLOR[txStatus], marginBottom: 4 }}>
-            {STATUS_LABEL[txStatus]}
+          <p style={{ color: STATUS_COLOR[mintStatus], marginBottom: 4 }}>
+            {STATUS_LABEL[mintStatus]}
           </p>
           <code className="text-xs break-all">{txId}</code>
           <div className="mt-3 flex gap-2">
