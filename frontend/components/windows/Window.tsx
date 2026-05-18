@@ -18,6 +18,7 @@ export function Window({
   const close = useWindows((s) => s.close);
   const minimize = useWindows((s) => s.minimize);
   const move = useWindows((s) => s.move);
+  const toggleMaximize = useWindows((s) => s.toggleMaximize);
   const maxZ = useWindows((s) =>
     Math.max(...s.windows.filter((w) => !w.minimized).map((w) => w.z), 0)
   );
@@ -40,7 +41,26 @@ export function Window({
   return (
     <div
       className={`window window-opening${closing ? " window-closing" : ""}`}
-      style={{ position: "absolute", left: win.x, top: win.y, zIndex: win.z, width }}
+      style={
+        win.maximized
+          ? {
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 28,
+              zIndex: win.z,
+              display: "flex",
+              flexDirection: "column",
+            }
+          : {
+              position: "absolute",
+              left: win.x,
+              top: win.y,
+              zIndex: win.z,
+              width,
+            }
+      }
       onMouseDown={() => focus(id)}
       onAnimationEnd={(e) => {
         if (closing && e.target === e.currentTarget) close(id);
@@ -49,6 +69,7 @@ export function Window({
       <div
         ref={titlebarRef}
         className={`title-bar${isActive ? "" : " inactive"}`}
+        onDoubleClick={() => toggleMaximize(id)}
         onMouseDown={(e) => {
           // Flash only when window becomes active (was not active before)
           if (!isActive && titlebarRef.current && !flashingRef.current) {
@@ -59,6 +80,8 @@ export function Window({
               flashingRef.current = false;
             }, 80);
           }
+          // No window dragging while maximized (focus/flash above still run).
+          if (win.maximized) return;
           dragRef.current = { ox: e.clientX - win.x, oy: e.clientY - win.y };
           const vw = window.innerWidth;
           const vh = window.innerHeight;
@@ -82,11 +105,19 @@ export function Window({
         <div className="title-bar-text">{title}</div>
         <div className="title-bar-controls">
           <button aria-label="Minimize" onClick={() => minimize(id)} />
-          <button aria-label="Maximize" />
+          <button
+            aria-label={win.maximized ? "Restore" : "Maximize"}
+            onClick={() => toggleMaximize(id)}
+          />
           <button aria-label="Close" onClick={() => setClosing(true)} />
         </div>
       </div>
-      <div className="window-body">{children}</div>
+      <div
+        className="window-body"
+        style={win.maximized ? { flex: 1, overflow: "auto" } : undefined}
+      >
+        {children}
+      </div>
     </div>
   );
 }
