@@ -13,6 +13,7 @@ export function GameWindow() {
     Math.max(...s.windows.filter((win) => !win.minimized).map((win) => win.z), 0)
   );
   const address = useWallet((s) => s.address);
+  const close = useWindows((s) => s.close);
   const [finalScore, setFinalScore] = useState<number | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const [isTopScore, setIsTopScore] = useState(false);
@@ -45,7 +46,7 @@ export function GameWindow() {
         ) : (
           <MintDialog
             score={finalScore}
-            onClose={() => setFinalScore(null)}
+            onClose={() => close(w.id)}
             onPlayAgain={() => {
               setFinalScore(null);
               setIsTopScore(false);
