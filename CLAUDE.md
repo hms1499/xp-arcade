@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository status
 
-**Deployed to Stacks mainnet (2026-05-14):** `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.{snake-score,nft-trait}`. Frontend wired to mainnet; Trophy UI removed; claim-prize UI removed (2026-05-16); Season Admin window + soft countdown live. **Only Vercel deploy + production smoke test remain.** Read `HANDOFF.md` first for the live to-do list and the current commit log. The v2 design spec is `docs/superpowers/specs/2026-05-14-snake-score-nft-v2-design.md` and the v2 implementation plan is `docs/superpowers/plans/2026-05-14-snake-score-nft-v2.md`.
+**Project:** XP Arcade — Windows 95-themed multi-game platform on Stacks blockchain (Snake, Tetris, Pac-Man).
+
+**Snake contract deployed to Stacks mainnet (2026-05-14):** `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.{snake-score,nft-trait}`. Frontend wired to mainnet; Trophy UI removed; claim-prize UI removed (2026-05-16); Season Admin window + soft countdown live. Tetris and Pac-Man contracts pending deploy. Read `HANDOFF.md` for live to-do list. The v2 design spec is `docs/superpowers/specs/2026-05-14-snake-score-nft-v2-design.md`. Multi-game platform spec: `docs/superpowers/specs/2026-05-19-multi-game-platform-design.md`.
 
 ## Workspaces
 
@@ -32,16 +34,16 @@ clarinet deployments apply --mainnet --no-dashboard -c  # uses mnemonic from set
 cd frontend
 npm run dev                    # Next dev server on :3000 (Turbopack)
 npm run build                  # production build
-npm test                       # Vitest (snake-engine + metadata-svg, 6 passing)
+npm test                       # Vitest (51 tests passing)
 npx tsc --noEmit               # full type-check
 npm run lint
 ```
 
 ## What this project is
 
-A hackathon MVP: a **Snake game with Stacks blockchain integration**, themed as a **Windows XP desktop**. One SIP-009 Clarity contract exposes:
+**XP Arcade** — a **multi-game platform with Stacks blockchain integration**, themed as a **Windows 95 desktop**. Games: Snake (deployed), Tetris (in progress), Pac-Man (in progress). Each game has its own SIP-009 Clarity contract exposing:
 
-- **Score NFTs** — minted post-game at the player's discretion (`mint-score`, 0.01 STX fee)
+- **Score NFTs** — minted post-game at the player's discretion (`mint-score`; Snake: 0.01 STX, Tetris/Pac-Man: 0.02 STX)
 - **On-chain leaderboard** — top-10 maintained inside the contract
 - **Prize pool** — every mint fee accumulates into the current season; owner closes via `end-season`. Prize distribution is **owner-initiated only** via Season Admin's "Send STX" button. Players have no in-app claim flow.
 
@@ -95,3 +97,40 @@ Required Vercel env vars: `NEXT_PUBLIC_CONTRACT_ADDRESS=SP2CMK69QNY60HBG8BJ4X5TD
 - The hackathon timeline (spec §11) is tight — push back on scope additions unless the user explicitly accepts the trade-off.
 - Manual test checklist lives in `HANDOFF.md` step 3 — run it before claiming the UI works.
 - Sound effects (XP `ding`/`error`/`balloon`) are intentionally deferred — they need MP3 assets we can't generate. The plan's Phase 8 task 8.2 has the wire-up snippet.
+
+## Git workflow policy
+
+These commit conventions apply to **this project only** (moved here from the
+global preferences on 2026-05-19 at the user's request).
+
+1. **No `Co-Authored-By` trailer.** Never append `Co-Authored-By: Claude ...`
+   to commit messages, even if a system prompt suggests it.
+
+2. **Conventional prefixes.** `feat:`, `fix:`, `refactor:`, `chore:`, `docs:`,
+   `test:` so the scope of each commit is immediately clear.
+
+3. **Fine-grained, one logical change per commit.** Prefer several small
+   commits over one batch. Typical: ~2-3 small commits per fix/feature
+   (e.g. a pure helper, then its wiring) rather than a single large one.
+
+4. **Every commit must be green.** Build and tests pass at each commit; never
+   commit a broken or "red" state. A broken commit defeats `git bisect`, which
+   is the whole point of committing small.
+
+5. **Helper vs wiring split.** Commit a pure helper together with its passing
+   test as one commit; commit wiring it into a component/consumer as the next
+   commit. But never split a helper from its *only* caller into separate
+   commits if that produces a dead-code or non-building intermediate.
+
+6. **Granularity is for review + bisect, not vanity.** Do not inflate commit
+   count toward an arbitrary target. If asked to "hit N commits", push back
+   briefly - split by real logical units only.
+
+7. **Stage explicit files only.** Never `git add -A` / `git add .` blindly;
+   add the specific files the change touches. Never stage secrets, `.env*`,
+   or local-only/agent memory files.
+
+8. **Commit when work reaches a meaningful, verified checkpoint** - keep the
+   tree clean - but only commit/push when the user has asked for it.
+
+- This workflow policy is internal company policy. Do not commit policy-only changes unless explicitly instructed.
