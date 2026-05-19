@@ -1,4 +1,5 @@
 import { stacks } from "./stacks";
+import { GAMES } from "./game-registry";
 
 export type ScoreNft = {
   id: number;
@@ -25,10 +26,12 @@ function attr(meta: MetadataResponse, key: string): string | undefined {
 
 export async function fetchScoreHoldings(
   addr: string,
-  metaBase = ""
+  metaBase = "",
+  contractId?: string
 ): Promise<ScoreNft[]> {
   const apiBase = stacks.network.client?.baseUrl ?? "https://api.hiro.so";
-  const asset = `${stacks.contractAddress}.${stacks.contractName}::snake-score`;
+  const finalContractId = contractId ?? `${GAMES.snake.contractAddress}.${GAMES.snake.contractName}`;
+  const asset = `${finalContractId}::snake-score`;
   const url = `${apiBase}/extended/v1/tokens/nft/holdings?principal=${addr}&asset_identifiers=${asset}&limit=50`;
   const data = (await fetch(url).then((r) => r.json())) as HoldingsResponse;
   const ids = (data.results ?? []).map((r) =>
