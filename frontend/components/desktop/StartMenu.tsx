@@ -4,6 +4,7 @@ import { useWindows } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
 import { AboutDialog } from "@/components/dialogs/AboutDialog";
 import { isOwnerAddress } from "@/components/windows/SeasonAdminWindow";
+import { GAMES } from "@/lib/game-registry";
 
 const menuItemBase: React.CSSProperties = {
   width: "100%",
@@ -119,20 +120,23 @@ export function StartMenu({
           role="menu"
           style={{ listStyle: "none", margin: 0, padding: "4px 0" }}
         >
-          <MenuItem
-            icon="🐍"
-            label="Play Snake"
-            onClick={() => { openWin("game"); onClose(); }}
-          />
+          {Object.values(GAMES).map((game) => (
+            <MenuItem
+              key={game.id}
+              icon={game.emoji}
+              label={game.label}
+              onClick={() => { openWin(`game-${game.id}`); onClose(); }}
+            />
+          ))}
           <MenuItem
             icon="🏆"
             label="Leaderboard"
-            onClick={() => { openWin("leaderboard"); onClose(); }}
+            onClick={() => { openWin("leaderboard-snake"); onClose(); }}
           />
           <MenuItem
             icon="💾"
-            label="My Snake NFTs"
-            onClick={() => { openWin("my-nfts"); onClose(); }}
+            label="My NFTs"
+            onClick={() => { openWin("mynfts-snake"); onClose(); }}
           />
           {isOwner && (
             <MenuItem
