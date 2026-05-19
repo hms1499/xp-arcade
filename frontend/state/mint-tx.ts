@@ -1,14 +1,16 @@
 "use client";
 import { create } from "zustand";
+import { type GameId } from "@/lib/game-registry";
 import { watchTx, type TxStatus } from "@/lib/tx-tracker";
 import { useWallet } from "@/state/wallet";
 import { useToasts } from "@/state/toasts";
 import { playSuccess } from "@/lib/sounds";
 
 type MintTxState = {
+  gameId: GameId | null;
   txId: string | null;
   status: TxStatus;
-  start: (txId: string, score: number) => void;
+  start: (gameId: GameId, txId: string, score: number) => void;
   reset: () => void;
 };
 
@@ -16,14 +18,15 @@ type MintTxState = {
 let stopFn: (() => void) | null = null;
 
 export const useMintTx = create<MintTxState>((set) => ({
+  gameId: null,
   txId: null,
   status: "pending",
-  start: (txId, score) => {
+  start: (gameId, txId, score) => {
     if (stopFn) {
       stopFn();
       stopFn = null;
     }
-    set({ txId, status: "pending" });
+    set({ gameId, txId, status: "pending" });
     useWallet.getState().setMintPending(true);
     useToasts.getState().push({
       title: "Minting…",
@@ -59,7 +62,7 @@ export const useMintTx = create<MintTxState>((set) => ({
       stopFn();
       stopFn = null;
     }
-    set({ txId: null, status: "pending" });
+    set({ gameId: null, txId: null, status: "pending" });
     useWallet.getState().setMintPending(false);
   },
 }));

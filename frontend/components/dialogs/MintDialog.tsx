@@ -50,7 +50,7 @@ export function MintDialog({
     try {
       const tx = await mintScore(score, name || defaultName, address);
       setTxId(tx);
-      startMintTx(tx, score);
+      startMintTx("snake", tx, score);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Mint failed";
       if (msg.includes("104") || msg.toLowerCase().includes("score-too-high")) {
