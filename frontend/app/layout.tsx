@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "XP Snake",
-  description: "Snake game with Stacks blockchain integration, themed as a Windows 95 desktop",
+  title: "XP Arcade",
+  description: "Windows 95-themed arcade with Snake, Tetris, Pac-Man and Stacks blockchain integration",
   other: {
     "talentapp:project_verification":
       "f375b3af3138ef065829701c915a457a21d4db3a6d1aa17d8ee34f782b61b62890fefa3d07b9f514ec76c6a62f9910490ac8fce3ea9a3f0f6cc9f9129b4a6e99",

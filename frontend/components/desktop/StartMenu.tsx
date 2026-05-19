@@ -156,7 +156,7 @@ export function StartMenu({
 
           <MenuItem
             icon="ℹ️"
-            label="About XP Snake"
+            label="About XP Arcade"
             onClick={() => setShowAbout(true)}
           />
 

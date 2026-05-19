@@ -9,10 +9,10 @@ export async function generateMetadata({
   params: Promise<{ address: string }>;
 }): Promise<Metadata> {
   const { address } = await params;
-  if (!isStacksAddress(address)) return { title: "Player not found · XP Snake" };
+  if (!isStacksAddress(address)) return { title: "Player not found · XP Arcade" };
   const short = shortAddress(address);
   return {
-    title: `Player ${short} · XP Snake`,
+    title: `Player ${short} · XP Arcade`,
     description: `Snake score NFTs minted by ${address}.`,
     openGraph: { title: `Player ${short}`, type: "profile" },
   };

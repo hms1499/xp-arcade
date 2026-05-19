@@ -24,7 +24,7 @@ describe("high-score", () => {
   });
 
   it("treats a corrupt stored value as 0", () => {
-    localStorage.setItem("xp-snake:best-score", "not-a-number");
+    localStorage.setItem("xp-arcade:best-score", "not-a-number");
     expect(getBestScore()).toBe(0);
     expect(recordScore(1)).toEqual({ best: 1, isNewRecord: true });
   });

@@ -1,4 +1,4 @@
-const BEST_SCORE_KEY = "xp-snake:best-score";
+const BEST_SCORE_KEY = "xp-arcade:best-score";
 
 /** Personal best score persisted in localStorage. 0 if none / SSR / corrupt. */
 export function getBestScore(): number {

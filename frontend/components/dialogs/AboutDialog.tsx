@@ -33,18 +33,18 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
       }}
     >
       <div className="title-bar">
-        <div className="title-bar-text">About XP Snake</div>
+        <div className="title-bar-text">About XP Arcade</div>
         <div className="title-bar-controls">
           <button aria-label="Close" onClick={onClose} />
         </div>
       </div>
       <div className="window-body" style={{ padding: 16 }}>
         <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
-          <span style={{ fontSize: 48 }}>🐍</span>
+          <span style={{ fontSize: 48 }}>🕹️</span>
           <div>
-            <div style={{ fontWeight: "bold", fontSize: 14 }}>XP Snake</div>
-            <div style={{ fontSize: 11, color: "#444" }}>Version 1.0 — Hackathon MVP</div>
-            <div style={{ fontSize: 11, color: "#444" }}>Snake game on Stacks blockchain</div>
+            <div style={{ fontWeight: "bold", fontSize: 14 }}>XP Arcade</div>
+            <div style={{ fontSize: 11, color: "#444" }}>Version 2.0 — Multi-Game Platform</div>
+            <div style={{ fontSize: 11, color: "#444" }}>Arcade games on Stacks blockchain</div>
           </div>
         </div>
 

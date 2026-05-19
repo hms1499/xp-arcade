@@ -122,7 +122,7 @@ export function SeasonAdminWindow() {
     const key = `${season}-${row.player}`;
     setBusyPay(key);
     try {
-      await transferStx(row.player, row.payoutUstx, `XP Snake S${season} #${row.rank}`);
+      await transferStx(row.player, row.payoutUstx, `XP Arcade S${season} #${row.rank}`);
       useToasts.getState().push({
         title: "Payout submitted",
         body: `${stxAmount} STX → ${row.player.slice(0, 6)}…`,
