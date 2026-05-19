@@ -18,6 +18,7 @@ export function SnakeWindow() {
   const close = useWindows((s) => s.close);
   const {
     score,
+    setScore,
     finalScore,
     showMint,
     isTopScore,
@@ -41,6 +42,7 @@ export function SnakeWindow() {
         <GameCanvas
           key={resetKey}
           onGameOver={handleGameOver}
+          onScoreChange={setScore}
           isTopScore={isTopScore}
           windowActive={isWindowActive(w, maxZ)}
         />

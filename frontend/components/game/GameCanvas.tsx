@@ -31,10 +31,12 @@ function tickMs(score: number) {
 
 export function GameCanvas({
   onGameOver,
+  onScoreChange,
   isTopScore = false,
   windowActive = true,
 }: {
   onGameOver: (score: number) => void;
+  onScoreChange?: (score: number) => void;
   isTopScore?: boolean;
   windowActive?: boolean;
 }) {
@@ -296,6 +298,7 @@ export function GameCanvas({
         }
         if (s.score > prevScore) {
           setScore(s.score);
+          onScoreChange?.(s.score);
           playEat();
           if (!reduceMotion) {
             const head = s.snake[0];
@@ -335,7 +338,7 @@ export function GameCanvas({
       window.removeEventListener("blur", onBlur);
       canvasEl?.removeEventListener("touchstart", onTouch);
     };
-  }, [onGameOver, setPausedBoth, isTopScore]);
+  }, [onGameOver, onScoreChange, setPausedBoth, isTopScore]);
 
   return (
     <div>
