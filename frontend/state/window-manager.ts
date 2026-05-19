@@ -1,10 +1,11 @@
 "use client";
 import { create } from "zustand";
+import { type GameId } from "@/lib/game-registry";
 
 export type WindowType =
-  | "game"
-  | "leaderboard"
-  | "my-nfts"
+  | `game-${GameId}`
+  | `leaderboard-${GameId}`
+  | `mynfts-${GameId}`
   | "season-admin"
   | "player-profile";
 

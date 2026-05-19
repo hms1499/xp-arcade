@@ -4,7 +4,7 @@ import { isWindowActive, useWindows, type WindowEntry } from "./window-manager";
 function entry(partial: Partial<WindowEntry> = {}): WindowEntry {
   return {
     id: "game-1",
-    type: "game",
+    type: "game-snake",
     x: 0,
     y: 0,
     z: 5,
@@ -39,7 +39,7 @@ describe("toggleMaximize", () => {
   it("sets maximized from undefined to true, raises z, keeps x/y", () => {
     useWindows.setState({
       windows: [
-        { id: "a", type: "game", x: 5, y: 6, z: 11, minimized: false },
+        { id: "a", type: "game-snake", x: 5, y: 6, z: 11, minimized: false },
       ],
       topZ: 11,
     });
@@ -58,7 +58,7 @@ describe("toggleMaximize", () => {
       windows: [
         {
           id: "a",
-          type: "game",
+          type: "game-snake",
           x: 0,
           y: 0,
           z: 11,
@@ -79,7 +79,7 @@ describe("toggleMaximize", () => {
   it("is a true no-op for an unknown id (no topZ bump, no change)", () => {
     useWindows.setState({
       windows: [
-        { id: "a", type: "game", x: 0, y: 0, z: 11, minimized: false },
+        { id: "a", type: "game-snake", x: 0, y: 0, z: 11, minimized: false },
       ],
       topZ: 11,
     });
