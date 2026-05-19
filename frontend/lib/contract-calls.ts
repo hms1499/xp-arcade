@@ -10,6 +10,7 @@ import {
 } from "@stacks/transactions";
 import { stacks } from "./stacks";
 import { unwrap } from "./cv-unwrap";
+import { GAMES, type GameId } from "./game-registry";
 
 const MINT_FEE_USTX = BigInt(10_000);
 
@@ -18,6 +19,66 @@ const base = {
   contractAddress: stacks.contractAddress,
   contractName: stacks.contractName,
 } as const;
+
+function gameBase(gameId: GameId) {
+  const g = GAMES[gameId];
+  return {
+    network: stacks.network,
+    contractAddress: g.contractAddress,
+    contractName: g.contractName,
+  };
+}
+
+export async function mintScoreForGame(
+  gameId: GameId,
+  score: number,
+  playerName: string,
+  senderAddress: string,
+): Promise<string> {
+  const g = GAMES[gameId];
+  return new Promise((resolve, reject) => {
+    openContractCall({
+      ...gameBase(gameId),
+      functionName: "mint-score",
+      functionArgs: [uintCV(score), stringAsciiCV(playerName.slice(0, 24))],
+      postConditions: [Pc.principal(senderAddress).willSendEq(g.mintFeeUstx).ustx()],
+      onFinish: (data) => resolve(data.txId),
+      onCancel: () => reject(new Error("cancelled")),
+    });
+  });
+}
+
+export async function getTopTenForGame(gameId: GameId): Promise<TopEntry[]> {
+  const res = await fetchCallReadOnlyFunction({
+    ...gameBase(gameId),
+    functionName: "get-top-ten",
+    functionArgs: [],
+    senderAddress: GAMES[gameId].contractAddress,
+  });
+  const v = unwrap<Array<{ player: string; score: string }>>(cvToValue(res));
+  return v.map((e) => ({ player: String(e.player), score: Number(e.score) }));
+}
+
+export async function getBestScoreForGame(gameId: GameId, addr: string) {
+  const res = await fetchCallReadOnlyFunction({
+    ...gameBase(gameId),
+    functionName: "get-best-score",
+    functionArgs: [principalCV(addr)],
+    senderAddress: addr,
+  });
+  const v = unwrap<null | { score: string; "token-id": string }>(cvToValue(res));
+  return v ? { score: Number(v.score), tokenId: Number(v["token-id"]) } : null;
+}
+
+export async function getLastTokenIdForGame(gameId: GameId): Promise<number> {
+  const res = await fetchCallReadOnlyFunction({
+    ...gameBase(gameId),
+    functionName: "get-last-token-id",
+    functionArgs: [],
+    senderAddress: GAMES[gameId].contractAddress,
+  });
+  return Number(unwrap(cvToValue(res)));
+}
 
 export async function mintScore(
   score: number,
