@@ -10,6 +10,14 @@ export default defineConfig({
     globals: true,
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, ".") },
+    alias: {
+      "@": path.resolve(__dirname, "."),
+      // `@stacks/connect` pulls in `@stacks/connect-ui`'s Stencil bundle,
+      // which crashes under jsdom. Swap it for an inert stub in tests.
+      "@stacks/connect": path.resolve(
+        __dirname,
+        "test/stacks-connect-stub.ts",
+      ),
+    },
   },
 });
