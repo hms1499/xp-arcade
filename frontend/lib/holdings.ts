@@ -31,7 +31,8 @@ export async function fetchScoreHoldings(
 ): Promise<ScoreNft[]> {
   const apiBase = stacks.network.client?.baseUrl ?? "https://api.hiro.so";
   const finalContractId = contractId ?? `${GAMES.snake.contractAddress}.${GAMES.snake.contractName}`;
-  const asset = `${finalContractId}::snake-score`;
+  const contractName = finalContractId.split(".").pop() ?? "snake-score";
+  const asset = `${finalContractId}::${contractName}`;
   const url = `${apiBase}/extended/v1/tokens/nft/holdings?principal=${addr}&asset_identifiers=${asset}&limit=50`;
   const data = (await fetch(url).then((r) => r.json())) as HoldingsResponse;
   const ids = (data.results ?? []).map((r) =>
