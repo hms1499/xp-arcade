@@ -44,9 +44,14 @@ export function SharedMintDialog({
   const defaultName = address ? address.slice(-8) : "anon";
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [hs] = useState(() => recordScore(score));
+  const [hs] = useState(() =>
+    gameId === "snake"
+      ? recordScore(score)
+      : { isNewRecord: false, best: score }
+  );
 
   const feeStx = (Number(game.mintFeeUstx) / 1_000_000).toFixed(2);
+  const chain = process.env.NEXT_PUBLIC_NETWORK === "mainnet" ? "mainnet" : "testnet";
 
   async function handleMint() {
     if (!address) return;
@@ -144,7 +149,7 @@ export function SharedMintDialog({
           {txId && (
             <p className="text-xs mb-2">
               <a
-                href={`${stxExplorerBase}/${txId}?chain=mainnet`}
+                href={`${stxExplorerBase}/${txId}?chain=${chain}`}
                 target="_blank"
                 rel="noreferrer"
                 className="underline"
