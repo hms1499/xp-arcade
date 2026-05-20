@@ -22,3 +22,6 @@ contract/deployments/*.local-plan.yaml
 !frontend/app/icon.png
 !frontend/app/apple-icon.png
 !frontend/public/logo-game.png
+
+# Agent memory
+.claude/
