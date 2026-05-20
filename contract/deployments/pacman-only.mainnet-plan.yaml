@@ -1,0 +1,17 @@
+id: 2
+name: Pac-Man mainnet deployment
+network: mainnet
+stacks-node: https://api.hiro.so
+bitcoin-node: http://blockstack:blockstacksystem@bitcoin.blockstack.com:8332
+plan:
+  batches:
+  - id: 0
+    transactions:
+    - transaction-type: contract-publish
+      contract-name: pacman-score
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      cost: 95010
+      path: contracts/pacman-score.clar
+      anchor-block-only: true
+      clarity-version: 4
+    epoch: '3.3'
