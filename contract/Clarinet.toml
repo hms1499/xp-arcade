@@ -31,3 +31,8 @@ epoch = "latest"
 path = "contracts/snake-score.clar"
 clarity_version = 4
 epoch = "latest"
+
+[contracts.tetris-score]
+path = "contracts/tetris-score.clar"
+clarity_version = 4
+epoch = "latest"
