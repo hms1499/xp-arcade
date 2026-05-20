@@ -32,6 +32,7 @@ const GHOST_COLORS = COLORS.map((c) =>
 const BOARD_W = 10;
 const BOARD_H = 20;
 const CELL_SIZE = 24;
+const NEXT_CELL = 20;
 
 function getOverlay(state: TetrisState): number[][] {
   const overlay = state.board.map((row) => [...row]);
@@ -142,33 +143,97 @@ export function TetrisCanvas({
   }, [handleKey]);
 
   const overlay = getOverlay(s);
+  const nextMask = TETROMINOES[s.next][0];
+  const nextColor = TETROMINO_COLOR[s.next];
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: `repeat(${BOARD_W}, ${CELL_SIZE}px)`,
-        gridTemplateRows: `repeat(${BOARD_H}, ${CELL_SIZE}px)`,
-        border: "2px inset #888",
-        background: "#111",
-        userSelect: "none",
-      }}
-    >
-      {overlay.flat().map((cell, i) => (
-        <div
-          key={i}
-          style={{
-            width: CELL_SIZE,
-            height: CELL_SIZE,
-            background:
-              cell === -1
-                ? GHOST_COLORS[TETROMINO_COLOR[s.current.type]]
-                : COLORS[cell] ?? "transparent",
-            boxSizing: "border-box",
-            border: cell !== 0 ? "1px solid rgba(255,255,255,0.15)" : "1px solid #1a1a1a",
-          }}
-        />
-      ))}
+    <div style={{ display: "flex", gap: 8, userSelect: "none", alignItems: "flex-start" }}>
+      {/* Main board */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${BOARD_W}, ${CELL_SIZE}px)`,
+          gridTemplateRows: `repeat(${BOARD_H}, ${CELL_SIZE}px)`,
+          border: "2px inset #888",
+          background: "#111",
+        }}
+      >
+        {overlay.flat().map((cell, i) => (
+          <div
+            key={i}
+            style={{
+              width: CELL_SIZE,
+              height: CELL_SIZE,
+              background:
+                cell === -1
+                  ? GHOST_COLORS[TETROMINO_COLOR[s.current.type]]
+                  : COLORS[cell] ?? "transparent",
+              boxSizing: "border-box",
+              border: cell !== 0 ? "1px solid rgba(255,255,255,0.15)" : "1px solid #1a1a1a",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Side panel */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+          width: 220,
+          fontFamily: '"Pixelated MS Sans Serif", "MS Sans Serif", Arial, sans-serif',
+          fontSize: 11,
+          color: "#fff",
+        }}
+      >
+        {/* NEXT piece */}
+        <div style={{ background: "#222", border: "2px inset #888", padding: 6 }}>
+          <div style={{ color: "#aaa", marginBottom: 4, fontSize: 10, textTransform: "uppercase", letterSpacing: 1 }}>Next</div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(4, ${NEXT_CELL}px)`,
+              gridTemplateRows: `repeat(4, ${NEXT_CELL}px)`,
+            }}
+          >
+            {nextMask.flat().map((cell, i) => (
+              <div
+                key={i}
+                style={{
+                  width: NEXT_CELL,
+                  height: NEXT_CELL,
+                  background: cell ? COLORS[nextColor] : "transparent",
+                  boxSizing: "border-box",
+                  border: cell ? "1px solid rgba(255,255,255,0.2)" : "none",
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div style={{ background: "#222", border: "2px inset #888", padding: 8, display: "flex", flexDirection: "column", gap: 8 }}>
+          {[
+            { label: "Score", value: s.score },
+            { label: "Level", value: s.level },
+            { label: "Lines", value: s.lines },
+          ].map(({ label, value }) => (
+            <div key={label}>
+              <div style={{ color: "#aaa", fontSize: 10, textTransform: "uppercase", letterSpacing: 1 }}>{label}</div>
+              <div style={{ fontSize: 18, fontWeight: "bold", color: "#fff" }}>{value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Controls hint */}
+        <div style={{ background: "#222", border: "2px inset #888", padding: 8, color: "#666", fontSize: 10, lineHeight: 1.6 }}>
+          <div>← → Move</div>
+          <div>↑ / Z Rotate</div>
+          <div>↓ Soft drop</div>
+          <div>Space Hard drop</div>
+        </div>
+      </div>
     </div>
   );
 }
