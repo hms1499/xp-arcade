@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useCallback, useReducer } from "react";
+import { useEffect, useRef, useCallback, useReducer, useState } from "react";
 import {
   createTetrisState,
   moveLeft,
@@ -72,7 +72,14 @@ export function TetrisCanvas({
 }) {
   const stateRef = useRef<TetrisState>(createTetrisState());
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pausedRef = useRef(false);
+  const [paused, setPaused] = useState(false);
   const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
+
+  const setPausedBoth = useCallback((v: boolean) => {
+    pausedRef.current = v;
+    setPaused(v);
+  }, []);
 
   function setState(next: TetrisState) {
     stateRef.current = next;
@@ -88,14 +95,18 @@ export function TetrisCanvas({
     if (tickRef.current) clearInterval(tickRef.current);
     const ms = Math.max(100, 800 - (level - 1) * 70);
     tickRef.current = setInterval(() => {
-      setState(tick(stateRef.current));
+      if (!pausedRef.current) setState(tick(stateRef.current));
     }, ms);
   }
 
   useEffect(() => {
     startTick(stateRef.current.level);
+    // Auto-pause on tab/window blur
+    const onBlur = () => setPausedBoth(true);
+    window.addEventListener("blur", onBlur);
     return () => {
       if (tickRef.current) clearInterval(tickRef.current);
+      window.removeEventListener("blur", onBlur);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -110,6 +121,15 @@ export function TetrisCanvas({
   const handleKey = useCallback((e: KeyboardEvent) => {
     const cur = stateRef.current;
     if (cur.gameOver) return;
+
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setPausedBoth(!pausedRef.current);
+      return;
+    }
+
+    if (pausedRef.current) return;
+
     switch (e.key) {
       case "ArrowLeft":
         e.preventDefault();
@@ -135,7 +155,7 @@ export function TetrisCanvas({
         break;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [setPausedBoth]);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKey);
@@ -145,34 +165,60 @@ export function TetrisCanvas({
   const overlay = getOverlay(s);
   const nextMask = TETROMINOES[s.next][0];
   const nextColor = TETROMINO_COLOR[s.next];
+  const boardPx = BOARD_H * CELL_SIZE;
 
   return (
     <div style={{ display: "flex", gap: 8, userSelect: "none", alignItems: "flex-start" }}>
       {/* Main board */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${BOARD_W}, ${CELL_SIZE}px)`,
-          gridTemplateRows: `repeat(${BOARD_H}, ${CELL_SIZE}px)`,
-          border: "2px inset #888",
-          background: "#111",
-        }}
-      >
-        {overlay.flat().map((cell, i) => (
+      <div style={{ position: "relative" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${BOARD_W}, ${CELL_SIZE}px)`,
+            gridTemplateRows: `repeat(${BOARD_H}, ${CELL_SIZE}px)`,
+            border: "2px inset #888",
+            background: "#111",
+          }}
+        >
+          {overlay.flat().map((cell, i) => (
+            <div
+              key={i}
+              style={{
+                width: CELL_SIZE,
+                height: CELL_SIZE,
+                background:
+                  cell === -1
+                    ? GHOST_COLORS[TETROMINO_COLOR[s.current.type]]
+                    : COLORS[cell] ?? "transparent",
+                boxSizing: "border-box",
+                border: cell !== 0 ? "1px solid rgba(255,255,255,0.15)" : "1px solid #1a1a1a",
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Pause overlay */}
+        {paused && (
           <div
-            key={i}
             style={{
-              width: CELL_SIZE,
-              height: CELL_SIZE,
-              background:
-                cell === -1
-                  ? GHOST_COLORS[TETROMINO_COLOR[s.current.type]]
-                  : COLORS[cell] ?? "transparent",
-              boxSizing: "border-box",
-              border: cell !== 0 ? "1px solid rgba(255,255,255,0.15)" : "1px solid #1a1a1a",
+              position: "absolute",
+              inset: 0,
+              background: "rgba(0,0,0,0.75)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              color: "#fff",
+              fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
             }}
-          />
-        ))}
+          >
+            <div style={{ fontSize: 20, fontWeight: "bold", letterSpacing: 2 }}>⏸ PAUSED</div>
+            <button onClick={() => setPausedBoth(false)} style={{ fontSize: 11 }}>
+              ▶ Resume
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Side panel */}
@@ -232,7 +278,18 @@ export function TetrisCanvas({
           <div>↑ / Z Rotate</div>
           <div>↓ Soft drop</div>
           <div>Space Hard drop</div>
+          <div style={{ marginTop: 4, color: "#555" }}>Esc to pause</div>
         </div>
+
+        {/* Pause button */}
+        <button
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={() => setPausedBoth(!paused)}
+          style={{ fontSize: 11, height: 22 }}
+          disabled={s.gameOver}
+        >
+          {paused ? "▶ Resume" : "⏸ Pause"}
+        </button>
       </div>
     </div>
   );
