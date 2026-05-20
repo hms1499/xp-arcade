@@ -1,0 +1,43 @@
+"use client";
+import { useWindows } from "@/state/window-manager";
+import { GameShellWindow } from "@/components/shared/GameShellWindow";
+import { SharedMintDialog } from "@/components/shared/SharedMintDialog";
+import { PacManCanvas } from "./PacManCanvas";
+import { useGameSession } from "@/hooks/useGameSession";
+
+export function PacManWindow() {
+  const w = useWindows((s) =>
+    s.windows.find((win) => win.type === "game-pacman")
+  );
+  const close = useWindows((s) => s.close);
+  const {
+    score,
+    setScore,
+    finalScore,
+    showMint,
+    resetKey,
+    handleGameOver,
+    handlePlayAgain,
+  } = useGameSession("pacman");
+
+  if (!w) return null;
+
+  return (
+    <GameShellWindow gameId="pacman" score={score}>
+      {showMint ? (
+        <SharedMintDialog
+          gameId="pacman"
+          score={finalScore}
+          onClose={() => close(w.id)}
+          onPlayAgain={handlePlayAgain}
+        />
+      ) : (
+        <PacManCanvas
+          key={resetKey}
+          onGameOver={handleGameOver}
+          onScoreChange={setScore}
+        />
+      )}
+    </GameShellWindow>
+  );
+}
