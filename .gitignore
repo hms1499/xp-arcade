@@ -5,6 +5,9 @@ node_modules/
 .env.local
 *.log
 .DS_Store
+tools/
+# macOS Finder duplicates ("file 2.ext")
+*[[:space:]]2.*
 contract/.cache/
 contract/deployments/*.local-plan.yaml
 .vercel
