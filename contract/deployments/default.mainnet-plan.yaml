@@ -21,4 +21,11 @@ plan:
       path: contracts/snake-score.clar
       anchor-block-only: true
       clarity-version: 4
+    - transaction-type: contract-publish
+      contract-name: tetris-score
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      cost: 95010
+      path: contracts/tetris-score.clar
+      anchor-block-only: true
+      clarity-version: 4
     epoch: '3.3'

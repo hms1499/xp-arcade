@@ -68,6 +68,11 @@ plan:
       path: contracts/nft-trait.clar
       clarity-version: 4
     - transaction-type: emulated-contract-publish
+      contract-name: pacman-score
+      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+      path: contracts/pacman-score.clar
+      clarity-version: 4
+    - transaction-type: emulated-contract-publish
       contract-name: snake-score
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
       path: contracts/snake-score.clar
