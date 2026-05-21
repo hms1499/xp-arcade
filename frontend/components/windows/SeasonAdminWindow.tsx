@@ -16,6 +16,7 @@ import {
 import { useToasts } from "@/state/toasts";
 import { watchTx } from "@/lib/tx-tracker";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
+import { GAMES, type GameId } from "@/lib/game-registry";
 
 type PayoutRow = {
   player: string;
@@ -45,6 +46,7 @@ export function SeasonAdminWindow() {
   const [busyPay, setBusyPay] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const countdown = useSeasonCountdown();
+  const [gameId, setGameId] = useState<GameId>("snake");
 
   const loadPastSeasons = useCallback(async (cs: number) => {
     const results: SeasonView[] = [];
@@ -77,6 +79,13 @@ export function SeasonAdminWindow() {
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Load failed"));
   }, [w, loadPastSeasons]);
+
+  useEffect(() => {
+    setCurrentSeason(null);
+    setAccumulated(null);
+    setSeasons([]);
+    setError(null);
+  }, [gameId]);
 
   if (!w) return null;
 
@@ -137,6 +146,20 @@ export function SeasonAdminWindow() {
   return (
     <Window id={w.id} title="Season Admin" width={560}>
       <div className="p-2 text-xs">
+        <div role="tablist" className="flex gap-1 mb-2">
+          {(Object.keys(GAMES) as GameId[]).map((g) => (
+            <button
+              key={g}
+              role="tab"
+              aria-selected={gameId === g}
+              onClick={() => setGameId(g)}
+              style={{ fontWeight: gameId === g ? "bold" : "normal" }}
+            >
+              {GAMES[g].label}
+            </button>
+          ))}
+        </div>
+
         {error && <p className="text-red-600 mb-2">&#x26A0;&#xFE0F; {error}</p>}
 
         <fieldset className="mb-3">
