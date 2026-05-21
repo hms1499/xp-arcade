@@ -1,3 +1,4 @@
+import { GAMES } from "./game-registry";
 import type { ScoreNft } from "./holdings";
 
 export type PlayerStats = {
@@ -9,13 +10,12 @@ export type PlayerStats = {
   mintFeesUstx: number;
 };
 
-const MINT_FEE_USTX = 10_000;
-
 export function computePlayerStats(nfts: ScoreNft[]): PlayerStats {
   const seasons = new Set<number>();
   const rarityCounts: Record<string, number> = {};
   let bestScore = 0;
   let totalScore = 0;
+  let mintFeesUstx = 0;
 
   for (const n of nfts) {
     if (typeof n.score === "number") {
@@ -24,6 +24,7 @@ export function computePlayerStats(nfts: ScoreNft[]): PlayerStats {
     }
     if (typeof n.season === "number") seasons.add(n.season);
     if (n.rarity) rarityCounts[n.rarity] = (rarityCounts[n.rarity] ?? 0) + 1;
+    mintFeesUstx += Number(GAMES[n.gameId].mintFeeUstx);
   }
 
   return {
@@ -32,7 +33,7 @@ export function computePlayerStats(nfts: ScoreNft[]): PlayerStats {
     totalScore,
     rarityCounts,
     seasonsPlayed: seasons.size,
-    mintFeesUstx: nfts.length * MINT_FEE_USTX,
+    mintFeesUstx,
   };
 }
 

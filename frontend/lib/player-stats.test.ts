@@ -15,9 +15,9 @@ describe("computePlayerStats", () => {
 
   it("aggregates across multiple NFTs", () => {
     const stats = computePlayerStats([
-      { id: 1, name: "a", image: "", score: 100, season: 1, rarity: "Common" },
-      { id: 2, name: "b", image: "", score: 250, season: 1, rarity: "Rare" },
-      { id: 3, name: "c", image: "", score: 50, season: 2, rarity: "Common" },
+      { id: 1, gameId: "snake", name: "a", image: "", score: 100, season: 1, rarity: "Common" },
+      { id: 2, gameId: "snake", name: "b", image: "", score: 250, season: 1, rarity: "Rare" },
+      { id: 3, gameId: "snake", name: "c", image: "", score: 50, season: 2, rarity: "Common" },
     ]);
     expect(stats.totalMints).toBe(3);
     expect(stats.bestScore).toBe(250);
@@ -29,8 +29,8 @@ describe("computePlayerStats", () => {
 
   it("tolerates missing numeric fields", () => {
     const stats = computePlayerStats([
-      { id: 1, name: "a", image: "" },
-      { id: 2, name: "b", image: "", score: 5 },
+      { id: 1, gameId: "snake", name: "a", image: "" },
+      { id: 2, gameId: "snake", name: "b", image: "", score: 5 },
     ]);
     expect(stats.bestScore).toBe(5);
     expect(stats.seasonsPlayed).toBe(0);

@@ -1,8 +1,9 @@
 import { stacks } from "./stacks";
-import { GAMES } from "./game-registry";
+import { GAMES, type GameId } from "./game-registry";
 
 export type ScoreNft = {
   id: number;
+  gameId: GameId;
   image: string;
   name: string;
   rarity?: string;
@@ -26,13 +27,12 @@ function attr(meta: MetadataResponse, key: string): string | undefined {
 
 export async function fetchScoreHoldings(
   addr: string,
-  metaBase = "",
-  contractId?: string
+  gameId: GameId
 ): Promise<ScoreNft[]> {
+  const game = GAMES[gameId];
   const apiBase = stacks.network.client?.baseUrl ?? "https://api.hiro.so";
-  const finalContractId = contractId ?? `${GAMES.snake.contractAddress}.${GAMES.snake.contractName}`;
-  const contractName = finalContractId.split(".").pop() ?? "snake-score";
-  const asset = `${finalContractId}::${contractName}`;
+  const contractId = `${game.contractAddress}.${game.contractName}`;
+  const asset = `${contractId}::${game.contractName}`;
   const url = `${apiBase}/extended/v1/tokens/nft/holdings?principal=${addr}&asset_identifiers=${asset}&limit=50`;
   const data = (await fetch(url).then((r) => r.json())) as HoldingsResponse;
   const ids = (data.results ?? []).map((r) =>
@@ -40,20 +40,27 @@ export async function fetchScoreHoldings(
   );
   return Promise.all(
     ids.map(async (id) => {
-      const meta = (await fetch(`${metaBase}/api/metadata/score/${id}`).then(
-        (x) => x.json()
-      )) as MetadataResponse;
-      const rarity = attr(meta, "Rarity");
-      const score = attr(meta, "Score");
-      const season = attr(meta, "Season");
+      const meta = (await fetch(
+        `/api/metadata/${game.metaSegment}/${id}`
+      ).then((x) => x.json())) as MetadataResponse;
       return {
         id,
+        gameId,
         image: meta.image,
         name: meta.name,
-        rarity,
-        score: score ? Number(score) : undefined,
-        season: season ? Number(season) : undefined,
+        rarity: attr(meta, "Rarity"),
+        score: attr(meta, "Score") ? Number(attr(meta, "Score")) : undefined,
+        season: attr(meta, "Season") ? Number(attr(meta, "Season")) : undefined,
       };
     })
   );
+}
+
+export async function fetchAllScoreHoldings(addr: string): Promise<ScoreNft[]> {
+  const results = await Promise.allSettled(
+    (["snake", "tetris", "pacman"] as GameId[]).map((id) =>
+      fetchScoreHoldings(addr, id)
+    )
+  );
+  return results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
 }

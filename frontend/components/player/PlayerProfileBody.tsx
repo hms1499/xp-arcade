@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { shortAddress } from "@/lib/stacks-address";
-import { fetchScoreHoldings, type ScoreNft } from "@/lib/holdings";
+import { fetchAllScoreHoldings, type ScoreNft } from "@/lib/holdings";
 import { rarityColor } from "@/lib/metadata-svg";
 import { computePlayerStats } from "@/lib/player-stats";
 import { PlayerStatsPanel } from "./PlayerStatsPanel";
@@ -22,7 +22,7 @@ export function PlayerProfileBody({
   useEffect(() => {
     setNfts(null);
     setError(null);
-    fetchScoreHoldings(address)
+    fetchAllScoreHoldings(address)
       .then((list) =>
         setNfts(
           [...list].sort(

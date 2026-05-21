@@ -9,6 +9,7 @@ export interface GameDef {
   contractAddress: string;
   contractName: string;
   mintFeeUstx: bigint;
+  metaSegment: string;
 }
 
 export const GAMES: Record<GameId, GameDef> = {
@@ -19,6 +20,7 @@ export const GAMES: Record<GameId, GameDef> = {
     contractAddress: DEPLOYER,
     contractName: "snake-score",
     mintFeeUstx: BigInt(10_000),
+    metaSegment: "score",
   },
   tetris: {
     id: "tetris",
@@ -27,6 +29,7 @@ export const GAMES: Record<GameId, GameDef> = {
     contractAddress: DEPLOYER,
     contractName: "tetris-score",
     mintFeeUstx: BigInt(20_000),
+    metaSegment: "tetris",
   },
   pacman: {
     id: "pacman",
@@ -35,5 +38,6 @@ export const GAMES: Record<GameId, GameDef> = {
     contractAddress: DEPLOYER,
     contractName: "pacman-score",
     mintFeeUstx: BigInt(20_000),
+    metaSegment: "pacman",
   },
 };

@@ -22,7 +22,7 @@ export function SharedMyNfts({ gameId }: { gameId: GameId }) {
     if (!w || !address) return;
     setNfts(null);
     setError(null);
-    fetchScoreHoldings(address, "", contractId)
+    fetchScoreHoldings(address, gameId)
       .then(setNfts)
       .catch((e) => setError(e instanceof Error ? e.message : "Load failed"));
   }, [w, address, contractId]);
