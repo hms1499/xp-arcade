@@ -1,5 +1,5 @@
 "use client";
-import { openContractCall, openSTXTransfer } from "@stacks/connect";
+import { openContractCall, request } from "@stacks/connect";
 import {
   uintCV,
   stringAsciiCV,
@@ -293,16 +293,25 @@ export async function transferStx(
   amountUstx: number,
   memo?: string,
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
-    openSTXTransfer({
-      network: stacks.network,
+  // Use SIP-030 RPC method directly. The legacy `openSTXTransfer` wrapper
+  // serialises the `network` field in a shape that Xverse rejects with
+  // "active/logged-in network mismatch", even when both sides are mainnet.
+  const network: "mainnet" | "testnet" =
+    process.env.NEXT_PUBLIC_NETWORK === "mainnet" ? "mainnet" : "testnet";
+  try {
+    const result = await request("stx_transferStx", {
       recipient,
       amount: String(amountUstx),
       memo: memo ?? "",
-      onFinish: (data) => resolve(data.txId),
-      onCancel: () => reject(new Error("cancelled")),
+      network,
     });
-  });
+    if (!result.txid) throw new Error("no txid in response");
+    return result.txid;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/cancel|reject|denied/i.test(msg)) throw new Error("cancelled");
+    throw err;
+  }
 }
 
 // Rank-based payout used by claim-prize: top 1-3 get 20% each, rank 4-10 get 4/70 each.
