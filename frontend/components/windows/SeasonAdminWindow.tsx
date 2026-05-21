@@ -5,11 +5,11 @@ import { useWallet } from "@/state/wallet";
 import { stacks } from "@/lib/stacks";
 import { Window } from "./Window";
 import {
-  getCurrentSeason,
-  getPrizePoolBalance,
-  getSeasonPrize,
-  hasClaimedPrize,
-  endSeason,
+  getCurrentSeasonForGame,
+  getPrizePoolBalanceForGame,
+  getSeasonPrizeForGame,
+  hasClaimedPrizeForGame,
+  endSeasonForGame,
   transferStx,
   computePayoutUstx,
 } from "@/lib/contract-calls";
@@ -48,44 +48,43 @@ export function SeasonAdminWindow() {
   const countdown = useSeasonCountdown();
   const [gameId, setGameId] = useState<GameId>("snake");
 
-  const loadPastSeasons = useCallback(async (cs: number) => {
-    const results: SeasonView[] = [];
-    for (let s = 1; s < cs; s++) {
-      const snap = await getSeasonPrize(s);
-      if (!snap) continue;
-      const sorted = [...snap.topTen].sort((a, b) => b.score - a.score);
-      const rows: PayoutRow[] = await Promise.all(
-        sorted.map(async (e, i) => ({
-          player: e.player,
-          rank: i + 1,
-          score: e.score,
-          payoutUstx: computePayoutUstx(snap.total, i + 1),
-          claimed: await hasClaimedPrize(e.player, s).catch(() => false),
-        })),
-      );
-      results.push({ season: s, total: snap.total, rows });
-    }
-    setSeasons(results);
-  }, []);
+  const loadPastSeasons = useCallback(
+    async (cs: number, g: GameId) => {
+      const results: SeasonView[] = [];
+      for (let s = 1; s < cs; s++) {
+        const snap = await getSeasonPrizeForGame(g, s);
+        if (!snap) continue;
+        const sorted = [...snap.topTen].sort((a, b) => b.score - a.score);
+        const rows: PayoutRow[] = await Promise.all(
+          sorted.map(async (e, i) => ({
+            player: e.player,
+            rank: i + 1,
+            score: e.score,
+            payoutUstx: computePayoutUstx(snap.total, i + 1),
+            claimed: await hasClaimedPrizeForGame(g, e.player, s).catch(() => false),
+          })),
+        );
+        results.push({ season: s, total: snap.total, rows });
+      }
+      setSeasons(results);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!w) return;
     setError(null);
-    Promise.all([getCurrentSeason(), getPrizePoolBalance()])
+    Promise.all([
+      getCurrentSeasonForGame(gameId),
+      getPrizePoolBalanceForGame(gameId),
+    ])
       .then(([cs, pool]) => {
         setCurrentSeason(cs);
         setAccumulated(pool);
-        return loadPastSeasons(cs);
+        return loadPastSeasons(cs, gameId);
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Load failed"));
-  }, [w, loadPastSeasons]);
-
-  useEffect(() => {
-    setCurrentSeason(null);
-    setAccumulated(null);
-    setSeasons([]);
-    setError(null);
-  }, [gameId]);
+  }, [w, gameId, loadPastSeasons]);
 
   if (!w) return null;
 
@@ -101,21 +100,35 @@ export function SeasonAdminWindow() {
   }
 
   async function handleEndSeason() {
-    if (!confirm("End the current season? This locks the snapshot and starts a new season.")) return;
+    if (
+      !confirm(
+        `End the current ${gameId} season? This locks the snapshot and starts a new season.`,
+      )
+    )
+      return;
     setBusyEnd(true);
     try {
-      const txId = await endSeason();
-      useToasts.getState().push({ title: "End-season submitted", body: "Watching for confirmation…" });
+      const txId = await endSeasonForGame(gameId);
+      useToasts.getState().push({
+        title: "End-season submitted",
+        body: "Watching for confirmation…",
+      });
       watchTx(txId, (s) => {
         if (s === "success") {
-          useToasts.getState().push({ title: "Season closed", body: "Snapshot locked. Reloading…" });
-          getCurrentSeason().then((cs) => {
-            setCurrentSeason(cs);
-            loadPastSeasons(cs);
+          useToasts.getState().push({
+            title: "Season closed",
+            body: "Snapshot locked. Reloading…",
           });
-          getPrizePoolBalance().then(setAccumulated);
+          getCurrentSeasonForGame(gameId).then((cs) => {
+            setCurrentSeason(cs);
+            loadPastSeasons(cs, gameId);
+          });
+          getPrizePoolBalanceForGame(gameId).then(setAccumulated);
         } else if (s !== "pending") {
-          useToasts.getState().push({ title: "End-season failed", body: "Transaction rejected." });
+          useToasts.getState().push({
+            title: "End-season failed",
+            body: "Transaction rejected.",
+          });
         }
       });
     } catch (e) {
