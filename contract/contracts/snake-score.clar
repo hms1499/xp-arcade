@@ -25,6 +25,9 @@
 })
 
 (define-map prize-claimed { player: principal, season: uint } bool)
+(define-map player-season-mints { player: principal, season: uint } uint)
+(define-constant MAX-MINTS-PER-SEASON u10)
+(define-constant ERR-MINT-LIMIT-REACHED (err u108))
 
 (define-data-var top-ten
   (list 10 { player: principal, score: uint })
@@ -90,8 +93,13 @@
 
 (define-public (mint-score (score uint) (player-name (string-ascii 24)))
   (let ((new-id (+ (var-get last-token-id) u1))
-        (prev (map-get? best-score tx-sender)))
+        (prev (map-get? best-score tx-sender))
+        (season (var-get current-season))
+        (current-mints (default-to u0
+          (map-get? player-season-mints
+            { player: tx-sender, season: (var-get current-season) }))))
     (asserts! (<= score u9999) ERR-SCORE-TOO-HIGH)
+    (asserts! (< current-mints MAX-MINTS-PER-SEASON) ERR-MINT-LIMIT-REACHED)
     (try! (stx-transfer? u10000 tx-sender (var-get contract-owner)))
     (var-set season-accumulated (+ (var-get season-accumulated) u10000))
     (try! (nft-mint? snake-score new-id tx-sender))
@@ -100,10 +108,13 @@
       score: score,
       player-name: player-name,
       block: stacks-block-height,
-      season: (var-get current-season),
+      season: season,
       rarity: (compute-rarity score)
     })
     (var-set last-token-id new-id)
+    (map-set player-season-mints
+      { player: tx-sender, season: season }
+      (+ current-mints u1))
     (if (or (is-none prev) (> score (get score (unwrap-panic prev))))
         (map-set best-score tx-sender { score: score, token-id: new-id })
         true)
@@ -267,6 +278,20 @@
     (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-OWNER)
     (var-set contract-owner new-owner)
     (ok true)))
+
+(define-read-only (get-mints-remaining (player principal))
+  (let ((used (default-to u0
+          (map-get? player-season-mints
+            { player: player, season: (var-get current-season) }))))
+    (if (>= used MAX-MINTS-PER-SEASON)
+        u0
+        (- MAX-MINTS-PER-SEASON used))))
+
+(define-read-only (get-top-ten-by-season (season uint))
+  (if (is-eq season (var-get current-season))
+      (var-get top-ten)
+      (default-to (list)
+        (get top-ten (map-get? season-prize season)))))
 
 ;; --- SIP-009 ---
 (define-public (transfer (token-id uint) (sender principal) (recipient principal))
