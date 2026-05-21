@@ -39,7 +39,7 @@ export function GameShellWindow({
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();
-                openWindow(`leaderboard-${gameId}`);
+                openWindow("highscore", { initialTab: gameId });
               }}
             >
               🏆 High Scores

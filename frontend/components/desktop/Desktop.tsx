@@ -32,7 +32,7 @@ export function Desktop({ children }: { children: React.ReactNode }) {
         <DesktopIcon
           label="High Scores"
           emoji="🏆"
-          onOpen={() => open("leaderboard-snake")}
+          onOpen={() => open("highscore")}
         />
         <DesktopIcon
           label="My NFTs"

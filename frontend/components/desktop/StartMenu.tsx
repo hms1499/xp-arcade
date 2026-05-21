@@ -131,7 +131,7 @@ export function StartMenu({
           <MenuItem
             icon="🏆"
             label="Leaderboard"
-            onClick={() => { openWin("leaderboard-snake"); onClose(); }}
+            onClick={() => { openWin("highscore"); onClose(); }}
           />
           <MenuItem
             icon="💾"

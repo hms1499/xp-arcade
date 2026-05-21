@@ -4,12 +4,12 @@ import { type GameId } from "@/lib/game-registry";
 
 export type WindowType =
   | `game-${GameId}`
-  | `leaderboard-${GameId}`
+  | "highscore"
   | `mynfts-${GameId}`
   | "season-admin"
   | "player-profile";
 
-export type WindowPayload = { address?: string };
+export type WindowPayload = { address?: string; initialTab?: GameId };
 
 export type WindowEntry = {
   id: string;
