@@ -14,6 +14,7 @@ import {
   computePayoutUstx,
 } from "@/lib/contract-calls";
 import { useToasts } from "@/state/toasts";
+import { usePayoutLedger, type PayoutEntry } from "@/state/payout-ledger";
 import { watchTx } from "@/lib/tx-tracker";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
 import { GAMES, type GameId } from "@/lib/game-registry";
@@ -37,6 +38,47 @@ export function isOwnerAddress(addr: string | null): boolean {
   return !!addr && addr === stacks.contractAddress;
 }
 
+const EXPLORER = "https://explorer.hiro.so/txid";
+
+function renderPayoutCell(args: {
+  entry: PayoutEntry | undefined;
+  busy: boolean;
+  onSend: () => void;
+}) {
+  const { entry, busy, onSend } = args;
+  if (!entry) {
+    return (
+      <button onClick={onSend} disabled={busy}>
+        {busy ? "…" : "Send STX"}
+      </button>
+    );
+  }
+  if (entry.status === "pending") {
+    return (
+      <a href={`${EXPLORER}/${entry.txId}`} target="_blank" rel="noreferrer">
+        ⏳ Pending
+      </a>
+    );
+  }
+  if (entry.status === "success") {
+    return (
+      <a href={`${EXPLORER}/${entry.txId}`} target="_blank" rel="noreferrer">
+        ✓ Paid
+      </a>
+    );
+  }
+  return (
+    <span>
+      <button onClick={onSend} disabled={busy}>
+        {busy ? "…" : "Retry"}
+      </button>{" "}
+      <a href={`${EXPLORER}/${entry.txId}`} target="_blank" rel="noreferrer" title="failed tx">
+        ✗
+      </a>
+    </span>
+  );
+}
+
 export function SeasonAdminWindow() {
   const w = useWindows((s) => s.windows.find((win) => win.type === "season-admin"));
   const address = useWallet((s) => s.address);
@@ -48,6 +90,7 @@ export function SeasonAdminWindow() {
   const [error, setError] = useState<string | null>(null);
   const countdown = useSeasonCountdown();
   const [gameId, setGameId] = useState<GameId>("snake");
+  const ledgerEntries = usePayoutLedger((s) => s.entries);
 
   const loadPastSeasons = useCallback(
     async (cs: number, g: GameId) => {
@@ -152,17 +195,20 @@ export function SeasonAdminWindow() {
     try {
       const memo = formatPayoutMemo({ gameId, season, rank: row.rank });
       const txId = await transferStx(row.player, row.payoutUstx, memo);
+      usePayoutLedger.getState().submit(gameId, season, row.player, txId);
       useToasts.getState().push({
         title: "Payout submitted",
         body: `${stxAmount} STX → ${row.player.slice(0, 6)}… (watching…)`,
       });
       watchTx(txId, (s) => {
         if (s === "success") {
+          usePayoutLedger.getState().updateStatus(gameId, season, row.player, "success");
           useToasts.getState().push({
             title: "Payout confirmed",
             body: `${stxAmount} STX → ${row.player.slice(0, 6)}…`,
           });
         } else if (s !== "pending") {
+          usePayoutLedger.getState().updateStatus(gameId, season, row.player, "failed");
           useToasts.getState().push({
             title: "Payout failed",
             body: `${stxAmount} STX → ${row.player.slice(0, 6)}… rejected.`,
@@ -251,12 +297,11 @@ export function SeasonAdminWindow() {
                         <td>{(r.payoutUstx / 1_000_000).toFixed(4)}</td>
                         <td>{r.claimed ? "✓" : "—"}</td>
                         <td>
-                          <button
-                            onClick={() => handlePay(r, s.season)}
-                            disabled={busyPay === key}
-                          >
-                            {busyPay === key ? "…" : "Send STX"}
-                          </button>
+                          {renderPayoutCell({
+                            entry: ledgerEntries[`${gameId}-${s.season}-${r.player}`],
+                            busy: busyPay === key,
+                            onSend: () => handlePay(r, s.season),
+                          })}
                         </td>
                       </tr>
                     );
