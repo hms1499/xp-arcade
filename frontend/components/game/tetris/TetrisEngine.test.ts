@@ -46,7 +46,7 @@ describe("TetrisEngine", () => {
     }
   });
 
-  it("clearing a full line adds 100 to score", () => {
+  it("clearing a full line adds 1 to score", () => {
     const s = createTetrisState();
     // Fill row 19 (bottom) manually with non-zero values
     const board = s.board.map((row, i) =>
@@ -59,7 +59,7 @@ describe("TetrisEngine", () => {
       current: { ...filled.current, y: 18 },
     };
     const after = tick(atBottom);
-    expect(after.score).toBeGreaterThanOrEqual(100);
+    expect(after.score).toBeGreaterThanOrEqual(1);
     expect(after.lines).toBeGreaterThanOrEqual(1);
   });
 

@@ -124,7 +124,7 @@ function clearLines(board: number[][]): { board: number[][]; cleared: number } {
   return { board: [...empty, ...remaining], cleared };
 }
 
-const LINE_SCORES = [0, 100, 300, 500, 800];
+const LINE_SCORES = [0, 1, 3, 5, 8];
 
 function spawnPiece(type: TetrominoType): ActivePiece {
   return { type, rotation: 0, x: 3, y: 0 };
