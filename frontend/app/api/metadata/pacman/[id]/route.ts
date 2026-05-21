@@ -1,25 +1,90 @@
 import { NextResponse } from "next/server";
+import { fetchCallReadOnlyFunction, cvToValue, uintCV } from "@stacks/transactions";
+import { stacks } from "@/lib/stacks";
+import { GAMES } from "@/lib/game-registry";
+import { unwrap } from "@/lib/cv-unwrap";
+import { scoreSvg } from "@/lib/metadata-svg";
+import { rateLimit } from "@/lib/rate-limit";
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+const RL_LIMIT = 60;
+const RL_WINDOW_MS = 60_000;
+const game = GAMES.pacman;
+
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const tokenId = Number(id);
-  if (!Number.isFinite(tokenId) || tokenId < 1) {
+  if (!Number.isFinite(tokenId) || tokenId <= 0) {
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "anon";
+  const rl = rateLimit(`metadata-pacman:${ip}`, RL_LIMIT, RL_WINDOW_MS);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "rate limited" },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": Math.ceil((rl.resetAt - Date.now()) / 1000).toString(),
+        },
+      }
+    );
+  }
 
-  return NextResponse.json({
-    sip: 16,
-    name: `Pac-Man Score #${tokenId}`,
-    description: `On-chain proof of a Pac-Man game score.`,
-    image: `${appUrl}/api/metadata/pacman/${tokenId}/image`,
-    attributes: [
-      { trait_type: "Game", value: "Pac-Man" },
-      { trait_type: "Token ID", value: String(tokenId) },
-    ],
-  });
+  try {
+    const res = await fetchCallReadOnlyFunction({
+      network: stacks.network,
+      contractAddress: game.contractAddress,
+      contractName: game.contractName,
+      functionName: "get-score-data",
+      functionArgs: [uintCV(tokenId)],
+      senderAddress: game.contractAddress,
+    });
+    const v = unwrap<null | {
+      score: string;
+      "player-name": string;
+      rarity: string;
+      season: string;
+    }>(cvToValue(res));
+    if (!v)
+      return NextResponse.json(
+        { error: "not found" },
+        { status: 404, headers: { "Cache-Control": "public, max-age=60" } }
+      );
+
+    const rarity = String(v.rarity ?? "Common");
+    const season = Number(v.season ?? 1);
+    const svg = scoreSvg({
+      tokenId,
+      score: Number(v.score),
+      playerName: String(v["player-name"]),
+      rarity,
+      gameName: "Pac-Man",
+    });
+    return NextResponse.json(
+      {
+        name: `Pac-Man Score #${tokenId}`,
+        description: `On-chain proof of a Pac-Man game score: ${v.score}.`,
+        image: "data:image/svg+xml;utf8," + encodeURIComponent(svg),
+        attributes: [
+          { trait_type: "Rarity", value: rarity },
+          { trait_type: "Season", value: String(season) },
+          { trait_type: "Score", value: String(Number(v.score)) },
+        ],
+      },
+      {
+        headers: {
+          "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
+        },
+      }
+    );
+  } catch (e) {
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "lookup failed" },
+      { status: 500 }
+    );
+  }
 }
