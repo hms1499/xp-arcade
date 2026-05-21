@@ -12,8 +12,8 @@ export function rarityColor(r: string): string {
 }
 
 const GAME_BG: Record<string, string> = {
-  Snake: "#245edb",
-  Tetris: "#1a472a",
+  Snake: "#1a472a",
+  Tetris: "#6b3a2a",
   "Pac-Man": "#1a1a2e",
 };
 
