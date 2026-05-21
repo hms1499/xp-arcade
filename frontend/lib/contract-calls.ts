@@ -80,6 +80,19 @@ export async function getLastTokenIdForGame(gameId: GameId): Promise<number> {
   return Number(unwrap(cvToValue(res)));
 }
 
+export async function getMintsRemaining(
+  gameId: GameId,
+  player: string,
+): Promise<number> {
+  const res = await fetchCallReadOnlyFunction({
+    ...gameBase(gameId),
+    functionName: "get-mints-remaining",
+    functionArgs: [principalCV(player)],
+    senderAddress: player,
+  });
+  return Number(unwrap(cvToValue(res)));
+}
+
 export async function mintScore(
   score: number,
   playerName: string,
