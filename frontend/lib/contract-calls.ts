@@ -7,6 +7,7 @@ import {
   cvToValue,
   fetchCallReadOnlyFunction,
   Pc,
+  makeUnsignedSTXTokenTransfer,
 } from "@stacks/transactions";
 import { stacks } from "./stacks";
 import { unwrap } from "./cv-unwrap";
@@ -293,17 +294,30 @@ export async function transferStx(
   amountUstx: number,
   memo?: string,
 ): Promise<string> {
-  // Use SIP-030 RPC method directly. The legacy `openSTXTransfer` wrapper
-  // serialises the `network` field in a shape that Xverse rejects with
-  // "active/logged-in network mismatch", even when both sides are mainnet.
-  const network: "mainnet" | "testnet" =
-    process.env.NEXT_PUBLIC_NETWORK === "mainnet" ? "mainnet" : "testnet";
+  // Xverse rejects stx_transferStx with a spurious "network mismatch" error
+  // (even on mainnet with a fresh session). stx_callContract works in the
+  // same session, so the bug is specific to stx_transferStx. Workaround:
+  // build the STX transfer transaction client-side and have the wallet
+  // sign+broadcast it via stx_signTransaction.
+  const addrResult = await request("stx_getAddresses");
+  const stxEntry = addrResult.addresses.find(
+    (a) => a.address.startsWith("SP") || a.address.startsWith("ST"),
+  );
+  if (!stxEntry?.publicKey) {
+    throw new Error("STX public key unavailable; reconnect wallet");
+  }
+  const unsignedTx = await makeUnsignedSTXTokenTransfer({
+    recipient,
+    amount: BigInt(amountUstx),
+    memo: memo ?? "",
+    publicKey: stxEntry.publicKey,
+    network: stacks.network,
+  });
+  const txHex = unsignedTx.serialize();
   try {
-    const result = await request("stx_transferStx", {
-      recipient,
-      amount: String(amountUstx),
-      memo: memo ?? "",
-      network,
+    const result = await request("stx_signTransaction", {
+      transaction: txHex,
+      broadcast: true,
     });
     if (!result.txid) throw new Error("no txid in response");
     return result.txid;
