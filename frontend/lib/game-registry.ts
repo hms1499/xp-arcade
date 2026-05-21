@@ -10,6 +10,7 @@ export interface GameDef {
   contractName: string;
   mintFeeUstx: bigint;
   metaSegment: string;
+  nftAssetName: string;
 }
 
 export const GAMES: Record<GameId, GameDef> = {
@@ -18,26 +19,29 @@ export const GAMES: Record<GameId, GameDef> = {
     label: "Snake",
     emoji: "🐍",
     contractAddress: DEPLOYER,
-    contractName: "snake-score",
+    contractName: "snake-score-v2",
     mintFeeUstx: BigInt(10_000),
     metaSegment: "score",
+    nftAssetName: "snake-score",
   },
   tetris: {
     id: "tetris",
     label: "Tetris",
     emoji: "🧱",
     contractAddress: DEPLOYER,
-    contractName: "tetris-score",
+    contractName: "tetris-score-v2",
     mintFeeUstx: BigInt(20_000),
     metaSegment: "tetris",
+    nftAssetName: "tetris-score",
   },
   pacman: {
     id: "pacman",
     label: "Pac-Man",
     emoji: "👾",
     contractAddress: DEPLOYER,
-    contractName: "pacman-score",
+    contractName: "pacman-score-v2",
     mintFeeUstx: BigInt(20_000),
     metaSegment: "pacman",
+    nftAssetName: "pacman-score",
   },
 };

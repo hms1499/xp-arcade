@@ -32,7 +32,7 @@ export async function fetchScoreHoldings(
   const game = GAMES[gameId];
   const apiBase = stacks.network.client?.baseUrl ?? "https://api.hiro.so";
   const contractId = `${game.contractAddress}.${game.contractName}`;
-  const asset = `${contractId}::${game.contractName}`;
+  const asset = `${contractId}::${game.nftAssetName}`;
   const url = `${apiBase}/extended/v1/tokens/nft/holdings?principal=${addr}&asset_identifiers=${asset}&limit=50`;
   const data = (await fetch(url).then((r) => r.json())) as HoldingsResponse;
   const ids = (data.results ?? []).map((r) =>

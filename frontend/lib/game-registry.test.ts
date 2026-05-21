@@ -21,4 +21,10 @@ describe("game-registry", () => {
     expect(GAMES.tetris.mintFeeUstx).toBe(BigInt(20_000));
     expect(GAMES.pacman.mintFeeUstx).toBe(BigInt(20_000));
   });
+
+  it("nftAssetName matches original contract token name for all games", () => {
+    expect(GAMES.snake.nftAssetName).toBe("snake-score");
+    expect(GAMES.tetris.nftAssetName).toBe("tetris-score");
+    expect(GAMES.pacman.nftAssetName).toBe("pacman-score");
+  });
 });
