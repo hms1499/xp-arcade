@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWallet } from "@/state/wallet";
-import { mintScoreForGame } from "@/lib/contract-calls";
+import { mintScoreForGame, getMintsRemaining } from "@/lib/contract-calls";
 import { useMintTx } from "@/state/mint-tx";
 import { type TxStatus } from "@/lib/tx-tracker";
 import { recordScore } from "@/lib/high-score";
@@ -44,6 +44,15 @@ export function SharedMintDialog({
   const defaultName = address ? address.slice(-8) : "anon";
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [mintsRemaining, setMintsRemaining] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!address) return;
+    getMintsRemaining(gameId, address)
+      .then(setMintsRemaining)
+      .catch(() => setMintsRemaining(null));
+  }, [address, gameId]);
+
   const [hs] = useState(() =>
     gameId === "snake"
       ? recordScore(score)
@@ -68,7 +77,9 @@ export function SharedMintDialog({
       startMintTx(gameId, tx, score);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Mint failed";
-      if (
+      if (msg.includes("108") || msg.toLowerCase().includes("mint-limit")) {
+        setError("Mint limit reached for this season (10/10).");
+      } else if (
         msg.includes("104") ||
         msg.toLowerCase().includes("score-too-high")
       ) {
@@ -101,6 +112,16 @@ export function SharedMintDialog({
         <span className="block text-xs text-gray-500 mt-1">
           Minting costs <b>{feeStx} STX</b> and records your score on-chain forever.
         </span>
+        {mintsRemaining !== null && (
+          <span
+            className="block text-xs mt-1"
+            style={{ color: mintsRemaining === 0 ? "#cc0000" : "#555" }}
+          >
+            {mintsRemaining === 0
+              ? "⛔ Mint limit reached for this season (10/10)"
+              : `🎟️ ${mintsRemaining} mint${mintsRemaining === 1 ? "" : "s"} remaining this season`}
+          </span>
+        )}
       </p>
 
       {!address ? (
@@ -131,8 +152,12 @@ export function SharedMintDialog({
             <p className="text-xs text-red-600 mb-2">⚠️ {error}</p>
           )}
           <div style={{ display: "flex", gap: 6 }}>
-            <button onClick={handleMint} disabled={busy}>
-              {busy ? "Opening wallet…" : `Mint for ${feeStx} STX`}
+            <button onClick={handleMint} disabled={busy || mintsRemaining === 0}>
+              {busy
+                ? "Opening wallet…"
+                : mintsRemaining === 0
+                ? "Limit reached"
+                : `Mint for ${feeStx} STX`}
             </button>
             <button onClick={onPlayAgain}>Play Again</button>
             <button onClick={onClose}>Close</button>
