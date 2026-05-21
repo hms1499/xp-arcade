@@ -374,3 +374,111 @@ describe("transfer-ownership", () => {
   });
 });
 
+describe("mint-cap", () => {
+  it("enforces MAX-MINTS-PER-SEASON (10) per player", () => {
+    for (let i = 0; i < 10; i++) {
+      const { result } = simnet.callPublicFn(
+        "snake-score", "mint-score",
+        [Cl.uint(i + 1), Cl.stringAscii("player")], wallet1
+      );
+      expect(result).toBeOk(Cl.uint(i + 1));
+    }
+    const { result } = simnet.callPublicFn(
+      "snake-score", "mint-score",
+      [Cl.uint(11), Cl.stringAscii("player")], wallet1
+    );
+    expect(result).toBeErr(Cl.uint(108));
+  });
+
+  it("cap resets after end-season", () => {
+    for (let i = 0; i < 10; i++) {
+      simnet.callPublicFn("snake-score", "mint-score",
+        [Cl.uint(i + 1), Cl.stringAscii("a")], wallet1);
+    }
+    simnet.callPublicFn("snake-score", "end-season", [], deployer);
+    const { result } = simnet.callPublicFn(
+      "snake-score", "mint-score",
+      [Cl.uint(50), Cl.stringAscii("a")], wallet1
+    );
+    expect(result).toBeOk(Cl.uint(11));
+  });
+
+  it("different players have independent caps", () => {
+    for (let i = 0; i < 10; i++) {
+      simnet.callPublicFn("snake-score", "mint-score",
+        [Cl.uint(i + 1), Cl.stringAscii("a")], w(1));
+    }
+    const { result } = simnet.callPublicFn(
+      "snake-score", "mint-score",
+      [Cl.uint(50), Cl.stringAscii("b")], w(2)
+    );
+    expect(result).toBeOk(Cl.uint(11));
+  });
+});
+
+describe("get-mints-remaining", () => {
+  it("returns 10 for a fresh player", () => {
+    const r = simnet.callReadOnlyFn(
+      "snake-score", "get-mints-remaining",
+      [Cl.principal(wallet1)], wallet1
+    ).result;
+    expect(r).toBeUint(10);
+  });
+
+  it("decrements by 1 per mint", () => {
+    simnet.callPublicFn("snake-score", "mint-score",
+      [Cl.uint(1), Cl.stringAscii("a")], wallet1);
+    const r = simnet.callReadOnlyFn(
+      "snake-score", "get-mints-remaining",
+      [Cl.principal(wallet1)], wallet1
+    ).result;
+    expect(r).toBeUint(9);
+  });
+
+  it("returns 0 when cap reached", () => {
+    for (let i = 0; i < 10; i++) {
+      simnet.callPublicFn("snake-score", "mint-score",
+        [Cl.uint(i + 1), Cl.stringAscii("a")], wallet1);
+    }
+    const r = simnet.callReadOnlyFn(
+      "snake-score", "get-mints-remaining",
+      [Cl.principal(wallet1)], wallet1
+    ).result;
+    expect(r).toBeUint(0);
+  });
+});
+
+describe("get-top-ten-by-season", () => {
+  it("returns current season data matching get-top-ten", () => {
+    simnet.callPublicFn("snake-score", "mint-score",
+      [Cl.uint(100), Cl.stringAscii("a")], w(1));
+    const current = simnet.callReadOnlyFn(
+      "snake-score", "get-top-ten", [], w(1)).result;
+    const bySeason = simnet.callReadOnlyFn(
+      "snake-score", "get-top-ten-by-season",
+      [Cl.uint(1)], w(1)
+    ).result;
+    expect(bySeason).toEqual(current);
+  });
+
+  it("returns season 1 snapshot after end-season; season 2 is empty", () => {
+    simnet.callPublicFn("snake-score", "mint-score",
+      [Cl.uint(100), Cl.stringAscii("a")], w(1));
+    const snapshot = simnet.callReadOnlyFn(
+      "snake-score", "get-top-ten", [], w(1)).result;
+    simnet.callPublicFn("snake-score", "end-season", [], deployer);
+
+    const season1 = simnet.callReadOnlyFn(
+      "snake-score", "get-top-ten-by-season",
+      [Cl.uint(1)], w(1)
+    ).result;
+    expect(season1).toEqual(snapshot);
+
+    const season2 = simnet.callReadOnlyFn(
+      "snake-score", "get-top-ten-by-season",
+      [Cl.uint(2)], w(1)
+    ).result;
+    expect((season2 as any).value.length).toBe(0);
+  });
+});
+
