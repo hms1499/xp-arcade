@@ -37,7 +37,7 @@ export function Desktop({ children }: { children: React.ReactNode }) {
         <DesktopIcon
           label="My NFTs"
           emoji="💾"
-          onOpen={() => open("mynfts-snake")}
+          onOpen={() => open("mynfts")}
         />
       </div>
       {children}

@@ -48,7 +48,7 @@ export function GameShellWindow({
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();
-                openWindow(`mynfts-${gameId}`);
+                openWindow("mynfts");
               }}
             >
               💾 My NFTs
