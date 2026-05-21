@@ -17,6 +17,7 @@ import { useToasts } from "@/state/toasts";
 import { watchTx } from "@/lib/tx-tracker";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
 import { GAMES, type GameId } from "@/lib/game-registry";
+import { formatPayoutMemo } from "@/lib/payout-memo";
 
 type PayoutRow = {
   player: string;
@@ -140,14 +141,33 @@ export function SeasonAdminWindow() {
 
   async function handlePay(row: PayoutRow, season: number) {
     const stxAmount = (row.payoutUstx / 1_000_000).toFixed(4);
-    if (!confirm(`Send ${stxAmount} STX to ${row.player} for Season ${season} rank #${row.rank}?`)) return;
+    if (
+      !confirm(
+        `Send ${stxAmount} STX to ${row.player} for ${gameId} Season ${season} rank #${row.rank}?`,
+      )
+    )
+      return;
     const key = `${season}-${row.player}`;
     setBusyPay(key);
     try {
-      await transferStx(row.player, row.payoutUstx, `XP Arcade S${season} #${row.rank}`);
+      const memo = formatPayoutMemo({ gameId, season, rank: row.rank });
+      const txId = await transferStx(row.player, row.payoutUstx, memo);
       useToasts.getState().push({
         title: "Payout submitted",
-        body: `${stxAmount} STX → ${row.player.slice(0, 6)}…`,
+        body: `${stxAmount} STX → ${row.player.slice(0, 6)}… (watching…)`,
+      });
+      watchTx(txId, (s) => {
+        if (s === "success") {
+          useToasts.getState().push({
+            title: "Payout confirmed",
+            body: `${stxAmount} STX → ${row.player.slice(0, 6)}…`,
+          });
+        } else if (s !== "pending") {
+          useToasts.getState().push({
+            title: "Payout failed",
+            body: `${stxAmount} STX → ${row.player.slice(0, 6)}… rejected.`,
+          });
+        }
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Transfer failed");
