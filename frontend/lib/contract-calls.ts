@@ -93,6 +93,73 @@ export async function getMintsRemaining(
   return Number(unwrap(cvToValue(res)));
 }
 
+export async function getCurrentSeasonForGame(gameId: GameId): Promise<number> {
+  const res = await fetchCallReadOnlyFunction({
+    ...gameBase(gameId),
+    functionName: "get-current-season",
+    functionArgs: [],
+    senderAddress: GAMES[gameId].contractAddress,
+  });
+  return Number(unwrap(cvToValue(res)));
+}
+
+export async function getPrizePoolBalanceForGame(gameId: GameId): Promise<number> {
+  const res = await fetchCallReadOnlyFunction({
+    ...gameBase(gameId),
+    functionName: "get-prize-pool-balance",
+    functionArgs: [],
+    senderAddress: GAMES[gameId].contractAddress,
+  });
+  return Number(unwrap(cvToValue(res)));
+}
+
+export async function getSeasonPrizeForGame(
+  gameId: GameId,
+  season: number,
+): Promise<SeasonPrize> {
+  const res = await fetchCallReadOnlyFunction({
+    ...gameBase(gameId),
+    functionName: "get-season-prize",
+    functionArgs: [uintCV(season)],
+    senderAddress: GAMES[gameId].contractAddress,
+  });
+  const v = unwrap<null | {
+    total: string;
+    "top-ten": Array<{ player: string; score: string }>;
+  }>(cvToValue(res));
+  if (!v) return null;
+  return {
+    total: Number(v.total),
+    topTen: v["top-ten"].map((e) => ({ player: String(e.player), score: Number(e.score) })),
+  };
+}
+
+export async function hasClaimedPrizeForGame(
+  gameId: GameId,
+  player: string,
+  season: number,
+): Promise<boolean> {
+  const res = await fetchCallReadOnlyFunction({
+    ...gameBase(gameId),
+    functionName: "has-claimed-prize",
+    functionArgs: [principalCV(player), uintCV(season)],
+    senderAddress: player,
+  });
+  return Boolean(cvToValue(res));
+}
+
+export async function endSeasonForGame(gameId: GameId): Promise<string> {
+  return new Promise((resolve, reject) => {
+    openContractCall({
+      ...gameBase(gameId),
+      functionName: "end-season",
+      functionArgs: [],
+      onFinish: (data) => resolve(data.txId),
+      onCancel: () => reject(new Error("cancelled")),
+    });
+  });
+}
+
 export async function mintScore(
   score: number,
   playerName: string,
