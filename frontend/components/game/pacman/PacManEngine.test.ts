@@ -24,7 +24,7 @@ describe("PacManEngine", () => {
     expect(moved.pacman.col).toBeGreaterThanOrEqual(0);
   });
 
-  it("eating a dot increments score by 10 and decrements dotsRemaining", () => {
+  it("eating a dot increments score by 1 and decrements dotsRemaining", () => {
     const s = createPacManState();
     const withDot = {
       ...s,
@@ -32,7 +32,7 @@ describe("PacManEngine", () => {
     };
     const after = movePacMan(withDot, "right");
     if (after.score > s.score) {
-      expect(after.score).toBe(s.score + 10);
+      expect(after.score).toBe(s.score + 1);
       expect(after.dotsRemaining).toBe(s.dotsRemaining - 1);
     }
   });

@@ -203,11 +203,11 @@ export function movePacMan(state: PacManState, dir: Direction): PacManState {
   const cell = newMaze[newRow]?.[newCol];
   if (cell === 1) {
     newMaze[newRow][newCol] = 3;
-    score += 10;
+    score += 1;
     dotsRemaining -= 1;
   } else if (cell === 2) {
     newMaze[newRow][newCol] = 3;
-    score += 50;
+    score += 5;
     dotsRemaining -= 1;
     frightened = true;
   }
@@ -222,7 +222,7 @@ export function movePacMan(state: PacManState, dir: Direction): PacManState {
   newGhosts = newGhosts.map((g) => {
     const result = checkCollision(newPacman, g);
     if (result === "eat") {
-      ghostScoreBonus += 200;
+      ghostScoreBonus += 20;
       return { ...g, row: GHOST_STARTS[g.id].row, col: GHOST_STARTS[g.id].col, frightTimer: 0 };
     }
     if (result === "die") { died = true; }
