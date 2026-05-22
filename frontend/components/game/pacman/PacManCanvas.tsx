@@ -121,6 +121,7 @@ export function PacManCanvas({
   const gameOverCalledRef = useRef(false);
   const pausedRef = useRef(false);
   const [paused, setPaused] = useState(false);
+  const [lives, setLives] = useState<number>(stateRef.current.lives);
 
   const setPausedBoth = useCallback((v: boolean) => {
     pausedRef.current = v;
@@ -149,6 +150,7 @@ export function PacManCanvas({
         next = tickGhosts(next);
         stateRef.current = next;
         onScoreChange(next.score);
+        if (next.lives !== s.lives) setLives(next.lives);
         if ((next.gameOver || next.won) && !gameOverCalledRef.current) {
           gameOverCalledRef.current = true;
           onGameOver(next.score);
@@ -170,10 +172,6 @@ export function PacManCanvas({
     cur.ghosts.forEach((g, i) => {
       drawGhost(ctx, g.row, g.col, GHOST_COLORS[i], g.frightTimer);
     });
-
-    ctx.fillStyle = "#ff0";
-    ctx.font = "bold 12px monospace";
-    ctx.fillText(`♥ ${cur.lives}`, 4, 14);
 
     if (pausedRef.current) {
       drawPauseOverlay(ctx, canvas.width, canvas.height);
@@ -223,6 +221,29 @@ export function PacManCanvas({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+      <div
+        style={{
+          width: MAZE_COLS * TILE_SIZE,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          background: "#222",
+          border: "2px inset #888",
+          padding: "3px 8px",
+          color: "#fff",
+          fontFamily: "monospace",
+          fontSize: 11,
+        }}
+      >
+        <span style={{ color: "#aaa", textTransform: "uppercase", letterSpacing: 1, fontSize: 9 }}>
+          Lives
+        </span>
+        <span style={{ color: "#ff5050", fontSize: 14, letterSpacing: 2 }}>
+          {Array.from({ length: Math.max(0, lives) }).map((_, i) => (
+            <span key={i}>♥</span>
+          ))}
+        </span>
+      </div>
       <canvas
         ref={canvasRef}
         width={MAZE_COLS * TILE_SIZE}
