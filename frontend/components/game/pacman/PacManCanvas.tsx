@@ -27,7 +27,9 @@ const DPAD_BTN: React.CSSProperties = {
   WebkitUserSelect: "none",
 };
 
-function drawMaze(ctx: CanvasRenderingContext2D, maze: number[][]) {
+function drawMaze(ctx: CanvasRenderingContext2D, maze: number[][], pelletPulse: number) {
+  // pelletPulse in [0, 1] — sin-driven radius modulation for power pellets only.
+  const pelletRadius = 4.5 + pelletPulse * 2;
   for (let r = 0; r < MAZE_ROWS; r++) {
     for (let c = 0; c < MAZE_COLS; c++) {
       const cell = maze[r][c];
@@ -47,7 +49,7 @@ function drawMaze(ctx: CanvasRenderingContext2D, maze: number[][]) {
         } else if (cell === 2) {
           ctx.fillStyle = DOT_COLOR;
           ctx.beginPath();
-          ctx.arc(x + TILE_SIZE / 2, y + TILE_SIZE / 2, 5, 0, Math.PI * 2);
+          ctx.arc(x + TILE_SIZE / 2, y + TILE_SIZE / 2, pelletRadius, 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -179,7 +181,9 @@ export function PacManCanvas({
     const cur = stateRef.current;
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    drawMaze(ctx, cur.maze);
+    // Pulse oscillates ~0.7Hz so pellets clearly draw the eye.
+    const pulse = (Math.sin(timestamp / 220) + 1) / 2;
+    drawMaze(ctx, cur.maze, pulse);
 
     if (!pausedRef.current) {
       mouthRef.current = (mouthRef.current + 0.15) % (Math.PI / 3);
@@ -189,6 +193,20 @@ export function PacManCanvas({
     cur.ghosts.forEach((g, i) => {
       drawGhost(ctx, g.row, g.col, GHOST_COLORS[i], g.frightTimer);
     });
+
+    const maxFright = Math.max(0, ...cur.ghosts.map((g) => g.frightTimer));
+    if (maxFright > 0) {
+      // Ratio of FRIGHT_TICKS (180 in engine). Hard-coded ratio rather than
+      // importing the constant — engine change would just under/over-fill the
+      // bar without breaking the game.
+      const ratio = Math.min(1, maxFright / 180);
+      const barW = canvas.width - 8;
+      const fillW = Math.floor(barW * ratio);
+      ctx.fillStyle = "#222";
+      ctx.fillRect(4, 4, barW, 4);
+      ctx.fillStyle = ratio > 0.3 ? "#4af" : "#f80";
+      ctx.fillRect(4, 4, fillW, 4);
+    }
 
     if (pausedRef.current) {
       drawPauseOverlay(ctx, canvas.width, canvas.height);
