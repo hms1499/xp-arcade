@@ -13,6 +13,7 @@ import {
   TETROMINOES,
   type TetrisState,
 } from "./TetrisEngine";
+import { TetrisTouchControls, type TetrisAction } from "./TetrisTouchControls";
 
 const COLORS = [
   "transparent",
@@ -77,6 +78,11 @@ export function TetrisCanvas({
   const pausedRef = useRef(false);
   const [paused, setPaused] = useState(false);
   const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
+  const [isTouch, setIsTouch] = useState(false);
+
+  useEffect(() => {
+    setIsTouch(window.matchMedia("(pointer: coarse)").matches);
+  }, []);
 
   const setPausedBoth = useCallback((v: boolean) => {
     pausedRef.current = v;
@@ -176,6 +182,19 @@ export function TetrisCanvas({
     return () => window.removeEventListener("keydown", handleKey);
   }, [handleKey]);
 
+  const handleAction = useCallback((a: TetrisAction) => {
+    const cur = stateRef.current;
+    if (cur.gameOver || pausedRef.current) return;
+    switch (a) {
+      case "left":   setState(moveLeft(cur)); break;
+      case "right":  setState(moveRight(cur)); break;
+      case "rotate": setState(rotate(cur)); break;
+      case "soft":   setState(moveDown(cur)); break;
+      case "hard":   setState(hardDrop(cur)); break;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const overlay = getOverlay(s);
   const nextMask = TETROMINOES[s.next][0];
   const nextColor = TETROMINO_COLOR[s.next];
@@ -183,7 +202,8 @@ export function TetrisCanvas({
 
   return (
     <div style={{ display: "flex", gap: 8, userSelect: "none", alignItems: "flex-start" }}>
-      {/* Main board */}
+      {/* Main board column */}
+      <div style={{ display: "flex", flexDirection: "column" }}>
       <div style={{ position: "relative" }}>
         <div
           style={{
@@ -233,6 +253,8 @@ export function TetrisCanvas({
             </button>
           </div>
         )}
+      </div>
+      {isTouch && <TetrisTouchControls onAction={handleAction} />}
       </div>
 
       {/* Side panel */}
@@ -285,14 +307,16 @@ export function TetrisCanvas({
           ))}
         </div>
 
-        {/* Controls hint */}
-        <div style={{ background: "#222", border: "2px inset #888", padding: 8, color: "#666", fontSize: 10, lineHeight: 1.6 }}>
-          <div>← → Move</div>
-          <div>↑ / Z Rotate</div>
-          <div>↓ Soft drop</div>
-          <div>Space Hard drop</div>
-          <div style={{ marginTop: 4, color: "#555" }}>Esc to pause</div>
-        </div>
+        {/* Controls hint (desktop only — touch users see on-screen buttons) */}
+        {!isTouch && (
+          <div style={{ background: "#222", border: "2px inset #888", padding: 8, color: "#666", fontSize: 10, lineHeight: 1.6 }}>
+            <div>← → Move</div>
+            <div>↑ / Z Rotate</div>
+            <div>↓ Soft drop</div>
+            <div>Space Hard drop</div>
+            <div style={{ marginTop: 4, color: "#555" }}>Esc to pause</div>
+          </div>
+        )}
 
         {/* Pause button */}
         <button
