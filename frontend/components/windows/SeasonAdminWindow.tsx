@@ -14,7 +14,9 @@ import {
   computePayoutUstx,
 } from "@/lib/contract-calls";
 import { useToasts } from "@/state/toasts";
-import { usePayoutLedger, type PayoutEntry } from "@/state/payout-ledger";
+import { usePayoutLedger, payoutKey, type PayoutEntry } from "@/state/payout-ledger";
+import { reconcile, type ReconRow } from "@/lib/reconciliation";
+import { buildPayoutCsv } from "@/lib/payout-csv";
 import { watchTx } from "@/lib/tx-tracker";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
 import { GAMES, type GameId } from "@/lib/game-registry";
@@ -41,6 +43,18 @@ export function isOwnerAddress(addr: string | null): boolean {
 }
 
 const EXPLORER = "https://explorer.hiro.so/txid";
+
+function downloadCsv(filename: string, content: string) {
+  const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
 function renderPayoutCell(args: {
   entry: PayoutEntry | undefined;
@@ -326,7 +340,31 @@ export function SeasonAdminWindow() {
           );
         })()}
 
-        {seasons.map((s) => (
+        {seasons.map((s) => {
+          const reconRows: ReconRow[] = s.rows.map((r) => ({
+            player: r.player,
+            rank: r.rank,
+            score: r.score,
+            expectedUstx: r.payoutUstx,
+            claimed: r.claimed,
+          }));
+          const recon = reconcile(
+            reconRows,
+            ledgerEntries,
+            (p) => payoutKey(gameId, s.season, p),
+          );
+          const anomalyPlayers = new Set(recon.anomalies.map((a) => a.player));
+          const handleExport = () => {
+            const csv = buildPayoutCsv({
+              gameId,
+              season: s.season,
+              rows: reconRows,
+              ledger: ledgerEntries,
+              keyFor: (p) => payoutKey(gameId, s.season, p),
+            });
+            downloadCsv(`${gameId}-season-${s.season}-payouts.csv`, csv);
+          };
+          return (
           <fieldset key={s.season} className="mb-3">
             <legend>Season {s.season} · Pool {(s.total / 1_000_000).toFixed(4)} STX</legend>
             {s.hasTies && (
@@ -337,6 +375,32 @@ export function SeasonAdminWindow() {
                 ⚠️ Tied scores detected. Tied players share the same rank and payout (matches on-chain
                 claim-prize). Verify the table before sending — total disbursed may exceed 100% of pool.
               </p>
+            )}
+            {s.rows.length > 0 && (
+              <div
+                className="flex justify-between items-center text-[10px] px-1 mb-1"
+                style={{
+                  background: recon.anomalies.length > 0 ? "#fff0f0" : "#f0f4ff",
+                  border: `1px solid ${recon.anomalies.length > 0 ? "#cc8080" : "#9090c0"}`,
+                  padding: "3px 4px",
+                }}
+              >
+                <span>
+                  Paid <b>{recon.paid}</b>/{recon.total}
+                  {" · Pending "}<b>{recon.pending}</b>
+                  {" · Failed "}<b>{recon.failed}</b>
+                  {" · Unsent "}<b>{recon.unsent}</b>
+                  {recon.anomalies.length > 0 && (
+                    <>
+                      {" · "}
+                      <span style={{ color: "#aa0000" }}>
+                        ⚠ {recon.anomalies.length} issue{recon.anomalies.length > 1 ? "s" : ""}
+                      </span>
+                    </>
+                  )}
+                </span>
+                <button onClick={handleExport}>Export CSV</button>
+              </div>
             )}
             {s.rows.length === 0 ? (
               <p className="px-1 text-gray-500">No top-10 entries.</p>
@@ -355,8 +419,12 @@ export function SeasonAdminWindow() {
                 <tbody>
                   {s.rows.map((r) => {
                     const key = `${s.season}-${r.player}`;
+                    const flagged = anomalyPlayers.has(r.player);
                     return (
-                      <tr key={r.player}>
+                      <tr
+                        key={r.player}
+                        style={flagged ? { background: "#fff4f4" } : undefined}
+                      >
                         <td>{r.rank}</td>
                         <td title={r.player}>{r.player.slice(0, 6)}…{r.player.slice(-4)}</td>
                         <td>{r.score}</td>
@@ -381,7 +449,8 @@ export function SeasonAdminWindow() {
               ✓ = player called claim-prize directly on-chain. Payouts are owner-initiated — send STX regardless of claim status; tracking is off-chain.
             </p>
           </fieldset>
-        ))}
+          );
+        })}
       </div>
     </Window>
   );
