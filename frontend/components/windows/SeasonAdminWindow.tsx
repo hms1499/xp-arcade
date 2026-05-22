@@ -19,6 +19,7 @@ import { watchTx } from "@/lib/tx-tracker";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
 import { GAMES, type GameId } from "@/lib/game-registry";
 import { formatPayoutMemo } from "@/lib/payout-memo";
+import { getStxBalance } from "@/lib/stx-balance";
 
 type PayoutRow = {
   player: string;
@@ -44,13 +45,18 @@ const EXPLORER = "https://explorer.hiro.so/txid";
 function renderPayoutCell(args: {
   entry: PayoutEntry | undefined;
   busy: boolean;
+  insufficient: boolean;
   onSend: () => void;
 }) {
-  const { entry, busy, onSend } = args;
+  const { entry, busy, insufficient, onSend } = args;
   if (!entry) {
     return (
-      <button onClick={onSend} disabled={busy}>
-        {busy ? "…" : "Send STX"}
+      <button
+        onClick={onSend}
+        disabled={busy || insufficient}
+        title={insufficient ? "Owner wallet balance is below this payout" : undefined}
+      >
+        {busy ? "…" : insufficient ? "Low balance" : "Send STX"}
       </button>
     );
   }
@@ -70,8 +76,12 @@ function renderPayoutCell(args: {
   }
   return (
     <span>
-      <button onClick={onSend} disabled={busy}>
-        {busy ? "…" : "Retry"}
+      <button
+        onClick={onSend}
+        disabled={busy || insufficient}
+        title={insufficient ? "Owner wallet balance is below this payout" : undefined}
+      >
+        {busy ? "…" : insufficient ? "Low balance" : "Retry"}
       </button>{" "}
       <a href={`${EXPLORER}/${entry.txId}`} target="_blank" rel="noreferrer" title="failed tx">
         ✗
@@ -92,6 +102,12 @@ export function SeasonAdminWindow() {
   const countdown = useSeasonCountdown();
   const [gameId, setGameId] = useState<GameId>("snake");
   const ledgerEntries = usePayoutLedger((s) => s.entries);
+  const [ownerBalance, setOwnerBalance] = useState<number | null>(null);
+
+  const refreshOwnerBalance = useCallback(() => {
+    if (!address) return;
+    getStxBalance(address).then(setOwnerBalance);
+  }, [address]);
 
   const loadPastSeasons = useCallback(
     async (cs: number, g: GameId) => {
@@ -126,6 +142,7 @@ export function SeasonAdminWindow() {
   useEffect(() => {
     if (!w) return;
     setError(null);
+    refreshOwnerBalance();
     Promise.all([
       getCurrentSeasonForGame(gameId),
       getPrizePoolBalanceForGame(gameId),
@@ -136,7 +153,7 @@ export function SeasonAdminWindow() {
         return loadPastSeasons(cs, gameId);
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Load failed"));
-  }, [w, gameId, loadPastSeasons]);
+  }, [w, gameId, loadPastSeasons, refreshOwnerBalance]);
 
   if (!w) return null;
 
@@ -211,6 +228,7 @@ export function SeasonAdminWindow() {
       watchTx(txId, (s) => {
         if (s === "success") {
           usePayoutLedger.getState().updateStatus(gameId, season, row.player, "success");
+          refreshOwnerBalance();
           useToasts.getState().push({
             title: "Payout confirmed",
             body: `${stxAmount} STX → ${row.player.slice(0, 6)}…`,
@@ -277,6 +295,37 @@ export function SeasonAdminWindow() {
           <p className="text-gray-500 italic">No past seasons yet — end the current one to create a snapshot.</p>
         )}
 
+        {seasons.length > 0 && (() => {
+          const unpaidUstx = seasons.reduce((sum, s) => {
+            return (
+              sum +
+              s.rows.reduce((rowSum, r) => {
+                const entry = ledgerEntries[`${gameId}-${s.season}-${r.player}`];
+                const settled = entry?.status === "success" || entry?.status === "pending";
+                return settled ? rowSum : rowSum + r.payoutUstx;
+              }, 0)
+            );
+          }, 0);
+          const short = ownerBalance != null && ownerBalance < unpaidUstx;
+          return (
+            <p
+              className="text-[10px] px-1 mb-2"
+              style={{
+                color: short ? "#aa0000" : "#000080",
+                background: short ? "#ffe0e0" : "#eef0ff",
+                border: `1px solid ${short ? "#cc8080" : "#9090c0"}`,
+                padding: "4px",
+              }}
+            >
+              Owner balance:{" "}
+              <b>{ownerBalance != null ? (ownerBalance / 1_000_000).toFixed(4) : "…"} STX</b>
+              {" · Unpaid total: "}
+              <b>{(unpaidUstx / 1_000_000).toFixed(4)} STX</b>
+              {short && " — wallet is short; top up before sending."}
+            </p>
+          );
+        })()}
+
         {seasons.map((s) => (
           <fieldset key={s.season} className="mb-3">
             <legend>Season {s.season} · Pool {(s.total / 1_000_000).toFixed(4)} STX</legend>
@@ -317,6 +366,8 @@ export function SeasonAdminWindow() {
                           {renderPayoutCell({
                             entry: ledgerEntries[`${gameId}-${s.season}-${r.player}`],
                             busy: busyPay === key,
+                            insufficient:
+                              ownerBalance != null && ownerBalance < r.payoutUstx,
                             onSend: () => handlePay(r, s.season),
                           })}
                         </td>
