@@ -66,9 +66,11 @@ function getOverlay(state: TetrisState): number[][] {
 export function TetrisCanvas({
   onGameOver,
   onScoreChange,
+  windowActive = true,
 }: {
   onGameOver: (score: number) => void;
   onScoreChange: (score: number) => void;
+  windowActive?: boolean;
 }) {
   const stateRef = useRef<TetrisState>(createTetrisState());
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -101,15 +103,27 @@ export function TetrisCanvas({
 
   useEffect(() => {
     startTick(stateRef.current.level);
-    // Auto-pause on tab/window blur
+    // Auto-pause on tab/window blur AND when this XP window loses focus to
+    // another XP window (see windowActive effect below).
     const onBlur = () => setPausedBoth(true);
+    const onHide = () => {
+      if (document.hidden) setPausedBoth(true);
+    };
     window.addEventListener("blur", onBlur);
+    document.addEventListener("visibilitychange", onHide);
     return () => {
       if (tickRef.current) clearInterval(tickRef.current);
       window.removeEventListener("blur", onBlur);
+      document.removeEventListener("visibilitychange", onHide);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!windowActive && !stateRef.current.gameOver) {
+      setPausedBoth(true);
+    }
+  }, [windowActive, setPausedBoth]);
 
   const prevLevel = useRef(1);
   const s = stateRef.current;
