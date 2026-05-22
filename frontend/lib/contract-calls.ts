@@ -255,18 +255,6 @@ export async function hasClaimedPrize(player: string, season: number): Promise<b
   return Boolean(cvToValue(res));
 }
 
-export async function claimPrize(season: number): Promise<string> {
-  return new Promise((resolve, reject) => {
-    openContractCall({
-      ...base,
-      functionName: "claim-prize",
-      functionArgs: [uintCV(season)],
-      onFinish: (data) => resolve(data.txId),
-      onCancel: () => reject(new Error("cancelled")),
-    });
-  });
-}
-
 export async function getCurrentSeason(): Promise<number> {
   const res = await fetchCallReadOnlyFunction({
     ...base,
@@ -328,7 +316,8 @@ export async function transferStx(
   }
 }
 
-// Rank-based payout used by claim-prize: top 1-3 get 20% each, rank 4-10 get 4/70 each.
+// Rank-based payout (mirrors the on-chain formula): top 1-3 get 20% each, rank 4-10 get 4/70 each.
+// Used by Season Admin for owner-initiated STX transfers.
 export function computePayoutUstx(total: number, rank: number): number {
   if (rank <= 3) return Math.floor((total * 20) / 100);
   return Math.floor((total * 4) / 70);
