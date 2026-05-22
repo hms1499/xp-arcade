@@ -15,6 +15,18 @@ const WALL_COLOR   = "#00008b";
 const DOT_COLOR    = "#ffb8ae";
 const PACMAN_COLOR = "#ffff00";
 
+const DPAD_BTN: React.CSSProperties = {
+  width: 48,
+  height: 48,
+  fontSize: 20,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "default",
+  userSelect: "none",
+  WebkitUserSelect: "none",
+};
+
 function drawMaze(ctx: CanvasRenderingContext2D, maze: number[][]) {
   for (let r = 0; r < MAZE_ROWS; r++) {
     for (let c = 0; c < MAZE_COLS; c++) {
@@ -122,6 +134,11 @@ export function PacManCanvas({
   const pausedRef = useRef(false);
   const [paused, setPaused] = useState(false);
   const [lives, setLives] = useState<number>(stateRef.current.lives);
+  const [isTouch, setIsTouch] = useState(false);
+
+  useEffect(() => {
+    setIsTouch(window.matchMedia("(pointer: coarse)").matches);
+  }, []);
 
   const setPausedBoth = useCallback((v: boolean) => {
     pausedRef.current = v;
@@ -250,21 +267,65 @@ export function PacManCanvas({
         height={MAZE_ROWS * TILE_SIZE}
         style={{ display: "block", imageRendering: "pixelated" }}
       />
-      <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 10, color: "#555" }}>
-        <span>Arrows / WASD to move</span>
-        <span>·</span>
-        <span>Esc to pause</span>
-        <button
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={() => {
-            const s = stateRef.current;
-            if (!s.gameOver && !s.won) setPausedBoth(!paused);
+      {isTouch ? (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "48px 48px 48px",
+            gridTemplateRows: "48px 48px",
+            gap: 2,
+            marginTop: 4,
+            justifyContent: "center",
           }}
-          style={{ fontSize: 10, height: 20, marginLeft: 4 }}
         >
-          {paused ? "▶ Resume" : "⏸ Pause"}
-        </button>
-      </div>
+          <div />
+          <button
+            style={DPAD_BTN}
+            onTouchStart={(e) => { e.preventDefault(); if (!pausedRef.current) dirBufferRef.current = "up"; }}
+            onMouseDown={(e) => { e.preventDefault(); if (!pausedRef.current) dirBufferRef.current = "up"; }}
+          >▲</button>
+          <button
+            style={DPAD_BTN}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={() => {
+              const s = stateRef.current;
+              if (!s.gameOver && !s.won) setPausedBoth(!paused);
+            }}
+            title={paused ? "Resume" : "Pause"}
+          >{paused ? "▶" : "⏸"}</button>
+          <button
+            style={DPAD_BTN}
+            onTouchStart={(e) => { e.preventDefault(); if (!pausedRef.current) dirBufferRef.current = "left"; }}
+            onMouseDown={(e) => { e.preventDefault(); if (!pausedRef.current) dirBufferRef.current = "left"; }}
+          >◀</button>
+          <button
+            style={DPAD_BTN}
+            onTouchStart={(e) => { e.preventDefault(); if (!pausedRef.current) dirBufferRef.current = "down"; }}
+            onMouseDown={(e) => { e.preventDefault(); if (!pausedRef.current) dirBufferRef.current = "down"; }}
+          >▼</button>
+          <button
+            style={DPAD_BTN}
+            onTouchStart={(e) => { e.preventDefault(); if (!pausedRef.current) dirBufferRef.current = "right"; }}
+            onMouseDown={(e) => { e.preventDefault(); if (!pausedRef.current) dirBufferRef.current = "right"; }}
+          >▶</button>
+        </div>
+      ) : (
+        <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 10, color: "#555" }}>
+          <span>Arrows / WASD to move</span>
+          <span>·</span>
+          <span>Esc to pause</span>
+          <button
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={() => {
+              const s = stateRef.current;
+              if (!s.gameOver && !s.won) setPausedBoth(!paused);
+            }}
+            style={{ fontSize: 10, height: 20, marginLeft: 4 }}
+          >
+            {paused ? "▶ Resume" : "⏸ Pause"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
