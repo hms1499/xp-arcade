@@ -275,7 +275,6 @@ export function TetrisCanvas({
         {/* Stats */}
         <div style={{ background: "#222", border: "2px inset #888", padding: 8, display: "flex", flexDirection: "column", gap: 8 }}>
           {[
-            { label: "Score", value: s.score },
             { label: "Level", value: s.level },
             { label: "Lines", value: s.lines },
           ].map(({ label, value }) => (
