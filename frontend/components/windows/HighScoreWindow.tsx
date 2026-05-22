@@ -222,6 +222,17 @@ function LeaderboardTab({
           {myRank > 0 && <> · Your rank: #{myRank}</>}
         </p>
       )}
+      {gameId === "snake" && (
+        <p
+          className="text-[9px] text-gray-500 mt-1 px-1 py-1"
+          style={{ background: "#f5f5f0", border: "1px solid #d0d0c8", lineHeight: 1.3 }}
+          title="Rarity tiers are shared across all games but reachability differs by game dynamics."
+        >
+          ℹ️ Snake's 20×20 grid caps practical scores around 400 — a Rare Snake
+          NFT is roughly as hard to earn as an Epic in Tetris or Pac-Man. Tiers
+          reflect achievement within each game, not cross-game equivalence.
+        </p>
+      )}
     </div>
   );
 }
