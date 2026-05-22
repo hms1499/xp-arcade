@@ -32,6 +32,7 @@ type SeasonView = {
   season: number;
   total: number;
   rows: PayoutRow[];
+  hasTies: boolean;
 };
 
 export function isOwnerAddress(addr: string | null): boolean {
@@ -99,16 +100,23 @@ export function SeasonAdminWindow() {
         const snap = await getSeasonPrizeForGame(g, s);
         if (!snap) continue;
         const sorted = [...snap.topTen].sort((a, b) => b.score - a.score);
+        // Match on-chain rank-fold: rank = 1 + count(entries with strictly greater score).
+        // Ties share the same rank, identical to claim-prize behaviour.
         const rows: PayoutRow[] = await Promise.all(
-          sorted.map(async (e, i) => ({
-            player: e.player,
-            rank: i + 1,
-            score: e.score,
-            payoutUstx: computePayoutUstx(snap.total, i + 1),
-            claimed: await hasClaimedPrizeForGame(g, e.player, s).catch(() => false),
-          })),
+          sorted.map(async (e) => {
+            const rank = 1 + snap.topTen.filter((x) => x.score > e.score).length;
+            return {
+              player: e.player,
+              rank,
+              score: e.score,
+              payoutUstx: computePayoutUstx(snap.total, rank),
+              claimed: await hasClaimedPrizeForGame(g, e.player, s).catch(() => false),
+            };
+          }),
         );
-        results.push({ season: s, total: snap.total, rows });
+        const scores = sorted.map((e) => e.score);
+        const hasTies = new Set(scores).size < scores.length;
+        results.push({ season: s, total: snap.total, rows, hasTies });
       }
       setSeasons(results);
     },
@@ -272,6 +280,15 @@ export function SeasonAdminWindow() {
         {seasons.map((s) => (
           <fieldset key={s.season} className="mb-3">
             <legend>Season {s.season} · Pool {(s.total / 1_000_000).toFixed(4)} STX</legend>
+            {s.hasTies && (
+              <p
+                className="text-[10px] px-1 mb-1"
+                style={{ color: "#aa6600", background: "#fff8d6", border: "1px solid #e0c060", padding: "4px" }}
+              >
+                ⚠️ Tied scores detected. Tied players share the same rank and payout (matches on-chain
+                claim-prize). Verify the table before sending — total disbursed may exceed 100% of pool.
+              </p>
+            )}
             {s.rows.length === 0 ? (
               <p className="px-1 text-gray-500">No top-10 entries.</p>
             ) : (
