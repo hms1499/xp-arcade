@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import {
   createPacManState,
   movePacMan,
@@ -73,11 +73,8 @@ function drawGhost(
   const h = TILE_SIZE - 2;
   ctx.fillStyle = frightTimer > 0 ? FRIGHT_COLOR : color;
   ctx.beginPath();
-  // Rounded top
   ctx.arc(x + w / 2, y + w / 2, w / 2, Math.PI, 0);
-  // Right side down
   ctx.lineTo(x + w, y + h);
-  // Wavy bottom (3 bumps)
   const bumpW = w / 3;
   for (let i = 2; i >= 0; i--) {
     ctx.quadraticCurveTo(
@@ -93,12 +90,27 @@ function drawGhost(
   ctx.fill();
 }
 
+function drawPauseOverlay(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  ctx.fillStyle = "rgba(0,0,0,0.6)";
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = "#ffff00";
+  ctx.font = "bold 18px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("PAUSED", w / 2, h / 2);
+  ctx.fillStyle = "#aaa";
+  ctx.font = "11px monospace";
+  ctx.fillText("Press Esc to resume", w / 2, h / 2 + 22);
+  ctx.textAlign = "left";
+}
+
 export function PacManCanvas({
   onGameOver,
   onScoreChange,
+  windowActive = true,
 }: {
   onGameOver: (score: number) => void;
   onScoreChange: (score: number) => void;
+  windowActive?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<PacManState>(createPacManState());
@@ -107,6 +119,19 @@ export function PacManCanvas({
   const rafRef = useRef<number>(0);
   const lastTickRef = useRef(0);
   const gameOverCalledRef = useRef(false);
+  const pausedRef = useRef(false);
+  const [paused, setPaused] = useState(false);
+
+  const setPausedBoth = useCallback((v: boolean) => {
+    pausedRef.current = v;
+    setPaused(v);
+  }, []);
+
+  useEffect(() => {
+    if (!windowActive && !stateRef.current.gameOver && !stateRef.current.won) {
+      setPausedBoth(true);
+    }
+  }, [windowActive, setPausedBoth]);
 
   const loop = useCallback((timestamp: number) => {
     const canvas = canvasRef.current;
@@ -115,9 +140,10 @@ export function PacManCanvas({
     if (!ctx) return;
 
     const TICK_MS = 100;
-    if (timestamp - lastTickRef.current >= TICK_MS) {
+    const s = stateRef.current;
+
+    if (!pausedRef.current && timestamp - lastTickRef.current >= TICK_MS) {
       lastTickRef.current = timestamp;
-      const s = stateRef.current;
       if (!s.gameOver && !s.won) {
         let next = movePacMan(s, dirBufferRef.current);
         next = tickGhosts(next);
@@ -136,17 +162,22 @@ export function PacManCanvas({
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     drawMaze(ctx, cur.maze);
 
-    mouthRef.current = (mouthRef.current + 0.15) % (Math.PI / 3);
+    if (!pausedRef.current) {
+      mouthRef.current = (mouthRef.current + 0.15) % (Math.PI / 3);
+    }
     drawPacMan(ctx, cur.pacman.row, cur.pacman.col, mouthRef.current);
 
     cur.ghosts.forEach((g, i) => {
       drawGhost(ctx, g.row, g.col, GHOST_COLORS[i], g.frightTimer);
     });
 
-    // Lives HUD
     ctx.fillStyle = "#ff0";
     ctx.font = "bold 12px monospace";
     ctx.fillText(`♥ ${cur.lives}`, 4, 14);
+
+    if (pausedRef.current) {
+      drawPauseOverlay(ctx, canvas.width, canvas.height);
+    }
 
     rafRef.current = requestAnimationFrame(loop);
   }, [onGameOver, onScoreChange]);
@@ -157,27 +188,62 @@ export function PacManCanvas({
   }, [loop]);
 
   const handleKey = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      const s = stateRef.current;
+      if (!s.gameOver && !s.won) {
+        setPausedBoth(!pausedRef.current);
+        e.preventDefault();
+      }
+      return;
+    }
     const MAP: Record<string, Direction> = {
       ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
       w: "up", s: "down", a: "left", d: "right",
     };
     if (MAP[e.key]) {
       e.preventDefault();
-      dirBufferRef.current = MAP[e.key];
+      if (!pausedRef.current) dirBufferRef.current = MAP[e.key];
     }
-  }, []);
+  }, [setPausedBoth]);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [handleKey]);
+    const onHide = () => {
+      if (document.hidden) setPausedBoth(true);
+    };
+    const onBlur = () => setPausedBoth(true);
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, [handleKey, setPausedBoth]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={MAZE_COLS * TILE_SIZE}
-      height={MAZE_ROWS * TILE_SIZE}
-      style={{ display: "block", imageRendering: "pixelated" }}
-    />
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+      <canvas
+        ref={canvasRef}
+        width={MAZE_COLS * TILE_SIZE}
+        height={MAZE_ROWS * TILE_SIZE}
+        style={{ display: "block", imageRendering: "pixelated" }}
+      />
+      <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 10, color: "#555" }}>
+        <span>Arrows / WASD to move</span>
+        <span>·</span>
+        <span>Esc to pause</span>
+        <button
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={() => {
+            const s = stateRef.current;
+            if (!s.gameOver && !s.won) setPausedBoth(!paused);
+          }}
+          style={{ fontSize: 10, height: 20, marginLeft: 4 }}
+        >
+          {paused ? "▶ Resume" : "⏸ Pause"}
+        </button>
+      </div>
+    </div>
   );
 }
