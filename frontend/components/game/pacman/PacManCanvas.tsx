@@ -133,6 +133,7 @@ export function PacManCanvas({
   const rafRef = useRef<number>(0);
   const lastTickRef = useRef(0);
   const gameOverCalledRef = useRef(false);
+  const flashUntilRef = useRef(0);
   const pausedRef = useRef(false);
   const [paused, setPaused] = useState(false);
   const [lives, setLives] = useState<number>(stateRef.current.lives);
@@ -172,8 +173,11 @@ export function PacManCanvas({
         if (next.lives !== s.lives) setLives(next.lives);
         if ((next.gameOver || next.won) && !gameOverCalledRef.current) {
           gameOverCalledRef.current = true;
-          onGameOver(next.score);
-          return;
+          // Death flash for ~450ms before opening the mint dialog so the
+          // game-over moment doesn't feel abrupt. The setTimeout lets the
+          // RAF keep painting the overlay while we wait.
+          flashUntilRef.current = timestamp + 450;
+          setTimeout(() => onGameOver(next.score), 450);
         }
       }
     }
@@ -206,6 +210,12 @@ export function PacManCanvas({
       ctx.fillRect(4, 4, barW, 4);
       ctx.fillStyle = ratio > 0.3 ? "#4af" : "#f80";
       ctx.fillRect(4, 4, fillW, 4);
+    }
+
+    if (timestamp < flashUntilRef.current) {
+      const remaining = (flashUntilRef.current - timestamp) / 450;
+      ctx.fillStyle = `rgba(255,0,0,${0.45 * remaining})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
     if (pausedRef.current) {
