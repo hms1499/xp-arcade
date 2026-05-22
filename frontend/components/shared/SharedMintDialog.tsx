@@ -26,11 +26,13 @@ const STATUS_COLOR: Record<TxStatus, string> = {
 export function SharedMintDialog({
   gameId,
   score,
+  isTopScore = false,
   onClose,
   onPlayAgain,
 }: {
   gameId: GameId;
   score: number;
+  isTopScore?: boolean;
   onClose: () => void;
   onPlayAgain: () => void;
 }) {
@@ -98,6 +100,22 @@ export function SharedMintDialog({
 
   return (
     <div className="text-sm mint-dialog-enter">
+      {isTopScore && (
+        <div
+          className="mb-2 text-center"
+          style={{
+            background: "linear-gradient(90deg,#fff4b0,#ffd86b,#fff4b0)",
+            border: "1px solid #c79a2e",
+            color: "#7a5c00",
+            fontWeight: "bold",
+            padding: "4px 6px",
+            fontSize: 12,
+            letterSpacing: 0.5,
+          }}
+        >
+          🏆 NEW HIGH SCORE — top-10 on this season's leaderboard!
+        </div>
+      )}
       <p className="mb-3">
         ⚠️ <b>Game Over</b> — Score: <b>{score}</b>
         <span className="block text-xs mt-1">

@@ -21,6 +21,7 @@ export function PacManWindow() {
     setScore,
     finalScore,
     showMint,
+    isTopScore,
     resetKey,
     handleGameOver,
     handlePlayAgain,
@@ -34,6 +35,7 @@ export function PacManWindow() {
         <SharedMintDialog
           gameId="pacman"
           score={finalScore}
+          isTopScore={isTopScore}
           onClose={() => close(w.id)}
           onPlayAgain={handlePlayAgain}
         />

@@ -35,6 +35,7 @@ export function SnakeWindow() {
         <SharedMintDialog
           gameId="snake"
           score={finalScore}
+          isTopScore={isTopScore}
           onClose={() => close(w.id)}
           onPlayAgain={handlePlayAgain}
         />
