@@ -112,6 +112,8 @@ export function SeasonAdminWindow() {
   const [seasons, setSeasons] = useState<SeasonView[]>([]);
   const [busyEnd, setBusyEnd] = useState(false);
   const [busyPay, setBusyPay] = useState<string | null>(null);
+  const [busyBatch, setBusyBatch] = useState<number | null>(null);
+  const [batchProgress, setBatchProgress] = useState<{ sent: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const countdown = useSeasonCountdown();
   const [gameId, setGameId] = useState<GameId>("snake");
@@ -262,6 +264,68 @@ export function SeasonAdminWindow() {
     }
   }
 
+  async function handleBatchPay(season: number, rows: PayoutRow[]) {
+    const unpaid = rows.filter((r) => {
+      const e = usePayoutLedger.getState().get(gameId, season, r.player);
+      return r.payoutUstx > 0 && (!e || e.status === "failed");
+    });
+    if (unpaid.length === 0) return;
+    const totalUstx = unpaid.reduce((a, r) => a + r.payoutUstx, 0);
+    const totalStx = (totalUstx / 1_000_000).toFixed(4);
+    if (ownerBalance != null && ownerBalance < totalUstx) {
+      setError(
+        `Owner balance (${(ownerBalance / 1_000_000).toFixed(4)} STX) is below the unpaid total (${totalStx} STX). Top up first.`,
+      );
+      return;
+    }
+    if (
+      !confirm(
+        `Send ${unpaid.length} payouts (${totalStx} STX total) for ${gameId} Season ${season}? Each row needs a separate wallet signature.`,
+      )
+    )
+      return;
+    setBusyBatch(season);
+    setBatchProgress({ sent: 0, total: unpaid.length });
+    try {
+      for (let i = 0; i < unpaid.length; i++) {
+        const r = unpaid[i];
+        try {
+          const memo = formatPayoutMemo({ gameId, season, rank: r.rank });
+          const txId = await transferStx(r.player, r.payoutUstx, memo);
+          usePayoutLedger.getState().submit(gameId, season, r.player, txId);
+          watchTx(txId, (s) => {
+            if (s === "success") {
+              usePayoutLedger.getState().updateStatus(gameId, season, r.player, "success");
+              refreshOwnerBalance();
+            } else if (s !== "pending") {
+              usePayoutLedger.getState().updateStatus(gameId, season, r.player, "failed");
+            }
+          });
+          setBatchProgress({ sent: i + 1, total: unpaid.length });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          const stoppedAt = `${i} of ${unpaid.length}`;
+          if (msg === "cancelled") {
+            useToasts.getState().push({
+              title: "Batch stopped",
+              body: `Cancelled at ${stoppedAt}. Already-sent rows are tracked; click batch again to resume the rest.`,
+            });
+          } else {
+            setError(`Batch stopped at ${stoppedAt}: ${msg}`);
+          }
+          return;
+        }
+      }
+      useToasts.getState().push({
+        title: "Batch submitted",
+        body: `${unpaid.length} payouts queued for ${gameId} Season ${season}. Watching for confirmations…`,
+      });
+    } finally {
+      setBusyBatch(null);
+      setBatchProgress(null);
+    }
+  }
+
   return (
     <Window id={w.id} title="Season Admin" width={560}>
       <div className="p-2 text-xs">
@@ -398,8 +462,34 @@ export function SeasonAdminWindow() {
                       </span>
                     </>
                   )}
+                  {busyBatch === s.season && batchProgress && (
+                    <>
+                      {" · "}
+                      <b>Sending {batchProgress.sent}/{batchProgress.total}…</b>
+                    </>
+                  )}
                 </span>
-                <button onClick={handleExport}>Export CSV</button>
+                <span className="flex gap-1">
+                  <button
+                    onClick={() => handleBatchPay(s.season, s.rows)}
+                    disabled={
+                      busyBatch != null ||
+                      recon.unsent + recon.failed === 0
+                    }
+                    title={
+                      recon.unsent + recon.failed === 0
+                        ? "Nothing to send — all rows are settled"
+                        : busyBatch != null
+                          ? "Another batch is running"
+                          : "Send STX to every unsent/failed row, one wallet signature per row"
+                    }
+                  >
+                    {busyBatch === s.season ? "Sending…" : "Pay all unsent"}
+                  </button>
+                  <button onClick={handleExport} disabled={busyBatch != null}>
+                    Export CSV
+                  </button>
+                </span>
               </div>
             )}
             {s.rows.length === 0 ? (
@@ -433,7 +523,7 @@ export function SeasonAdminWindow() {
                         <td>
                           {renderPayoutCell({
                             entry: ledgerEntries[`${gameId}-${s.season}-${r.player}`],
-                            busy: busyPay === key,
+                            busy: busyPay === key || busyBatch != null,
                             insufficient:
                               ownerBalance != null && ownerBalance < r.payoutUstx,
                             onSend: () => handlePay(r, s.season),
