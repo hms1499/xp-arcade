@@ -3,7 +3,11 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-export type DesktopThemeId = "night-city" | "classic-teal" | "arcade-grid";
+export type DesktopThemeId =
+  | "night-city"
+  | "snake-terminal"
+  | "tetris-rain"
+  | "pacman-maze";
 
 export type DesktopThemeOption = {
   id: DesktopThemeId;
@@ -18,14 +22,19 @@ export const DESKTOP_THEMES: DesktopThemeOption[] = [
     description: "Animated skyline with stars and city lights.",
   },
   {
-    id: "classic-teal",
-    label: "Classic Teal",
-    description: "Quiet Windows-style solid desktop.",
+    id: "snake-terminal",
+    label: "Snake Terminal",
+    description: "CRT-green grid with a slow snake trail.",
   },
   {
-    id: "arcade-grid",
-    label: "Arcade Grid",
-    description: "Retro grid with restrained scanlines.",
+    id: "tetris-rain",
+    label: "Tetris Rain",
+    description: "Falling tetromino silhouettes on a neon stage.",
+  },
+  {
+    id: "pacman-maze",
+    label: "Pac-Man Maze",
+    description: "Neon maze lines, dots, and ghost silhouettes.",
   },
 ];
 

@@ -15,20 +15,23 @@ describe("desktop theme store", () => {
   it("exposes the MVP theme options", () => {
     expect(DESKTOP_THEMES.map((theme) => theme.id)).toEqual([
       "night-city",
-      "classic-teal",
-      "arcade-grid",
+      "snake-terminal",
+      "tetris-rain",
+      "pacman-maze",
     ]);
   });
 
   it("validates theme ids", () => {
     expect(isDesktopThemeId("night-city")).toBe(true);
-    expect(isDesktopThemeId("classic-teal")).toBe(true);
-    expect(isDesktopThemeId("arcade-grid")).toBe(true);
+    expect(isDesktopThemeId("snake-terminal")).toBe(true);
+    expect(isDesktopThemeId("tetris-rain")).toBe(true);
+    expect(isDesktopThemeId("pacman-maze")).toBe(true);
+    expect(isDesktopThemeId("classic-teal")).toBe(false);
     expect(isDesktopThemeId("unknown")).toBe(false);
   });
 
   it("updates the active theme", () => {
-    const next: DesktopThemeId = "classic-teal";
+    const next: DesktopThemeId = "snake-terminal";
     useDesktopTheme.getState().setTheme(next);
     expect(useDesktopTheme.getState().theme).toBe(next);
   });

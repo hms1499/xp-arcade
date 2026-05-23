@@ -57,6 +57,27 @@ body {
   to   { transform: translateX(-100%); }
 }
 
+@keyframes snakeWallpaperTrail {
+  0%, 100% { transform: translate(0, 0); opacity: .82; }
+  50%      { transform: translate(18px, -10px); opacity: 1; }
+}
+
+@keyframes tetrisWallpaperFall {
+  from { transform: translateY(-140px) rotate(0deg); }
+  to   { transform: translateY(820px) rotate(16deg); }
+}
+
+@keyframes pacmanWallpaperRun {
+  0%   { transform: translate(120px, 105px) rotate(0deg); }
+  24%  { transform: translate(455px, 105px) rotate(0deg); }
+  25%  { transform: translate(455px, 105px) rotate(90deg); }
+  42%  { transform: translate(455px, 210px) rotate(90deg); }
+  43%  { transform: translate(455px, 210px) rotate(180deg); }
+  66%  { transform: translate(270px, 210px) rotate(180deg); }
+  67%  { transform: translate(270px, 210px) rotate(90deg); }
+  100% { transform: translate(270px, 320px) rotate(90deg); }
+}
+
 .tray-spinner {
   width: 10px;
   height: 10px;
@@ -72,6 +93,27 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .leaderboard-ticker { animation: none !important; }
+}
+
+.snake-wallpaper-trail {
+  animation: snakeWallpaperTrail 9s ease-in-out infinite;
+}
+
+.tetris-wallpaper-piece {
+  animation: tetrisWallpaperFall 18s linear infinite;
+}
+
+.pacman-wallpaper-runner {
+  animation: pacmanWallpaperRun 16s linear infinite;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .snake-wallpaper-trail,
+  .tetris-wallpaper-piece,
+  .pacman-wallpaper-runner {
+    animation: none !important;
+  }
 }
 
 @media (max-width: 900px), (max-height: 620px) {
