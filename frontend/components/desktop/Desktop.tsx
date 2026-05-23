@@ -1,16 +1,63 @@
 "use client";
+import { useEffect, useRef } from "react";
 import { DesktopIcon } from "./DesktopIcon";
 import { Taskbar } from "./Taskbar";
 import { NightCityWallpaper } from "./NightCityWallpaper";
 import { useWindows } from "@/state/window-manager";
-import { GAMES } from "@/lib/game-registry";
+import { GAMES, type GameId } from "@/lib/game-registry";
 import { unlockAudio } from "@/lib/sounds";
 import { useLeaderboardShowcase } from "@/hooks/useLeaderboardShowcase";
 import { DesktopLeaderboardShowcase } from "./DesktopLeaderboardShowcase";
+import {
+  findTopTenChange,
+  shortPlayer,
+  type LeaderboardChange,
+} from "@/lib/leaderboard-showcase";
+import type { TopEntry } from "@/lib/contract-calls";
+import { useToasts } from "@/state/toasts";
+
+const GAME_IDS = Object.keys(GAMES) as GameId[];
+
+function changeBody(change: LeaderboardChange): string {
+  if (change.kind === "new-leader") {
+    const moved = change.previousRank ? `from #${change.previousRank}` : "from outside top-10";
+    return `${shortPlayer(change.player)} moved ${moved} to #1 with ${change.score}.`;
+  }
+  if (change.kind === "new-entry") {
+    return `${shortPlayer(change.player)} entered at #${change.rank} with ${change.score}.`;
+  }
+  return `${shortPlayer(change.player)} improved from ${change.previousScore} to ${change.score} at #${change.rank}.`;
+}
 
 export function Desktop({ children }: { children: React.ReactNode }) {
   const open = useWindows((s) => s.open);
   const leaderboard = useLeaderboardShowcase();
+  const previousRowsRef = useRef<Record<GameId, TopEntry[]> | null>(null);
+
+  useEffect(() => {
+    if (!leaderboard.lastUpdated) return;
+    const previousRows = previousRowsRef.current;
+    if (!previousRows) {
+      previousRowsRef.current = leaderboard.rowsByGame;
+      return;
+    }
+
+    for (const gameId of GAME_IDS) {
+      const change = findTopTenChange(previousRows[gameId], leaderboard.rowsByGame[gameId]);
+      if (!change) continue;
+      const game = GAMES[gameId];
+      useToasts.getState().push({
+        title:
+          change.kind === "new-leader"
+            ? `New ${game.label} leader`
+            : `${game.label} top-10 update`,
+        body: changeBody(change),
+        type: change.kind === "new-leader" ? "success" : "info",
+      });
+    }
+
+    previousRowsRef.current = leaderboard.rowsByGame;
+  }, [leaderboard.lastUpdated, leaderboard.rowsByGame]);
 
   return (
     <div
