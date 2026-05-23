@@ -5,9 +5,11 @@ import { NightCityWallpaper } from "./NightCityWallpaper";
 import { useWindows } from "@/state/window-manager";
 import { GAMES } from "@/lib/game-registry";
 import { unlockAudio } from "@/lib/sounds";
+import { useLeaderboardShowcase } from "@/hooks/useLeaderboardShowcase";
 
 export function Desktop({ children }: { children: React.ReactNode }) {
   const open = useWindows((s) => s.open);
+  const leaderboard = useLeaderboardShowcase();
 
   return (
     <div
@@ -41,7 +43,7 @@ export function Desktop({ children }: { children: React.ReactNode }) {
         />
       </div>
       {children}
-      <Taskbar />
+      <Taskbar leaderboardSummaries={leaderboard.summaries} />
     </div>
   );
 }

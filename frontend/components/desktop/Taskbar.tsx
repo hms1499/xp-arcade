@@ -4,6 +4,9 @@ import { useWindows } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
 import { SystemTray } from "./SystemTray";
 import { StartMenu } from "./StartMenu";
+import { LeaderboardTicker } from "./LeaderboardTicker";
+import type { GameId } from "@/lib/game-registry";
+import type { LeaderboardSummary } from "@/lib/leaderboard-showcase";
 
 const TYPE_LABEL: Record<string, string> = {
   game: "Snake",
@@ -34,7 +37,11 @@ function Win95Flag() {
   );
 }
 
-export function Taskbar() {
+export function Taskbar({
+  leaderboardSummaries,
+}: {
+  leaderboardSummaries: Record<GameId, LeaderboardSummary>;
+}) {
   const [open, setOpen] = useState(false);
   const windows = useWindows((s) => s.windows);
   const focus = useWindows((s) => s.focus);
@@ -124,6 +131,8 @@ export function Taskbar() {
           </button>
         ))}
       </div>
+
+      <LeaderboardTicker summaries={leaderboardSummaries} />
 
       <SystemTray />
     </div>

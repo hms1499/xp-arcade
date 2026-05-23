@@ -52,6 +52,11 @@ body {
   100% { background-color: #e0e0e0; }
 }
 
+@keyframes leaderboardTicker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+
 .tray-spinner {
   width: 10px;
   height: 10px;
@@ -63,6 +68,10 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .tray-spinner { animation: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leaderboard-ticker { animation: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -114,4 +123,3 @@ input[type='text'], input[type='password'], input[type='number'],
 input[type='email'], input[type='search'], textarea {
   cursor: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='20'%3E%3Cline x1='2' y1='1' x2='9' y2='1' stroke='black' stroke-width='1.5'/%3E%3Cline x1='5.5' y1='1' x2='5.5' y2='19' stroke='black' stroke-width='1.5'/%3E%3Cline x1='2' y1='19' x2='9' y2='19' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E") 5 10, text !important;
 }
-
