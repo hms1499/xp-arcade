@@ -1,13 +1,44 @@
-# Contract Review — Pre-Mainnet Deploy
+# Historical Contract Review — Pre-Mainnet Deploy
 
 **Contract:** `contract/contracts/snake-score.clar`  
 **Reviewed:** 2026-05-14  
 **Reviewer:** Claude Sonnet 4.6  
-**Status:** ⛔ NOT READY FOR MAINNET — blocking issues listed below
+**Status:** Historical review. Do not treat the original blocking status below as
+the current project status without checking the resolved/current notes in this
+section.
 
 ---
 
-## Summary
+## Current Status — 2026-05-23
+
+This document was written before the current v2 multi-game mainnet setup. Several
+items called out in the original review have since been addressed in code or by the
+v2 operating model:
+
+- `impl-trait` is present in the current score contracts.
+- `transfer-ownership` is present in the current score contracts.
+- `base-uri` no longer contains a literal `{id}` placeholder.
+- The frontend now validates contract config and uses the game registry for current
+  metadata routes.
+
+Still-current v2 limitations:
+
+- Scores are still client-trusted. Anyone can submit an arbitrary score within the
+  contract cap.
+- Mint fees still flow to the owner wallet; prize disbursement is owner-operated via
+  Season Admin rather than a trustless contract escrow.
+- `claim-prize` remains record/accounting logic, not an STX transfer.
+- `get-token-uri` still returns the configured base URI and does not append token id
+  on-chain. The public metadata routes remain token-specific.
+
+Deferred contract-level fixes are tracked in
+`docs/superpowers/specs/2026-05-22-v3-trustless-claim-design.md`. Frontend-only
+hardening that avoids contract changes is tracked in
+`docs/superpowers/specs/2026-05-23-frontend-hardening-no-contract-design.md`.
+
+---
+
+## Original Summary
 
 The contract is safe for testnet MVP use, but has four issues that must be addressed before a mainnet deploy where real funds/NFTs are at stake. Two of them are data-integrity bugs (cross-season exploit, non-unique token URIs); two are process gates (placeholder URI, deployer address).
 
