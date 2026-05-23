@@ -5,6 +5,7 @@ import { useWallet } from "@/state/wallet";
 import { AboutDialog } from "@/components/dialogs/AboutDialog";
 import { isOwnerAddress } from "@/components/windows/SeasonAdminWindow";
 import { GAMES } from "@/lib/game-registry";
+import { DESKTOP_THEMES, useDesktopTheme } from "@/state/desktop-theme";
 
 const menuItemBase: React.CSSProperties = {
   width: "100%",
@@ -62,6 +63,8 @@ export function StartMenu({
   const address = useWallet((s) => s.address);
   const isOwner = isOwnerAddress(address);
   const [showAbout, setShowAbout] = useState(false);
+  const theme = useDesktopTheme((s) => s.theme);
+  const setTheme = useDesktopTheme((s) => s.setTheme);
 
   useEffect(() => {
     if (!open) return;
@@ -159,6 +162,38 @@ export function StartMenu({
             label="About XP Arcade"
             onClick={() => setShowAbout(true)}
           />
+
+          <li
+            style={{
+              borderTop: "1px solid #808080",
+              borderBottom: "1px solid #ffffff",
+              margin: "4px 0",
+            }}
+          />
+
+          <li
+            role="none"
+            style={{
+              padding: "3px 8px 2px",
+              color: "#555",
+              fontSize: 10,
+              textTransform: "uppercase",
+              letterSpacing: 0.5,
+            }}
+          >
+            Desktop Theme
+          </li>
+          {DESKTOP_THEMES.map((option) => (
+            <MenuItem
+              key={option.id}
+              icon={theme === option.id ? "✓" : " "}
+              label={option.label}
+              onClick={() => {
+                setTheme(option.id);
+                onClose();
+              }}
+            />
+          ))}
 
           <li
             style={{
