@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { GAMES, type GameId } from "./game-registry";
+import { GAMES, validateGameDef, type GameId } from "./game-registry";
 
 describe("game-registry", () => {
   it("has snake, tetris, pacman entries", () => {
@@ -26,5 +26,20 @@ describe("game-registry", () => {
     expect(GAMES.snake.nftAssetName).toBe("snake-score");
     expect(GAMES.tetris.nftAssetName).toBe("tetris-score");
     expect(GAMES.pacman.nftAssetName).toBe("pacman-score");
+  });
+
+  it("rejects invalid registry entries", () => {
+    expect(() =>
+      validateGameDef({
+        ...GAMES.snake,
+        contractAddress: "",
+      }),
+    ).toThrow(/contract address/);
+    expect(() =>
+      validateGameDef({
+        ...GAMES.snake,
+        mintFeeUstx: BigInt(0),
+      }),
+    ).toThrow(/mint fee/);
   });
 });
