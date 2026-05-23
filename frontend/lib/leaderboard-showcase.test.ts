@@ -1,0 +1,78 @@
+import { describe, expect, it } from "vitest";
+import {
+  findTopTenChange,
+  rankRows,
+  scoreRarity,
+  shortPlayer,
+  summarizeLeaderboard,
+} from "./leaderboard-showcase";
+
+describe("leaderboard showcase helpers", () => {
+  it("sorts rows descending and assigns ranks", () => {
+    expect(
+      rankRows([
+        { player: "SP_B", score: 10 },
+        { player: "SP_A", score: 40 },
+      ]),
+    ).toEqual([
+      { player: "SP_A", score: 40, rank: 1 },
+      { player: "SP_B", score: 10, rank: 2 },
+    ]);
+  });
+
+  it("summarizes leader, top three, and cutoff", () => {
+    const rows = Array.from({ length: 10 }, (_, index) => ({
+      player: `SP_${index}`,
+      score: 100 - index,
+    }));
+    const summary = summarizeLeaderboard("snake", rows);
+    expect(summary.leader?.score).toBe(100);
+    expect(summary.topThree).toHaveLength(3);
+    expect(summary.cutoff?.rank).toBe(10);
+  });
+
+  it("detects a new leader before other changes", () => {
+    const change = findTopTenChange(
+      [
+        { player: "SP_A", score: 100 },
+        { player: "SP_B", score: 90 },
+      ],
+      [
+        { player: "SP_B", score: 120 },
+        { player: "SP_C", score: 80 },
+      ],
+    );
+    expect(change).toEqual({
+      kind: "new-leader",
+      player: "SP_B",
+      score: 120,
+      previousRank: 2,
+    });
+  });
+
+  it("detects new top-ten entries", () => {
+    const change = findTopTenChange(
+      [{ player: "SP_A", score: 100 }],
+      [
+        { player: "SP_A", score: 100 },
+        { player: "SP_B", score: 80 },
+      ],
+    );
+    expect(change).toEqual({
+      kind: "new-entry",
+      player: "SP_B",
+      score: 80,
+      rank: 2,
+    });
+  });
+
+  it("formats player labels and rarity bands", () => {
+    expect(shortPlayer("SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV")).toBe(
+      "SP2CM…13SV",
+    );
+    expect(scoreRarity(42)).toBe("Common");
+    expect(scoreRarity(167)).toBe("Rare");
+    expect(scoreRarity(500)).toBe("Epic");
+    expect(scoreRarity(1000)).toBe("Legendary");
+  });
+});
