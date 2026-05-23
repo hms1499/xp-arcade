@@ -50,10 +50,12 @@ function PanelTitle({ children }: { children: React.ReactNode }) {
 
 export function DesktopLeaderboardShowcase({
   summaries,
+  seasonsByGame,
   lastUpdated,
   error,
 }: {
   summaries: Record<GameId, LeaderboardSummary>;
+  seasonsByGame: Record<GameId, number | null>;
   lastUpdated: Date | null;
   error: string | null;
 }) {
@@ -159,22 +161,28 @@ export function DesktopLeaderboardShowcase({
               textAlign: "center",
             }}
           >
-            {countdown.state === "unset" ? "No season deadline set" : formatCountdown(countdown)}
+            {countdown.state === "unset"
+              ? "No display deadline set"
+              : `Soft deadline ${formatCountdown(countdown)}`}
           </div>
           {GAME_IDS.map((gameId) => {
             const game = GAMES[gameId];
             const cutoff = summaries[gameId].cutoff;
+            const season = seasonsByGame[gameId];
             return (
               <div
                 key={gameId}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "82px 1fr",
+                  gridTemplateColumns: "82px 48px 1fr",
                   gap: 6,
                   alignItems: "center",
                 }}
               >
                 <span>{game.emoji} {game.label}</span>
+                <span style={{ fontFamily: "monospace", color: "#000080" }}>
+                  S{season ?? "…"}
+                </span>
                 <span style={{ color: "#555" }}>
                   {cutoff ? `#10 cutoff ${cutoff.score}` : "Top-10 still open"}
                 </span>

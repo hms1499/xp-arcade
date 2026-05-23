@@ -92,6 +92,7 @@ export function Desktop({ children }: { children: React.ReactNode }) {
       </div>
       <DesktopLeaderboardShowcase
         summaries={leaderboard.summaries}
+        seasonsByGame={leaderboard.seasonsByGame}
         lastUpdated={leaderboard.lastUpdated}
         error={leaderboard.error}
       />
