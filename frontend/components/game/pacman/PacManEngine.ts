@@ -1,4 +1,4 @@
-import { MAZE_LAYOUT, MAZE_ROWS, MAZE_COLS, isWall, countDots } from "./maze";
+import { MAZE_LAYOUT, MAZE_COLS, isWall, countDots } from "./maze";
 
 export type Direction = "up" | "down" | "left" | "right";
 export type GhostMode = "scatter" | "chase" | "frightened";
@@ -176,7 +176,8 @@ function resetPositions(state: PacManState): PacManState {
 export function movePacMan(state: PacManState, dir: Direction): PacManState {
   if (state.gameOver || state.won) return state;
 
-  let { pacman, maze, score, dotsRemaining, lives, ghosts } = state;
+  const { pacman, maze, dotsRemaining, lives, ghosts } = state;
+  let score = state.score;
 
   // Check collision at current position (ghost already on pac-man)
   for (const g of ghosts) {
@@ -256,7 +257,8 @@ export function movePacMan(state: PacManState, dir: Direction): PacManState {
 export function tickGhosts(state: PacManState): PacManState {
   if (state.gameOver || state.won) return state;
 
-  let { modeTimer, modePhase, ghosts } = state;
+  const { modePhase, ghosts } = state;
+  let modeTimer = state.modeTimer;
   modeTimer -= 1;
   let newPhase = modePhase;
   if (modeTimer <= 0 && modePhase < MODE_SEQUENCE.length - 1) {

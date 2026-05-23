@@ -228,7 +228,7 @@ function LeaderboardTab({
           style={{ background: "#f5f5f0", border: "1px solid #d0d0c8", lineHeight: 1.3 }}
           title="Rarity tiers are shared across all games but reachability differs by game dynamics."
         >
-          ℹ️ Snake's 20×20 grid caps practical scores around 400 — a Rare Snake
+          ℹ️ Snake&apos;s 20×20 grid caps practical scores around 400 — a Rare Snake
           NFT is roughly as hard to earn as an Epic in Tetris or Pac-Man. Tiers
           reflect achievement within each game, not cross-game equivalence.
         </p>

@@ -113,7 +113,7 @@ export function SharedMintDialog({
             letterSpacing: 0.5,
           }}
         >
-          🏆 NEW HIGH SCORE — top-10 on this season's leaderboard!
+          🏆 NEW HIGH SCORE — top-10 on this season&apos;s leaderboard!
         </div>
       )}
       <p className="mb-3">

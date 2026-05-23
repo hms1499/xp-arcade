@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { shortAddress } from "@/lib/stacks-address";
 import { fetchAllScoreHoldings, type ScoreNft } from "@/lib/holdings";
 import { rarityColor } from "@/lib/metadata-svg";
@@ -38,9 +39,9 @@ export function PlayerProfileBody({
   return (
     <div className="p-2">
       {showBackToDesktop && (
-        <a href="/" className="text-xs text-blue-700 underline">
+        <Link href="/" className="text-xs text-blue-700 underline">
           ← Back to desktop
-        </a>
+        </Link>
       )}
       <h2 className="text-sm font-bold mb-1 mt-1">
         Player {shortAddress(address)}

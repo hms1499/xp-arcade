@@ -3,8 +3,6 @@ import {
   createTetrisState,
   moveLeft,
   moveRight,
-  moveDown,
-  rotate,
   hardDrop,
   tick,
   type TetrisState,

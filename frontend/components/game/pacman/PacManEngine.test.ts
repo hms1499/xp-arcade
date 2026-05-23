@@ -2,8 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   createPacManState,
   movePacMan,
-  tickGhosts,
-  type Direction,
 } from "./PacManEngine";
 import { countDots } from "./maze";
 

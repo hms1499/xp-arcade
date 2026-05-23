@@ -11,7 +11,7 @@ export function NightCityWallpaper() {
     const r = rng(2718281);
 
     /* ── Stars ─────────────────────────────────────────────── */
-    const stars = Array.from({ length: 110 }, (_, i) => {
+    const stars = Array.from({ length: 110 }, () => {
       const bright = r();
       return {
         cx: r() * 1200,
@@ -88,7 +88,7 @@ export function NightCityWallpaper() {
       .map((b) => ({
         cx: b.x + b.w / 2,
         cy: 650 - b.h - b.antennaH,
-        delay: `${(Math.random() * 3).toFixed(2)}s`,
+        delay: `${(r() * 3).toFixed(2)}s`,
       }));
 
     return { stars, nodes, farBldgs, nearBldgs, wins, antennaBlinks };

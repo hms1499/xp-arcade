@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function PlayerNotFound() {
   return (
     <div className="min-h-screen p-4 bg-[#3a6ea5] text-white">
@@ -7,9 +9,9 @@ export default function PlayerNotFound() {
           That doesn&apos;t look like a valid Stacks address.
         </p>
         <p className="mt-3">
-          <a href="/" className="text-blue-700 underline text-sm">
+          <Link href="/" className="text-blue-700 underline text-sm">
             ← Back to desktop
-          </a>
+          </Link>
         </p>
       </div>
     </div>
