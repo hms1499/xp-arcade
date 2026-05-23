@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import { DesktopIcon } from "./DesktopIcon";
 import { Taskbar } from "./Taskbar";
-import { NightCityWallpaper } from "./NightCityWallpaper";
+import { DesktopWallpaper } from "./DesktopWallpaper";
 import { useWindows } from "@/state/window-manager";
 import { GAMES, type GameId } from "@/lib/game-registry";
 import { unlockAudio } from "@/lib/sounds";
@@ -66,7 +66,7 @@ export function Desktop({ children }: { children: React.ReactNode }) {
       onTouchStart={unlockAudio}
       style={{ background: "#00030c" }}
     >
-      <NightCityWallpaper />
+      <DesktopWallpaper />
       <div
         className="absolute top-4 left-4 grid grid-cols-1 gap-4"
         style={{ zIndex: 1 }}
