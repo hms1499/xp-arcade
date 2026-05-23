@@ -6,6 +6,7 @@ import { useWindows } from "@/state/window-manager";
 import { GAMES } from "@/lib/game-registry";
 import { unlockAudio } from "@/lib/sounds";
 import { useLeaderboardShowcase } from "@/hooks/useLeaderboardShowcase";
+import { DesktopLeaderboardShowcase } from "./DesktopLeaderboardShowcase";
 
 export function Desktop({ children }: { children: React.ReactNode }) {
   const open = useWindows((s) => s.open);
@@ -42,6 +43,11 @@ export function Desktop({ children }: { children: React.ReactNode }) {
           onOpen={() => open("mynfts")}
         />
       </div>
+      <DesktopLeaderboardShowcase
+        summaries={leaderboard.summaries}
+        lastUpdated={leaderboard.lastUpdated}
+        error={leaderboard.error}
+      />
       {children}
       <Taskbar leaderboardSummaries={leaderboard.summaries} />
     </div>

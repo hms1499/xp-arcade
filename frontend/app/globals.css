@@ -74,6 +74,12 @@ body {
   .leaderboard-ticker { animation: none !important; }
 }
 
+@media (max-width: 900px), (max-height: 620px) {
+  .desktop-showcase {
+    display: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .xp-bar-slider    { animation: none !important; }
   .boot-fade-out    { animation: none !important; }
