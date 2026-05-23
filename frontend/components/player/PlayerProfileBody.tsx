@@ -10,6 +10,12 @@ import { PlayerStatsPanel } from "./PlayerStatsPanel";
 import { RarityBreakdown } from "./RarityBreakdown";
 import { CopyAddressButton } from "./CopyAddressButton";
 
+type NftLoadState = {
+  address: string;
+  nfts: ScoreNft[] | null;
+  error: string | null;
+};
+
 export function PlayerProfileBody({
   address,
   showBackToDesktop = false,
@@ -17,23 +23,37 @@ export function PlayerProfileBody({
   address: string;
   showBackToDesktop?: boolean;
 }) {
-  const [nfts, setNfts] = useState<ScoreNft[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loadState, setLoadState] = useState<NftLoadState | null>(null);
 
   useEffect(() => {
-    setNfts(null);
-    setError(null);
+    let cancelled = false;
     fetchAllScoreHoldings(address)
-      .then((list) =>
-        setNfts(
-          [...list].sort(
+      .then((list) => {
+        if (cancelled) return;
+        setLoadState({
+          address,
+          nfts: [...list].sort(
             (a, b) => (b.score ?? 0) - (a.score ?? 0) || b.id - a.id
-          )
-        )
-      )
-      .catch((e) => setError(e instanceof Error ? e.message : "Load failed"));
+          ),
+          error: null,
+        });
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setLoadState({
+          address,
+          nfts: null,
+          error: e instanceof Error ? e.message : "Load failed",
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [address]);
 
+  const activeState = loadState?.address === address ? loadState : null;
+  const nfts = activeState?.nfts ?? null;
+  const error = activeState?.error ?? null;
   const stats = useMemo(() => (nfts ? computePlayerStats(nfts) : null), [nfts]);
 
   return (

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useCallback, useReducer, useState } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import {
   createTetrisState,
   moveLeft,
@@ -73,16 +73,14 @@ export function TetrisCanvas({
   onScoreChange: (score: number) => void;
   windowActive?: boolean;
 }) {
-  const stateRef = useRef<TetrisState>(createTetrisState());
+  const [renderState, setRenderState] = useState(() => createTetrisState());
+  const stateRef = useRef<TetrisState>(renderState);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pausedRef = useRef(false);
   const [paused, setPaused] = useState(false);
-  const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
-  const [isTouch, setIsTouch] = useState(false);
-
-  useEffect(() => {
-    setIsTouch(window.matchMedia("(pointer: coarse)").matches);
-  }, []);
+  const [isTouch] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches,
+  );
 
   const setPausedBoth = useCallback((v: boolean) => {
     pausedRef.current = v;
@@ -90,9 +88,11 @@ export function TetrisCanvas({
   }, []);
 
   function setState(next: TetrisState) {
+    const prev = stateRef.current;
     stateRef.current = next;
     onScoreChange(next.score);
-    forceUpdate();
+    setRenderState(next);
+    if (next.level !== prev.level) startTick(next.level);
     if (next.gameOver) {
       if (tickRef.current) clearInterval(tickRef.current);
       onGameOver(next.score);
@@ -131,12 +131,7 @@ export function TetrisCanvas({
     }
   }, [windowActive, setPausedBoth]);
 
-  const prevLevel = useRef(1);
-  const s = stateRef.current;
-  if (s.level !== prevLevel.current) {
-    prevLevel.current = s.level;
-    startTick(s.level);
-  }
+  const s = renderState;
 
   const handleKey = useCallback((e: KeyboardEvent) => {
     const cur = stateRef.current;
@@ -198,7 +193,6 @@ export function TetrisCanvas({
   const overlay = getOverlay(s);
   const nextMask = TETROMINOES[s.next][0];
   const nextColor = TETROMINO_COLOR[s.next];
-  const boardPx = BOARD_H * CELL_SIZE;
 
   return (
     <div style={{ display: "flex", gap: 8, userSelect: "none", alignItems: "flex-start" }}>
@@ -218,10 +212,10 @@ export function TetrisCanvas({
             <div
               key={i}
               style={{
-                width: CELL_SIZE,
-                height: CELL_SIZE,
-                background:
-                  cell === -1
+                  width: CELL_SIZE,
+                  height: CELL_SIZE,
+                  background:
+                    cell === -1
                     ? GHOST_COLORS[TETROMINO_COLOR[s.current.type]]
                     : COLORS[cell] ?? "transparent",
                 boxSizing: "border-box",

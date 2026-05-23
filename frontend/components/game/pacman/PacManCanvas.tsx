@@ -136,12 +136,10 @@ export function PacManCanvas({
   const flashUntilRef = useRef(0);
   const pausedRef = useRef(false);
   const [paused, setPaused] = useState(false);
-  const [lives, setLives] = useState<number>(stateRef.current.lives);
-  const [isTouch, setIsTouch] = useState(false);
-
-  useEffect(() => {
-    setIsTouch(window.matchMedia("(pointer: coarse)").matches);
-  }, []);
+  const [lives, setLives] = useState(3);
+  const [isTouch] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches,
+  );
 
   const setPausedBoth = useCallback((v: boolean) => {
     pausedRef.current = v;
@@ -154,81 +152,81 @@ export function PacManCanvas({
     }
   }, [windowActive, setPausedBoth]);
 
-  const loop = useCallback((timestamp: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+  useEffect(() => {
+    function loop(timestamp: number) {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
-    const TICK_MS = 100;
-    const s = stateRef.current;
+      const TICK_MS = 100;
+      const s = stateRef.current;
 
-    if (!pausedRef.current && timestamp - lastTickRef.current >= TICK_MS) {
-      lastTickRef.current = timestamp;
-      if (!s.gameOver && !s.won) {
-        let next = movePacMan(s, dirBufferRef.current);
-        next = tickGhosts(next);
-        stateRef.current = next;
-        onScoreChange(next.score);
-        if (next.lives !== s.lives) setLives(next.lives);
-        if ((next.gameOver || next.won) && !gameOverCalledRef.current) {
-          gameOverCalledRef.current = true;
-          // Death flash for ~450ms before opening the mint dialog so the
-          // game-over moment doesn't feel abrupt. The setTimeout lets the
-          // RAF keep painting the overlay while we wait.
-          flashUntilRef.current = timestamp + 450;
-          setTimeout(() => onGameOver(next.score), 450);
+      if (!pausedRef.current && timestamp - lastTickRef.current >= TICK_MS) {
+        lastTickRef.current = timestamp;
+        if (!s.gameOver && !s.won) {
+          let next = movePacMan(s, dirBufferRef.current);
+          next = tickGhosts(next);
+          stateRef.current = next;
+          onScoreChange(next.score);
+          if (next.lives !== s.lives) setLives(next.lives);
+          if ((next.gameOver || next.won) && !gameOverCalledRef.current) {
+            gameOverCalledRef.current = true;
+            // Death flash for ~450ms before opening the mint dialog so the
+            // game-over moment doesn't feel abrupt. The setTimeout lets the
+            // RAF keep painting the overlay while we wait.
+            flashUntilRef.current = timestamp + 450;
+            setTimeout(() => onGameOver(next.score), 450);
+          }
         }
       }
-    }
 
-    const cur = stateRef.current;
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // Pulse oscillates ~0.7Hz so pellets clearly draw the eye.
-    const pulse = (Math.sin(timestamp / 220) + 1) / 2;
-    drawMaze(ctx, cur.maze, pulse);
-
-    if (!pausedRef.current) {
-      mouthRef.current = (mouthRef.current + 0.15) % (Math.PI / 3);
-    }
-    drawPacMan(ctx, cur.pacman.row, cur.pacman.col, mouthRef.current);
-
-    cur.ghosts.forEach((g, i) => {
-      drawGhost(ctx, g.row, g.col, GHOST_COLORS[i], g.frightTimer);
-    });
-
-    const maxFright = Math.max(0, ...cur.ghosts.map((g) => g.frightTimer));
-    if (maxFright > 0) {
-      // Ratio of FRIGHT_TICKS (180 in engine). Hard-coded ratio rather than
-      // importing the constant — engine change would just under/over-fill the
-      // bar without breaking the game.
-      const ratio = Math.min(1, maxFright / 180);
-      const barW = canvas.width - 8;
-      const fillW = Math.floor(barW * ratio);
-      ctx.fillStyle = "#222";
-      ctx.fillRect(4, 4, barW, 4);
-      ctx.fillStyle = ratio > 0.3 ? "#4af" : "#f80";
-      ctx.fillRect(4, 4, fillW, 4);
-    }
-
-    if (timestamp < flashUntilRef.current) {
-      const remaining = (flashUntilRef.current - timestamp) / 450;
-      ctx.fillStyle = `rgba(255,0,0,${0.45 * remaining})`;
+      const cur = stateRef.current;
+      ctx.fillStyle = "#000";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Pulse oscillates ~0.7Hz so pellets clearly draw the eye.
+      const pulse = (Math.sin(timestamp / 220) + 1) / 2;
+      drawMaze(ctx, cur.maze, pulse);
+
+      if (!pausedRef.current) {
+        mouthRef.current = (mouthRef.current + 0.15) % (Math.PI / 3);
+      }
+      drawPacMan(ctx, cur.pacman.row, cur.pacman.col, mouthRef.current);
+
+      cur.ghosts.forEach((g, i) => {
+        drawGhost(ctx, g.row, g.col, GHOST_COLORS[i], g.frightTimer);
+      });
+
+      const maxFright = Math.max(0, ...cur.ghosts.map((g) => g.frightTimer));
+      if (maxFright > 0) {
+        // Ratio of FRIGHT_TICKS (180 in engine). Hard-coded ratio rather than
+        // importing the constant — engine change would just under/over-fill the
+        // bar without breaking the game.
+        const ratio = Math.min(1, maxFright / 180);
+        const barW = canvas.width - 8;
+        const fillW = Math.floor(barW * ratio);
+        ctx.fillStyle = "#222";
+        ctx.fillRect(4, 4, barW, 4);
+        ctx.fillStyle = ratio > 0.3 ? "#4af" : "#f80";
+        ctx.fillRect(4, 4, fillW, 4);
+      }
+
+      if (timestamp < flashUntilRef.current) {
+        const remaining = (flashUntilRef.current - timestamp) / 450;
+        ctx.fillStyle = `rgba(255,0,0,${0.45 * remaining})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      if (pausedRef.current) {
+        drawPauseOverlay(ctx, canvas.width, canvas.height);
+      }
+
+      rafRef.current = requestAnimationFrame(loop);
     }
 
-    if (pausedRef.current) {
-      drawPauseOverlay(ctx, canvas.width, canvas.height);
-    }
-
-    rafRef.current = requestAnimationFrame(loop);
-  }, [onGameOver, onScoreChange]);
-
-  useEffect(() => {
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [loop]);
+  }, [onGameOver, onScoreChange]);
 
   const handleKey = useCallback((e: KeyboardEvent) => {
     if (e.key === "Escape") {

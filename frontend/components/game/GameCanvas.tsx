@@ -54,11 +54,9 @@ export function GameCanvas({
   const [score, setScore] = useState(0);
   const [best] = useState(() => getBestScore());
   const [paused, setPaused] = useState(false);
-  const [isTouch, setIsTouch] = useState(false);
-
-  useEffect(() => {
-    setIsTouch(window.matchMedia("(pointer: coarse)").matches);
-  }, []);
+  const [isTouch] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches,
+  );
 
   // Stable so the game-loop effect doesn't re-run when it changes.
   const setPausedBoth = useCallback((v: boolean) => {

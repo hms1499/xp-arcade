@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { useWindows } from "@/state/window-manager";
+import { useWindows, type WindowEntry } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
 import { Window } from "@/components/windows/Window";
 import { getTopTenForGame, type TopEntry } from "@/lib/contract-calls";
@@ -11,6 +11,13 @@ const GAME_IDS: GameId[] = ["snake", "tetris", "pacman"];
 const BADGE_BG: Record<number, string> = { 1: "#ffd700", 2: "#c0c0c0", 3: "#cd7f32" };
 
 type RankSnapshot = Record<string, number>;
+type LeaderboardLoadState = {
+  gameId: GameId;
+  rows: TopEntry[] | null;
+  snapshot: RankSnapshot;
+  error: string | null;
+  lastUpdated: Date | null;
+};
 
 function loadSnapshot(gameId: GameId): RankSnapshot {
   try {
@@ -49,12 +56,7 @@ function LeaderboardTab({
   isActive: boolean;
   address: string | null;
 }) {
-  const [rows, setRows] = useState<TopEntry[] | null>(null);
-  const [snapshot, setSnapshot] = useState<RankSnapshot>(() =>
-    typeof window !== "undefined" ? loadSnapshot(gameId) : {}
-  );
-  const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [loadState, setLoadState] = useState<LeaderboardLoadState | null>(null);
   const countdown = useSeasonCountdown();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -65,16 +67,27 @@ function LeaderboardTab({
       getTopTenForGame(gameId)
         .then((data) => {
           const sorted = [...data].sort((a, b) => b.score - a.score);
-          setRows(sorted);
-          setError(null);
-          setLastUpdated(new Date());
-          setSnapshot(loadSnapshot(gameId));
+          const previousSnapshot = loadSnapshot(gameId);
           saveSnapshot(gameId, sorted);
+          setLoadState({
+            gameId,
+            rows: sorted,
+            snapshot: previousSnapshot,
+            error: null,
+            lastUpdated: new Date(),
+          });
         })
-        .catch((e) => setError(e instanceof Error ? e.message : "Load failed"));
+        .catch((e) => {
+          setLoadState({
+            gameId,
+            rows: null,
+            snapshot: typeof window !== "undefined" ? loadSnapshot(gameId) : {},
+            error: e instanceof Error ? e.message : "Load failed",
+            lastUpdated: null,
+          });
+        });
     }
 
-    setRows(null);
     load();
     timerRef.current = setInterval(load, 30_000);
     return () => {
@@ -82,6 +95,11 @@ function LeaderboardTab({
     };
   }, [isActive, gameId]);
 
+  const activeState = loadState?.gameId === gameId ? loadState : null;
+  const rows = activeState?.rows ?? null;
+  const snapshot = activeState?.snapshot ?? {};
+  const error = activeState?.error ?? null;
+  const lastUpdated = activeState?.lastUpdated ?? null;
   const myRank =
     address && rows ? rows.findIndex((r) => r.player === address) + 1 : 0;
 
@@ -240,15 +258,22 @@ function LeaderboardTab({
 export function HighScoreWindow() {
   const w = useWindows((s) => s.windows.find((win) => win.type === "highscore"));
   const address = useWallet((s) => s.address);
-  const [activeTab, setActiveTab] = useState<GameId>("snake");
-
-  // Switch tab when window is opened/focused with a specific initialTab
-  useEffect(() => {
-    const tab = w?.payload?.initialTab;
-    if (tab) setActiveTab(tab);
-  }, [w?.payload?.initialTab]);
 
   if (!w) return null;
+
+  return <HighScoreContent key={w.id} w={w} address={address} />;
+}
+
+function HighScoreContent({
+  w,
+  address,
+}: {
+  w: WindowEntry;
+  address: string | null;
+}) {
+  const [activeTab, setActiveTab] = useState<GameId>(
+    () => w.payload?.initialTab ?? "snake",
+  );
 
   return (
     <Window id={w.id} title="🏆 High Scores" width={460}>

@@ -157,13 +157,13 @@ export function SeasonAdminWindow() {
 
   useEffect(() => {
     if (!w) return;
-    setError(null);
     refreshOwnerBalance();
     Promise.all([
       getCurrentSeasonForGame(gameId),
       getPrizePoolBalanceForGame(gameId),
     ])
       .then(([cs, pool]) => {
+        setError(null);
         setCurrentSeason(cs);
         setAccumulated(pool);
         return loadPastSeasons(cs, gameId);

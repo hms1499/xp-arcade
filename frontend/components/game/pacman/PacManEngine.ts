@@ -176,8 +176,9 @@ function resetPositions(state: PacManState): PacManState {
 export function movePacMan(state: PacManState, dir: Direction): PacManState {
   if (state.gameOver || state.won) return state;
 
-  const { pacman, maze, dotsRemaining, lives, ghosts } = state;
+  const { pacman, maze, lives, ghosts } = state;
   let score = state.score;
+  let dotsRemaining = state.dotsRemaining;
 
   // Check collision at current position (ghost already on pac-man)
   for (const g of ghosts) {

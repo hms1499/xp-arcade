@@ -18,24 +18,47 @@ const GAME_BADGE_COLOR: Record<string, string> = {
   pacman: "#856404",
 };
 
+type NftLoadState = {
+  address: string;
+  nfts: ScoreNft[] | null;
+  error: string | null;
+};
+
 export function MyNftsWindow() {
   const w = useWindows((s) => s.windows.find((win) => win.type === "mynfts"));
   const address = useWallet((s) => s.address);
-  const [nfts, setNfts] = useState<ScoreNft[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loadState, setLoadState] = useState<NftLoadState | null>(null);
 
   useEffect(() => {
     if (!w || !address) return;
-    setNfts(null);
-    setError(null);
+    let cancelled = false;
     fetchAllScoreHoldings(address)
-      .then((list) =>
-        setNfts([...list].sort((a, b) => (b.score ?? 0) - (a.score ?? 0) || b.id - a.id))
-      )
-      .catch((e) => setError(e instanceof Error ? e.message : "Load failed"));
+      .then((list) => {
+        if (cancelled) return;
+        setLoadState({
+          address,
+          nfts: [...list].sort((a, b) => (b.score ?? 0) - (a.score ?? 0) || b.id - a.id),
+          error: null,
+        });
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setLoadState({
+          address,
+          nfts: null,
+          error: e instanceof Error ? e.message : "Load failed",
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [w, address]);
 
   if (!w) return null;
+
+  const activeState = loadState?.address === address ? loadState : null;
+  const nfts = activeState?.nfts ?? null;
+  const error = activeState?.error ?? null;
 
   return (
     <Window id={w.id} title="💾 My NFTs" width={480}>
