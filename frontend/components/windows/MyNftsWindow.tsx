@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useWindows } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
 import { Window } from "@/components/windows/Window";
-import { fetchAllScoreHoldings, type ScoreNft } from "@/lib/holdings";
+import { fetchAllScoreHoldings, scoreNftKey, type ScoreNft } from "@/lib/holdings";
 import { rarityColor } from "@/lib/metadata-svg";
 import { GAMES } from "@/lib/game-registry";
 
@@ -116,7 +116,7 @@ export function MyNftsWindow() {
             }}
           >
             {nfts.map((nft) => (
-              <NftCard key={`${nft.gameId}-${nft.id}`} nft={nft} />
+              <NftCard key={scoreNftKey(nft)} nft={nft} />
             ))}
           </div>
         )}

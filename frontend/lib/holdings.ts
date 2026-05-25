@@ -25,6 +25,10 @@ function attr(meta: MetadataResponse, key: string): string | undefined {
   return meta.attributes?.find((a) => a.trait_type === key)?.value;
 }
 
+export function scoreNftKey(nft: Pick<ScoreNft, "gameId" | "id">): string {
+  return `${nft.gameId}-${nft.id}`;
+}
+
 export async function fetchScoreHoldings(
   addr: string,
   gameId: GameId
@@ -33,11 +37,25 @@ export async function fetchScoreHoldings(
   const apiBase = stacks.network.client?.baseUrl ?? "https://api.hiro.so";
   const contractId = `${game.contractAddress}.${game.contractName}`;
   const asset = `${contractId}::${game.nftAssetName}`;
-  const url = `${apiBase}/extended/v1/tokens/nft/holdings?principal=${addr}&asset_identifiers=${asset}&limit=50`;
-  const data = (await fetch(url).then((r) => r.json())) as HoldingsResponse;
-  const ids = (data.results ?? []).map((r) =>
-    Number(r.value.repr.replace("u", ""))
-  );
+  const ids: number[] = [];
+  const limit = 50;
+  let offset = 0;
+
+  while (true) {
+    const params = new URLSearchParams({
+      principal: addr,
+      asset_identifiers: asset,
+      limit: String(limit),
+      offset: String(offset),
+    });
+    const url = `${apiBase}/extended/v1/tokens/nft/holdings?${params.toString()}`;
+    const data = (await fetch(url).then((r) => r.json())) as HoldingsResponse;
+    const page = data.results ?? [];
+    ids.push(...page.map((r) => Number(r.value.repr.replace("u", ""))));
+    if (page.length < limit) break;
+    offset += limit;
+  }
+
   return Promise.all(
     ids.map(async (id) => {
       const meta = (await fetch(

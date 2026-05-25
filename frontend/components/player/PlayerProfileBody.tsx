@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { shortAddress } from "@/lib/stacks-address";
-import { fetchAllScoreHoldings, type ScoreNft } from "@/lib/holdings";
+import { fetchAllScoreHoldings, scoreNftKey, type ScoreNft } from "@/lib/holdings";
 import { rarityColor } from "@/lib/metadata-svg";
 import { computePlayerStats } from "@/lib/player-stats";
 import { PlayerStatsPanel } from "./PlayerStatsPanel";
@@ -99,7 +99,7 @@ export function PlayerProfileBody({
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
           {nfts.map((n) => (
             <div
-              key={n.id}
+              key={scoreNftKey(n)}
               className="text-center text-xs border border-gray-300 p-1 bg-white"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
