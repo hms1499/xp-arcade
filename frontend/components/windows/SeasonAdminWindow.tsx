@@ -11,8 +11,8 @@ import {
   hasClaimedPrizeForGame,
   endSeasonForGame,
   transferStx,
-  computePayoutUstx,
 } from "@/lib/contract-calls";
+import { buildPayoutRows } from "@/lib/payout-schedule";
 import { useToasts } from "@/state/toasts";
 import { usePayoutLedger, payoutKey, type PayoutEntry } from "@/state/payout-ledger";
 import { reconcile, type ReconRow } from "@/lib/reconciliation";
@@ -131,22 +131,19 @@ export function SeasonAdminWindow() {
       for (let s = 1; s < cs; s++) {
         const snap = await getSeasonPrizeForGame(g, s);
         if (!snap) continue;
-        const sorted = [...snap.topTen].sort((a, b) => b.score - a.score);
-        // Match on-chain rank-fold: rank = 1 + count(entries with strictly greater score).
-        // Ties share the same rank, identical to claim-prize behaviour.
+        const ranked = buildPayoutRows(snap.total, snap.topTen);
         const rows: PayoutRow[] = await Promise.all(
-          sorted.map(async (e) => {
-            const rank = 1 + snap.topTen.filter((x) => x.score > e.score).length;
+          ranked.map(async (e) => {
             return {
               player: e.player,
-              rank,
+              rank: e.rank,
               score: e.score,
-              payoutUstx: computePayoutUstx(snap.total, rank),
+              payoutUstx: e.payoutUstx,
               claimed: await hasClaimedPrizeForGame(g, e.player, s).catch(() => false),
             };
           }),
         );
-        const scores = sorted.map((e) => e.score);
+        const scores = ranked.map((e) => e.score);
         const hasTies = new Set(scores).size < scores.length;
         results.push({ season: s, total: snap.total, rows, hasTies });
       }
@@ -403,6 +400,11 @@ export function SeasonAdminWindow() {
             </p>
           );
         })()}
+        {seasons.length > 0 && (
+          <p className="text-[10px] text-gray-600 px-1 mb-2">
+            Payout status is stored in this browser. Export CSV after sending payouts and reconcile before using another device.
+          </p>
+        )}
 
         {seasons.map((s) => {
           const reconRows: ReconRow[] = s.rows.map((r) => ({
@@ -436,8 +438,8 @@ export function SeasonAdminWindow() {
                 className="text-[10px] px-1 mb-1"
                 style={{ color: "#aa6600", background: "#fff8d6", border: "1px solid #e0c060", padding: "4px" }}
               >
-                ⚠️ Tied scores detected. Tied players share the same rank and payout (matches on-chain
-                claim-prize). Verify the table before sending — total disbursed may exceed 100% of pool.
+                ⚠️ Tied scores detected. Admin payouts use sorted row order so the payout schedule stays
+                within the pool. Export the CSV before sending if you need an audit trail.
               </p>
             )}
             {s.rows.length > 0 && (
