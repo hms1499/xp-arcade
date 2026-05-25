@@ -8,6 +8,8 @@ import {
   fetchCallReadOnlyFunction,
   Pc,
   makeUnsignedSTXTokenTransfer,
+  deserializeTransaction,
+  broadcastTransaction,
 } from "@stacks/transactions";
 import { stacks } from "./stacks";
 import { unwrap } from "./cv-unwrap";
@@ -302,18 +304,29 @@ export async function transferStx(
     network: stacks.network,
   });
   const txHex = unsignedTx.serialize();
+  let result: { txid?: string; transaction: string };
   try {
-    const result = await request("stx_signTransaction", {
-      transaction: txHex,
-      broadcast: true,
-    });
-    if (!result.txid) throw new Error("no txid in response");
-    return result.txid;
+    result = await request("stx_signTransaction", { transaction: txHex });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (/cancel|reject|denied/i.test(msg)) throw new Error("cancelled");
     throw err;
   }
+  // Xverse's stx_signTransaction signs but does not broadcast — broadcast
+  // the signed transaction ourselves.
+  if (result.txid) return result.txid;
+  if (!result.transaction) throw new Error("wallet returned no transaction");
+  const signedTx = deserializeTransaction(result.transaction);
+  const broadcast = await broadcastTransaction({
+    transaction: signedTx,
+    network: stacks.network,
+  });
+  const rejected = broadcast as { error?: string; reason?: string };
+  if (rejected.error) {
+    throw new Error(`Broadcast rejected: ${rejected.reason ?? rejected.error}`);
+  }
+  if (!broadcast.txid) throw new Error("broadcast returned no txid");
+  return broadcast.txid;
 }
 
 // Rank-based payout (mirrors the on-chain formula): top 1-3 get 20% each, rank 4-10 get 4/70 each.
