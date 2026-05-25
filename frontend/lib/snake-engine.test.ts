@@ -41,6 +41,22 @@ describe("snake-engine", () => {
     expect(g.state.gameOver).toBe(true);
   });
 
+  it("allows moving into the tail cell when the tail moves away", () => {
+    const g = createGame({ gridSize: 10, seed: 1 });
+    g.state.snake = [
+      { x: 2, y: 1 },
+      { x: 2, y: 2 },
+      { x: 3, y: 2 },
+      { x: 3, y: 1 },
+    ];
+    g.state.food = { x: 8, y: 8 };
+    g.state.direction = "right";
+    g.tick();
+    expect(g.state.gameOver).toBe(false);
+    expect(g.state.snake[0]).toEqual({ x: 3, y: 1 });
+    expect(g.state.snake).toHaveLength(4);
+  });
+
   it("direction-lock prevents 180-degree reversal", () => {
     const g = createGame({ gridSize: 10, seed: 1 });
     g.turn("left");

@@ -276,9 +276,11 @@ export function tickGhosts(state: PacManState): PacManState {
 
   let newLives = state.lives;
   let died = false;
+  let ghostScoreBonus = 0;
   const finalGhosts = movedGhosts.map((g) => {
     const result = checkCollision(state.pacman, g);
     if (result === "eat") {
+      ghostScoreBonus += 20;
       return { ...g, row: GHOST_STARTS[g.id].row, col: GHOST_STARTS[g.id].col, frightTimer: 0 };
     }
     if (result === "die") { died = true; }
@@ -293,5 +295,11 @@ export function tickGhosts(state: PacManState): PacManState {
     return resetPositions({ ...state, lives: newLives, modeTimer, modePhase: newPhase });
   }
 
-  return { ...state, ghosts: finalGhosts, modeTimer, modePhase: newPhase };
+  return {
+    ...state,
+    ghosts: finalGhosts,
+    score: state.score + ghostScoreBonus,
+    modeTimer,
+    modePhase: newPhase,
+  };
 }

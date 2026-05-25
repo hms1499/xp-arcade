@@ -83,12 +83,14 @@ export function createGame(opts: { gridSize: number; seed: number }): Game {
       state.gameOver = true;
       return;
     }
-    if (state.snake.some((s) => s.x === next.x && s.y === next.y)) {
+    const willEat = next.x === state.food.x && next.y === state.food.y;
+    const collisionBody = willEat ? state.snake : state.snake.slice(0, -1);
+    if (collisionBody.some((s) => s.x === next.x && s.y === next.y)) {
       state.gameOver = true;
       return;
     }
     state.snake.unshift(next);
-    if (next.x === state.food.x && next.y === state.food.y) {
+    if (willEat) {
       state.score += 1;
       const food = placeFood(rand, state.gridSize, state.snake);
       if (food === null) {

@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   createPacManState,
   movePacMan,
+  tickGhosts,
 } from "./PacManEngine";
 import { countDots } from "./maze";
 
@@ -63,5 +64,35 @@ describe("PacManEngine", () => {
     const after = movePacMan(collision, "left");
     expect(after.lives).toBe(0);
     expect(after.gameOver).toBe(true);
+  });
+
+  it("awards ghost points when a frightened ghost moves into pac-man", () => {
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.99);
+    const s = createPacManState();
+    const frightened = {
+      ...s,
+      pacman: { row: 10, col: 10, dir: "left" as const },
+      ghosts: s.ghosts.map((g, i) =>
+        i === 0
+          ? {
+              ...g,
+              row: 10,
+              col: 9,
+              dir: "up" as const,
+              mode: "scatter" as const,
+              frightTimer: 5,
+            }
+          : g,
+      ),
+      score: 7,
+    };
+
+    const after = tickGhosts(frightened);
+
+    expect(after.score).toBe(27);
+    expect(after.ghosts[0].row).toBe(9);
+    expect(after.ghosts[0].col).toBe(10);
+    expect(after.ghosts[0].frightTimer).toBe(0);
+    randomSpy.mockRestore();
   });
 });
