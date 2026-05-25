@@ -10,7 +10,9 @@ import {
   getSeasonPrizeForGame,
   hasClaimedPrizeForGame,
   endSeasonForGame,
+  getTopTenForGame,
   transferStx,
+  type TopEntry,
 } from "@/lib/contract-calls";
 import { buildPayoutRows } from "@/lib/payout-schedule";
 import { useToasts } from "@/state/toasts";
@@ -109,6 +111,7 @@ export function SeasonAdminWindow() {
   const address = useWallet((s) => s.address);
   const [currentSeason, setCurrentSeason] = useState<number | null>(null);
   const [accumulated, setAccumulated] = useState<number | null>(null);
+  const [currentTopTen, setCurrentTopTen] = useState<TopEntry[] | null>(null);
   const [seasons, setSeasons] = useState<SeasonView[]>([]);
   const [busyEnd, setBusyEnd] = useState(false);
   const [busyPay, setBusyPay] = useState<string | null>(null);
@@ -158,11 +161,13 @@ export function SeasonAdminWindow() {
     Promise.all([
       getCurrentSeasonForGame(gameId),
       getPrizePoolBalanceForGame(gameId),
+      getTopTenForGame(gameId),
     ])
-      .then(([cs, pool]) => {
+      .then(([cs, pool, topTen]) => {
         setError(null);
         setCurrentSeason(cs);
         setAccumulated(pool);
+        setCurrentTopTen([...topTen].sort((a, b) => b.score - a.score));
         return loadPastSeasons(cs, gameId);
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Load failed"));
@@ -181,10 +186,21 @@ export function SeasonAdminWindow() {
     );
   }
 
+  const currentScores = currentTopTen?.map((e) => e.score) ?? [];
+  const currentHasTies = currentScores.length > 1 && new Set(currentScores).size < currentScores.length;
+  const currentCutoff = currentTopTen && currentTopTen.length >= 10 ? currentTopTen[9].score : null;
+  const canEndSeason = currentSeason != null && accumulated != null && currentTopTen !== null;
+
   async function handleEndSeason() {
+    const preflight = [
+      `Season: ${currentSeason ?? "unknown"}`,
+      `Pool: ${accumulated != null ? (accumulated / 1_000_000).toFixed(4) : "unknown"} STX`,
+      `Ranked players: ${currentTopTen?.length ?? "unknown"}/10`,
+      currentHasTies ? "Tied scores: yes" : "Tied scores: no",
+    ].join("\n");
     if (
       !confirm(
-        `End the current ${gameId} season? This locks the snapshot and starts a new season.`,
+        `End the current ${gameId} season?\n\n${preflight}\n\nThis locks the snapshot and starts a new season.`,
       )
     )
       return;
@@ -349,9 +365,24 @@ export function SeasonAdminWindow() {
               Season <b>{currentSeason ?? "…"}</b> · Pool:{" "}
               <b>{accumulated != null ? (accumulated / 1_000_000).toFixed(4) : "…"} STX</b>
             </div>
-            <button onClick={handleEndSeason} disabled={busyEnd || currentSeason == null}>
+            <button onClick={handleEndSeason} disabled={busyEnd || !canEndSeason}>
               {busyEnd ? "Closing…" : "End Season"}
             </button>
+          </div>
+          <div
+            className="text-[10px] px-1 py-1 mb-1"
+            style={{
+              background: currentHasTies ? "#fff8d6" : "#eef0ff",
+              border: `1px solid ${currentHasTies ? "#e0c060" : "#9090c0"}`,
+              color: currentHasTies ? "#8a5a00" : "#000080",
+              lineHeight: 1.4,
+            }}
+          >
+            Preflight: top-10 <b>{currentTopTen ? `${currentTopTen.length}/10` : "..."}</b>
+            {" · "}
+            cutoff <b>{currentCutoff ?? "open"}</b>
+            {" · "}
+            ties <b>{currentHasTies ? "yes" : "no"}</b>
           </div>
           <p className="text-[10px] text-gray-500 px-1">
             Ending the season snapshots top-10 and pool total, then starts a fresh season.

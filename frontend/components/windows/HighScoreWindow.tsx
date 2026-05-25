@@ -3,7 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import { useWindows, type WindowEntry } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
 import { Window } from "@/components/windows/Window";
-import { getTopTenForGame, type TopEntry } from "@/lib/contract-calls";
+import {
+  getBestScoreForGame,
+  getCurrentSeasonForGame,
+  getTopTenForGame,
+  type TopEntry,
+} from "@/lib/contract-calls";
 import { GAMES, type GameId } from "@/lib/game-registry";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
 
@@ -14,6 +19,8 @@ type RankSnapshot = Record<string, number>;
 type LeaderboardLoadState = {
   gameId: GameId;
   rows: TopEntry[] | null;
+  season: number | null;
+  playerBest: number | null;
   snapshot: RankSnapshot;
   error: string | null;
   lastUpdated: Date | null;
@@ -64,14 +71,24 @@ function LeaderboardTab({
     if (!isActive) return;
 
     function load() {
-      getTopTenForGame(gameId)
-        .then((data) => {
+      Promise.all([
+        getTopTenForGame(gameId),
+        getCurrentSeasonForGame(gameId).catch(() => null),
+        address
+          ? getBestScoreForGame(gameId, address)
+              .then((best) => best?.score ?? 0)
+              .catch(() => null)
+          : Promise.resolve(null),
+      ])
+        .then(([data, season, playerBest]) => {
           const sorted = [...data].sort((a, b) => b.score - a.score);
           const previousSnapshot = loadSnapshot(gameId);
           saveSnapshot(gameId, sorted);
           setLoadState({
             gameId,
             rows: sorted,
+            season,
+            playerBest,
             snapshot: previousSnapshot,
             error: null,
             lastUpdated: new Date(),
@@ -81,6 +98,8 @@ function LeaderboardTab({
           setLoadState({
             gameId,
             rows: null,
+            season: null,
+            playerBest: null,
             snapshot: typeof window !== "undefined" ? loadSnapshot(gameId) : {},
             error: e instanceof Error ? e.message : "Load failed",
             lastUpdated: null,
@@ -93,19 +112,43 @@ function LeaderboardTab({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isActive, gameId]);
+  }, [isActive, gameId, address]);
 
   const activeState = loadState?.gameId === gameId ? loadState : null;
   const rows = activeState?.rows ?? null;
   const snapshot = activeState?.snapshot ?? {};
   const error = activeState?.error ?? null;
   const lastUpdated = activeState?.lastUpdated ?? null;
+  const season = activeState?.season ?? null;
+  const playerBest = activeState?.playerBest ?? null;
   const myRank =
     address && rows ? rows.findIndex((r) => r.player === address) + 1 : 0;
+  const cutoff = rows && rows.length >= 10 ? rows[9].score : null;
+  const pointsNeeded =
+    address && rows && myRank === 0 && cutoff !== null && playerBest !== null
+      ? Math.max(0, cutoff - playerBest + 1)
+      : null;
 
   return (
     <div>
       {error && <p className="text-red-600 text-xs mb-2">⚠️ {error}</p>}
+      <div
+        className="text-[10px] mb-1"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 8,
+          color: "#555",
+        }}
+      >
+        <span>
+          Season <b>{season ?? "..."}</b>
+          {rows && <> · {rows.length}/10 ranked</>}
+        </span>
+        <span>
+          {cutoff !== null ? <>Cutoff <b>{cutoff}</b></> : "Open top-10"}
+        </span>
+      </div>
       {countdown.state !== "unset" && (
         <div className="flex justify-end mb-1">
           <span
@@ -142,7 +185,7 @@ function LeaderboardTab({
               padding: "12px 0",
             }}
           >
-            No scores yet. Be the first!
+            No scores yet.
           </div>
         )}
         {rows?.map((r, i) => {
@@ -238,6 +281,20 @@ function LeaderboardTab({
           })}{" "}
           · auto-refresh 30s
           {myRank > 0 && <> · Your rank: #{myRank}</>}
+        </p>
+      )}
+      {address && rows && myRank === 0 && (
+        <p
+          className="text-[9px] text-gray-600 mt-1 px-1 py-1"
+          style={{ background: "#f5f5f0", border: "1px solid #d0d0c8", lineHeight: 1.3 }}
+        >
+          {cutoff === null
+            ? "Any minted score will enter this leaderboard."
+            : playerBest === null
+            ? "Current best could not be read."
+            : pointsNeeded === 0
+            ? "Your current best is enough to enter; mint a qualifying run to update your row."
+            : `You need ${pointsNeeded} more point${pointsNeeded === 1 ? "" : "s"} than your current best to enter top 10.`}
         </p>
       )}
       {gameId === "snake" && (

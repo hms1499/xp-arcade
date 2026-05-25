@@ -8,11 +8,11 @@ import { recordScore } from "@/lib/high-score";
 import { GAMES, type GameId } from "@/lib/game-registry";
 
 const STATUS_LABEL: Record<TxStatus, string> = {
-  pending: "⏳ Confirming…",
-  success: "✓ Confirmed!",
-  abort_by_response: "✗ Failed (contract error)",
-  abort_by_post_condition: "✗ Failed (post-condition)",
-  failed: "✗ Failed",
+  pending: "Submitted · confirming on-chain",
+  success: "Confirmed · NFT minted",
+  abort_by_response: "Failed · contract rejected",
+  abort_by_post_condition: "Failed · post-condition blocked",
+  failed: "Failed · transaction rejected",
 };
 
 const STATUS_COLOR: Record<TxStatus, string> = {
@@ -63,6 +63,12 @@ export function SharedMintDialog({
 
   const feeStx = (Number(game.mintFeeUstx) / 1_000_000).toFixed(2);
   const chain = process.env.NEXT_PUBLIC_NETWORK === "mainnet" ? "mainnet" : "testnet";
+  const isMintDisabled = busy || mintsRemaining === 0;
+  const mintButtonLabel = busy
+    ? "Opening wallet..."
+    : mintsRemaining === 0
+    ? "Limit reached"
+    : `Mint for ${feeStx} STX`;
 
   async function handleMint() {
     if (!address) return;
@@ -117,10 +123,10 @@ export function SharedMintDialog({
         </div>
       )}
       <p className="mb-3">
-        ⚠️ <b>Game Over</b> — Score: <b>{score}</b>
+        <b>Game Over</b> - Score: <b>{score}</b>
         <span className="block text-xs mt-1">
           {hs.isNewRecord ? (
-            <b style={{ color: "#007700" }}>🏅 New personal best!</b>
+            <b style={{ color: "#007700" }}>New personal best</b>
           ) : (
             <span className="text-gray-500">
               Personal best: <b>{hs.best}</b>
@@ -128,7 +134,10 @@ export function SharedMintDialog({
           )}
         </span>
         <span className="block text-xs text-gray-500 mt-1">
-          Minting costs <b>{feeStx} STX</b> and records your score on-chain forever.
+          Play again is free. Mint only if you want this exact score recorded as an NFT.
+        </span>
+        <span className="block text-xs text-gray-500 mt-1">
+          Mint cost: <b>{feeStx} STX</b>. Scores are client-submitted and public on-chain.
         </span>
         {mintsRemaining !== null && (
           <span
@@ -136,8 +145,8 @@ export function SharedMintDialog({
             style={{ color: mintsRemaining === 0 ? "#cc0000" : "#555" }}
           >
             {mintsRemaining === 0
-              ? "⛔ Mint limit reached for this season (10/10)"
-              : `🎟️ ${mintsRemaining} mint${mintsRemaining === 1 ? "" : "s"} remaining this season`}
+              ? "Mint limit reached for this season (10/10)"
+              : `${mintsRemaining} mint${mintsRemaining === 1 ? "" : "s"} remaining this season`}
           </span>
         )}
       </p>
@@ -148,8 +157,8 @@ export function SharedMintDialog({
             Connect a wallet to mint your score as an NFT.
           </p>
           <div style={{ display: "flex", gap: 6 }}>
-            <button onClick={connect}>Connect Wallet</button>
             <button onClick={onPlayAgain}>Play Again</button>
+            <button onClick={connect}>Connect Wallet</button>
             <button onClick={onClose}>Close</button>
           </div>
         </div>
@@ -169,26 +178,25 @@ export function SharedMintDialog({
           {error && (
             <p className="text-xs text-red-600 mb-2">⚠️ {error}</p>
           )}
-          <div style={{ display: "flex", gap: 6 }}>
-            <button onClick={handleMint} disabled={busy || mintsRemaining === 0}>
-              {busy
-                ? "Opening wallet…"
-                : mintsRemaining === 0
-                ? "Limit reached"
-                : `Mint for ${feeStx} STX`}
-            </button>
+          <p className="text-[10px] text-gray-500 mb-2">
+            Wallet confirmation should show an exact {feeStx} STX transfer.
+          </p>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             <button onClick={onPlayAgain}>Play Again</button>
+            <button onClick={handleMint} disabled={isMintDisabled}>
+              {mintButtonLabel}
+            </button>
             <button onClick={onClose}>Close</button>
           </div>
         </div>
       ) : (
         <div>
-          <p
-            className="text-xs mb-2"
-            style={{ color: STATUS_COLOR[mintStatus] }}
-          >
-            {STATUS_LABEL[mintStatus]}
-          </p>
+          <ol className="text-xs mb-2" style={{ color: "#555", lineHeight: 1.7 }}>
+            <li>1. Submitted to wallet</li>
+            <li style={{ color: STATUS_COLOR[mintStatus] }}>
+              2. {STATUS_LABEL[mintStatus]}
+            </li>
+          </ol>
           {txId && (
             <p className="text-xs mb-2">
               <a

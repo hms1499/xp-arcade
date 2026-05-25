@@ -10,6 +10,11 @@ describe("computePlayerStats", () => {
       rarityCounts: {},
       seasonsPlayed: 0,
       mintFeesUstx: 0,
+      byGame: {
+        snake: { totalMints: 0, bestScore: 0, totalScore: 0, seasonsPlayed: 0, mintFeesUstx: 0 },
+        tetris: { totalMints: 0, bestScore: 0, totalScore: 0, seasonsPlayed: 0, mintFeesUstx: 0 },
+        pacman: { totalMints: 0, bestScore: 0, totalScore: 0, seasonsPlayed: 0, mintFeesUstx: 0 },
+      },
     });
   });
 
@@ -17,14 +22,28 @@ describe("computePlayerStats", () => {
     const stats = computePlayerStats([
       { id: 1, gameId: "snake", name: "a", image: "", score: 100, season: 1, rarity: "Common" },
       { id: 2, gameId: "snake", name: "b", image: "", score: 250, season: 1, rarity: "Rare" },
-      { id: 3, gameId: "snake", name: "c", image: "", score: 50, season: 2, rarity: "Common" },
+      { id: 3, gameId: "tetris", name: "c", image: "", score: 50, season: 2, rarity: "Common" },
     ]);
     expect(stats.totalMints).toBe(3);
     expect(stats.bestScore).toBe(250);
     expect(stats.totalScore).toBe(400);
     expect(stats.rarityCounts).toEqual({ Common: 2, Rare: 1 });
     expect(stats.seasonsPlayed).toBe(2);
-    expect(stats.mintFeesUstx).toBe(30_000);
+    expect(stats.mintFeesUstx).toBe(40_000);
+    expect(stats.byGame.snake).toEqual({
+      totalMints: 2,
+      bestScore: 250,
+      totalScore: 350,
+      seasonsPlayed: 1,
+      mintFeesUstx: 20_000,
+    });
+    expect(stats.byGame.tetris).toEqual({
+      totalMints: 1,
+      bestScore: 50,
+      totalScore: 50,
+      seasonsPlayed: 1,
+      mintFeesUstx: 20_000,
+    });
   });
 
   it("tolerates missing numeric fields", () => {
