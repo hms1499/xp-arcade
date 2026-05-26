@@ -11,6 +11,7 @@ import { PlayerStatsPanel } from "./PlayerStatsPanel";
 import { RarityBreakdown } from "./RarityBreakdown";
 import { CopyAddressButton } from "./CopyAddressButton";
 import { useWallet } from "@/state/wallet";
+import { useWindows } from "@/state/window-manager";
 
 type NftLoadState = {
   address: string;
@@ -37,6 +38,7 @@ export function PlayerProfileBody({
   const [loadState, setLoadState] = useState<NftLoadState | null>(null);
   const [filter, setFilter] = useState<ProfileFilter>("all");
   const walletAddress = useWallet((s) => s.address);
+  const openWindow = useWindows((s) => s.open);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,6 +104,11 @@ export function PlayerProfileBody({
         totalMints={stats?.totalMints}
         bestScore={stats?.bestScore}
         topGame={stats ? topGameLabel(stats) : null}
+        onOpenMyNfts={
+          walletAddress === address && !showBackToDesktop
+            ? () => openWindow("mynfts")
+            : undefined
+        }
       />
 
       {stats && nfts && nfts.length > 0 && (
@@ -270,12 +277,14 @@ function ProfileHeader({
   totalMints,
   bestScore,
   topGame,
+  onOpenMyNfts,
 }: {
   address: string;
   isOwnProfile: boolean;
   totalMints?: number;
   bestScore?: number;
   topGame: string | null;
+  onOpenMyNfts?: () => void;
 }) {
   return (
     <div
@@ -303,7 +312,15 @@ function ProfileHeader({
             Player {shortAddress(address)}
           </h2>
         </div>
-        <div className="text-[10px] font-mono text-gray-700">
+        <div
+          className="text-[10px] font-mono text-gray-700"
+          style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}
+        >
+          {onOpenMyNfts && (
+            <button onClick={onOpenMyNfts} style={{ fontSize: 10 }}>
+              My NFTs
+            </button>
+          )}
           <CopyAddressButton value={address} />
           <a
             href={`https://explorer.hiro.so/address/${address}?chain=${
