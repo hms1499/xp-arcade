@@ -115,12 +115,10 @@ export function PlayerProfileBody({
         </>
       )}
 
-      {nfts === null && !error && <p className="text-sm">Loading NFTs…</p>}
+      {nfts === null && !error && <ProfileLoading />}
       {error && <p className="text-red-700 text-xs">⚠️ {error}</p>}
       {nfts && nfts.length === 0 && (
-        <div className="text-sm text-gray-700 border border-dashed border-gray-400 p-3 text-center">
-          No score NFTs minted yet by this player.
-        </div>
+        <ProfileEmpty isOwnProfile={walletAddress === address} />
       )}
       {filteredNfts && filteredNfts.length === 0 && (
         <div className="text-sm text-gray-700 border border-dashed border-gray-400 p-3 text-center">
@@ -154,6 +152,54 @@ export function PlayerProfileBody({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function ProfileLoading() {
+  return (
+    <div style={{ display: "grid", gap: 8 }}>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            style={{
+              height: 52,
+              background: "#e0e0e0",
+              borderRadius: 3,
+              animation: "shimmer 1.2s linear infinite",
+            }}
+          />
+        ))}
+      </div>
+      <div
+        style={{
+          height: 96,
+          background: "#e0e0e0",
+          borderRadius: 3,
+          animation: "shimmer 1.2s linear infinite",
+        }}
+      />
+    </div>
+  );
+}
+
+function ProfileEmpty({ isOwnProfile }: { isOwnProfile: boolean }) {
+  return (
+    <div
+      className="text-sm text-gray-700 text-center"
+      style={{
+        border: "1px dashed #808080",
+        background: "#f5f5f0",
+        padding: 14,
+      }}
+    >
+      <div className="font-bold mb-1">No score NFTs yet.</div>
+      <div className="text-xs">
+        {isOwnProfile
+          ? "Play a game and mint a score to start filling this profile."
+          : "This player has not minted a score NFT yet."}
+      </div>
     </div>
   );
 }
