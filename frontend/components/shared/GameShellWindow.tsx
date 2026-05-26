@@ -1,6 +1,7 @@
 "use client";
 import { type GameId, GAMES } from "@/lib/game-registry";
 import { useWindows } from "@/state/window-manager";
+import { useSessionStats } from "@/state/session-stats";
 import { Window } from "@/components/windows/Window";
 
 export function GameShellWindow({
@@ -17,6 +18,7 @@ export function GameShellWindow({
     s.windows.find((win) => win.type === `game-${gameId}`)
   );
   const openWindow = useWindows((s) => s.open);
+  const sessionStats = useSessionStats((s) => s.byGame[gameId]);
 
   if (!w) return null;
 
@@ -54,8 +56,16 @@ export function GameShellWindow({
               💾 My NFTs
             </button>
           </div>
-          <span>
-            Score: <b>{score}</b>
+          <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {sessionStats.runs > 0 && (
+              <span style={{ color: "#555" }}>
+                Session: <b>{sessionStats.bestScore}</b> best · {sessionStats.runs} run
+                {sessionStats.runs === 1 ? "" : "s"}
+              </span>
+            )}
+            <span>
+              Score: <b>{score}</b>
+            </span>
           </span>
         </div>
         <div className="p-2">{children}</div>

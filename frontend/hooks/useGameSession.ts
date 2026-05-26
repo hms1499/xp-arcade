@@ -3,6 +3,7 @@ import { useState, useCallback } from "react";
 import { type GameId } from "@/lib/game-registry";
 import { getTopTenForGame } from "@/lib/contract-calls";
 import { useMintTx } from "@/state/mint-tx";
+import { useSessionStats } from "@/state/session-stats";
 
 export function useGameSession(gameId: GameId) {
   const [score, setScore] = useState(0);
@@ -20,6 +21,7 @@ export function useGameSession(gameId: GameId) {
     async (s: number) => {
       setFinalScore(s);
       setShowMint(true);
+      useSessionStats.getState().recordResult(gameId, s);
       try {
         const top = await getTopTenForGame(gameId);
         const min =
