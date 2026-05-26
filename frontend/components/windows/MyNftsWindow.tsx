@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useWindows } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
 import { useMintTx } from "@/state/mint-tx";
@@ -7,6 +7,7 @@ import { Window } from "@/components/windows/Window";
 import { fetchAllScoreHoldings, scoreNftKey, type ScoreNft } from "@/lib/holdings";
 import { rarityColor } from "@/lib/metadata-svg";
 import { GAMES, type GameId } from "@/lib/game-registry";
+import { shortAddress } from "@/lib/stacks-address";
 
 const GAME_BADGE_BG: Record<string, string> = {
   snake: "#d4edda",
@@ -50,6 +51,7 @@ export function MyNftsWindow() {
   const [gameFilter, setGameFilter] = useState<GameFilter>("all");
   const [rarityFilter, setRarityFilter] = useState<RarityFilter>("all");
   const [sortMode, setSortMode] = useState<SortMode>("score-desc");
+  const [selectedNft, setSelectedNft] = useState<ScoreNft | null>(null);
   const mintTxId = useMintTx((s) => s.txId);
   const mintStatus = useMintTx((s) => s.status);
   const confirmedMintTxId = mintStatus === "success" ? mintTxId : null;
@@ -291,25 +293,40 @@ export function MyNftsWindow() {
             }}
           >
             {visibleNfts.map((nft) => (
-              <NftCard key={scoreNftKey(nft)} nft={nft} />
+              <NftCard
+                key={scoreNftKey(nft)}
+                nft={nft}
+                onOpen={() => setSelectedNft(nft)}
+              />
             ))}
           </div>
+        )}
+        {address && selectedNft && (
+          <NftDetailDialog
+            nft={selectedNft}
+            owner={address}
+            onClose={() => setSelectedNft(null)}
+          />
         )}
       </div>
     </Window>
   );
 }
 
-function NftCard({ nft }: { nft: ScoreNft }) {
+function NftCard({ nft, onOpen }: { nft: ScoreNft; onOpen: () => void }) {
   const game = GAMES[nft.gameId];
   return (
-    <div
+    <button
+      type="button"
+      onClick={onOpen}
       style={{
         border: "1px solid #ccc",
         borderRadius: 3,
         overflow: "hidden",
         fontSize: 10,
         background: "#fff",
+        padding: 0,
+        textAlign: "left",
       }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -388,6 +405,149 @@ function NftCard({ nft }: { nft: ScoreNft }) {
           <span>{typeof nft.season === "number" ? `Season ${nft.season}` : "Season ?"}</span>
         </div>
       </div>
+    </button>
+  );
+}
+
+function NftDetailDialog({
+  nft,
+  owner,
+  onClose,
+}: {
+  nft: ScoreNft;
+  owner: string;
+  onClose: () => void;
+}) {
+  const game = GAMES[nft.gameId];
+  const chain = process.env.NEXT_PUBLIC_NETWORK === "mainnet" ? "mainnet" : "testnet";
+  const metadataHref = `/api/metadata/${game.metaSegment}/${nft.id}`;
+  const contractHref = `https://explorer.hiro.so/address/${game.contractAddress}.${game.contractName}?chain=${chain}`;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${nft.name} details`}
+      onMouseDown={(e) => e.stopPropagation()}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 80,
+        background: "rgba(0,0,0,0.35)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 12,
+      }}
+    >
+      <div
+        className="window"
+        style={{
+          width: "min(520px, calc(100vw - 24px))",
+          maxHeight: "calc(100vh - 48px)",
+          overflow: "auto",
+        }}
+      >
+        <div className="title-bar">
+          <div className="title-bar-text">{game.emoji} NFT Details</div>
+          <div className="title-bar-controls">
+            <button type="button" aria-label="Close" onClick={onClose} />
+          </div>
+        </div>
+        <div
+          className="window-body"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(140px, 190px) 1fr",
+            gap: 10,
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={nft.image}
+            alt={nft.name}
+            style={{
+              width: "100%",
+              aspectRatio: "1 / 1",
+              objectFit: "cover",
+              border: "2px inset #dfdfdf",
+              background: "#fff",
+            }}
+          />
+          <div style={{ display: "grid", gap: 6, alignContent: "start" }}>
+            <div>
+              <div className="text-[10px] text-gray-500">Score NFT</div>
+              <h3 className="text-sm font-bold">{nft.name}</h3>
+            </div>
+            <DetailRow label="Game" value={`${game.emoji} ${game.label}`} />
+            <DetailRow
+              label="Score"
+              value={typeof nft.score === "number" ? nft.score : "Unknown"}
+            />
+            <DetailRow
+              label="Rarity"
+              value={
+                nft.rarity ? (
+                  <b style={{ color: rarityColor(nft.rarity) }}>{nft.rarity}</b>
+                ) : (
+                  "Unknown"
+                )
+              }
+            />
+            <DetailRow
+              label="Season"
+              value={typeof nft.season === "number" ? nft.season : "Unknown"}
+            />
+            <DetailRow label="Token" value={`#${nft.id}`} />
+            <DetailRow label="Owner" value={shortAddress(owner)} />
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
+              <a
+                href={metadataHref}
+                target="_blank"
+                rel="noreferrer"
+                className="underline text-blue-700"
+              >
+                Metadata
+              </a>
+              <a
+                href={contractHref}
+                target="_blank"
+                rel="noreferrer"
+                className="underline text-blue-700"
+              >
+                Contract
+              </a>
+              <button type="button" onClick={onClose}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: ReactNode;
+}) {
+  return (
+    <div
+      className="text-xs"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "64px 1fr",
+        gap: 8,
+        borderTop: "1px solid #e0e0e0",
+        paddingTop: 4,
+      }}
+    >
+      <span className="text-gray-500">{label}</span>
+      <span>{value}</span>
     </div>
   );
 }
