@@ -273,7 +273,7 @@ export function MyNftsWindow() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(112px, 1fr))",
               gap: 8,
             }}
           >
@@ -296,33 +296,83 @@ function NftCard({ nft }: { nft: ScoreNft }) {
         borderRadius: 3,
         overflow: "hidden",
         fontSize: 10,
-        textAlign: "center",
         background: "#fff",
       }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={nft.image} alt={nft.name} style={{ width: "100%", display: "block" }} />
-      <div style={{ padding: "2px 4px" }}>
-        {typeof nft.score === "number" && (
-          <div style={{ fontWeight: "bold" }}>{nft.score}</div>
-        )}
-        {nft.rarity && (
-          <div style={{ fontSize: 9, color: rarityColor(nft.rarity) }}>
-            {nft.rarity}
-          </div>
-        )}
+      <img
+        src={nft.image}
+        alt={nft.name}
+        style={{
+          width: "100%",
+          aspectRatio: "1 / 1",
+          objectFit: "cover",
+          display: "block",
+          borderBottom: "1px solid #d0d0d0",
+        }}
+      />
+      <div style={{ padding: "5px 6px", display: "grid", gap: 4 }}>
+        <div
+          className="truncate"
+          title={nft.name}
+          style={{ fontWeight: "bold", minWidth: 0 }}
+        >
+          {nft.name}
+        </div>
         <div
           style={{
-            marginTop: 2,
-            display: "inline-block",
-            padding: "1px 5px",
-            borderRadius: 8,
-            fontSize: 9,
-            background: GAME_BADGE_BG[nft.gameId] ?? "#eee",
-            color: GAME_BADGE_COLOR[nft.gameId] ?? "#333",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            gap: 6,
           }}
         >
-          {game.emoji} {game.label}
+          <span style={{ color: "#555" }}>Score</span>
+          <b style={{ fontSize: 16, color: "#000080" }}>
+            {typeof nft.score === "number" ? nft.score : "?"}
+          </b>
+        </div>
+        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+          <span
+            style={{
+              display: "inline-block",
+              padding: "1px 5px",
+              borderRadius: 8,
+              fontSize: 9,
+              background: GAME_BADGE_BG[nft.gameId] ?? "#eee",
+              color: GAME_BADGE_COLOR[nft.gameId] ?? "#333",
+            }}
+          >
+            {game.emoji} {game.label}
+          </span>
+          {nft.rarity && (
+            <span
+              style={{
+                display: "inline-block",
+                padding: "1px 5px",
+                border: "1px solid #d0d0d0",
+                fontSize: 9,
+                color: rarityColor(nft.rarity),
+                fontWeight: "bold",
+              }}
+            >
+              {nft.rarity}
+            </span>
+          )}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 4,
+            color: "#666",
+            fontSize: 9,
+            borderTop: "1px solid #eeeeee",
+            paddingTop: 3,
+          }}
+        >
+          <span>#{nft.id}</span>
+          <span>{typeof nft.season === "number" ? `Season ${nft.season}` : "Season ?"}</span>
         </div>
       </div>
     </div>
