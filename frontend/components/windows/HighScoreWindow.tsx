@@ -133,35 +133,83 @@ function LeaderboardTab({
     <div>
       {error && <p className="text-red-600 text-xs mb-2">⚠️ {error}</p>}
       <div
-        className="text-[10px] mb-1"
+        className="text-[10px] mb-2"
         style={{
-          display: "flex",
-          justifyContent: "space-between",
+          display: "grid",
+          gridTemplateColumns: "1fr auto",
           gap: 8,
+          alignItems: "center",
+          background: "#f5f5f0",
+          border: "1px solid #d0d0c8",
+          padding: "5px 6px",
           color: "#555",
         }}
       >
-        <span>
-          Season <b>{season ?? "..."}</b>
-          {rows && <> · {rows.length}/10 ranked</>}
-        </span>
-        <span>
-          {cutoff !== null ? <>Cutoff <b>{cutoff}</b></> : "Open top-10"}
-        </span>
-      </div>
-      {countdown.state !== "unset" && (
-        <div className="flex justify-end mb-1">
-          <span
-            style={{
-              fontFamily: "monospace",
-              fontSize: 11,
-              color: countdown.state === "expired" ? "#cc0000" : "#000080",
-            }}
-            title={`Ends ${countdown.endsAt.toLocaleString()}`}
-          >
-            ⏳ {formatCountdown(countdown)}
+        <div style={{ display: "grid", gap: 2 }}>
+          <span>
+            Season <b>{season ?? "..."}</b>
+            {rows && <> · {rows.length}/10 ranked</>}
+          </span>
+          <span>
+            {lastUpdated
+              ? `Updated ${lastUpdated.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })}`
+              : "Loading live scores"}
+            {myRank > 0 && <> · Your rank: #{myRank}</>}
           </span>
         </div>
+        <div style={{ display: "grid", gap: 2, textAlign: "right" }}>
+          <span>
+            {cutoff !== null ? <>Cutoff <b>{cutoff}</b></> : "Open top-10"}
+          </span>
+          {countdown.state !== "unset" && (
+            <span
+              style={{
+                fontFamily: "monospace",
+                fontSize: 11,
+                color: countdown.state === "expired" ? "#cc0000" : "#000080",
+              }}
+              title={`Ends ${countdown.endsAt.toLocaleString()}`}
+            >
+              ⏳ {formatCountdown(countdown)}
+            </span>
+          )}
+        </div>
+      </div>
+      {address && rows && myRank === 0 && (
+        <p
+          className="text-[9px] text-gray-600 mb-2 px-1 py-1"
+          style={{ background: "#fff8e1", border: "1px solid #d7b35a", lineHeight: 1.3 }}
+        >
+          {cutoff === null
+            ? "Any minted score will enter this leaderboard."
+            : playerBest === null
+            ? "Current best could not be read."
+            : pointsNeeded === 0
+            ? "Your current best is enough to enter; mint a qualifying run to update your row."
+            : `You need ${pointsNeeded} more point${pointsNeeded === 1 ? "" : "s"} than your current best to enter top 10.`}
+        </p>
+      )}
+      {gameId === "snake" && (
+        <details
+          className="text-[9px] text-gray-500 mb-2 px-1 py-1"
+          style={{ background: "#f5f5f0", border: "1px solid #d0d0c8", lineHeight: 1.3 }}
+        >
+          <summary
+            style={{
+              cursor: "pointer",
+              color: "#555",
+            }}
+          >
+            Snake rarity note
+          </summary>
+          Snake&apos;s 20×20 grid caps practical scores around 400. A Rare Snake
+          NFT is roughly as hard to earn as an Epic in Tetris or Pac-Man. Tiers
+          reflect achievement within each game, not cross-game equivalence.
+        </details>
       )}
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
         {rows === null && !error &&
@@ -271,43 +319,6 @@ function LeaderboardTab({
           );
         })}
       </div>
-      {lastUpdated && (
-        <p className="text-[9px] text-gray-400 mt-1 text-right">
-          Updated{" "}
-          {lastUpdated.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-          })}{" "}
-          · auto-refresh 30s
-          {myRank > 0 && <> · Your rank: #{myRank}</>}
-        </p>
-      )}
-      {address && rows && myRank === 0 && (
-        <p
-          className="text-[9px] text-gray-600 mt-1 px-1 py-1"
-          style={{ background: "#f5f5f0", border: "1px solid #d0d0c8", lineHeight: 1.3 }}
-        >
-          {cutoff === null
-            ? "Any minted score will enter this leaderboard."
-            : playerBest === null
-            ? "Current best could not be read."
-            : pointsNeeded === 0
-            ? "Your current best is enough to enter; mint a qualifying run to update your row."
-            : `You need ${pointsNeeded} more point${pointsNeeded === 1 ? "" : "s"} than your current best to enter top 10.`}
-        </p>
-      )}
-      {gameId === "snake" && (
-        <p
-          className="text-[9px] text-gray-500 mt-1 px-1 py-1"
-          style={{ background: "#f5f5f0", border: "1px solid #d0d0c8", lineHeight: 1.3 }}
-          title="Rarity tiers are shared across all games but reachability differs by game dynamics."
-        >
-          ℹ️ Snake&apos;s 20×20 grid caps practical scores around 400 — a Rare Snake
-          NFT is roughly as hard to earn as an Epic in Tetris or Pac-Man. Tiers
-          reflect achievement within each game, not cross-game equivalence.
-        </p>
-      )}
     </div>
   );
 }
