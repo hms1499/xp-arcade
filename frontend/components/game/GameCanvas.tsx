@@ -367,12 +367,26 @@ export function GameCanvas({
           />
         </div>
       </div>
-      <div style={{ position: "relative", width: GRID * CELL, height: GRID * CELL }}>
+      <div
+        style={{
+          position: "relative",
+          width: `min(${GRID * CELL}px, calc(100vw - 32px))`,
+          aspectRatio: "1 / 1",
+          maxHeight: `min(${GRID * CELL}px, calc(100vh - 210px))`,
+          margin: "0 auto",
+        }}
+      >
         <canvas
           ref={canvasRef}
           width={GRID * CELL}
           height={GRID * CELL}
-          style={{ imageRendering: "pixelated", border: "1px solid #444", display: "block" }}
+          style={{
+            imageRendering: "pixelated",
+            border: "1px solid #444",
+            display: "block",
+            width: "100%",
+            height: "100%",
+          }}
         />
         {paused && (
           <div

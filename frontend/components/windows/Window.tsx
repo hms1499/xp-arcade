@@ -26,6 +26,7 @@ export function Window({
   const flashingRef = useRef(false);
   const titlebarRef = useRef<HTMLDivElement>(null);
   const [closing, setClosing] = useState(false);
+  const [compactViewport, setCompactViewport] = useState(false);
 
   // Safety net: close after animation duration even if animationend doesn't fire
   useEffect(() => {
@@ -33,6 +34,14 @@ export function Window({
     const t = setTimeout(() => close(id), 150);
     return () => clearTimeout(t);
   }, [closing, close, id]);
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 640px), (max-height: 620px)");
+    const update = () => setCompactViewport(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
 
   if (!win || win.minimized) return null;
 
@@ -42,7 +51,7 @@ export function Window({
     <div
       className={`window window-opening${closing ? " window-closing" : ""}`}
       style={
-        win.maximized
+        win.maximized || compactViewport
           ? {
               position: "fixed",
               top: 0,
@@ -59,6 +68,9 @@ export function Window({
               top: win.y,
               zIndex: win.z,
               width,
+              maxWidth: "calc(100vw - 8px)",
+              maxHeight: "calc(100vh - 36px)",
+              overflow: "auto",
             }
       }
       onMouseDown={() => focus(id)}
@@ -69,7 +81,9 @@ export function Window({
       <div
         ref={titlebarRef}
         className={`title-bar${isActive ? "" : " inactive"}`}
-        onDoubleClick={() => toggleMaximize(id)}
+        onDoubleClick={() => {
+          if (!compactViewport) toggleMaximize(id);
+        }}
         onMouseDown={(e) => {
           // Flash only when window becomes active (was not active before)
           if (!isActive && titlebarRef.current && !flashingRef.current) {
@@ -81,7 +95,7 @@ export function Window({
             }, 80);
           }
           // No window dragging while maximized (focus/flash above still run).
-          if (win.maximized) return;
+          if (win.maximized || compactViewport) return;
           dragRef.current = { ox: e.clientX - win.x, oy: e.clientY - win.y };
           const vw = window.innerWidth;
           const vh = window.innerHeight;
@@ -107,6 +121,7 @@ export function Window({
           <button aria-label="Minimize" onClick={() => minimize(id)} />
           <button
             aria-label={win.maximized ? "Restore" : "Maximize"}
+            disabled={compactViewport}
             onClick={() => toggleMaximize(id)}
           />
           <button aria-label="Close" onClick={() => setClosing(true)} />
@@ -114,7 +129,11 @@ export function Window({
       </div>
       <div
         className="window-body"
-        style={win.maximized ? { flex: 1, overflow: "auto" } : undefined}
+        style={
+          win.maximized || compactViewport
+            ? { flex: 1, overflow: "auto" }
+            : undefined
+        }
       >
         {children}
       </div>
