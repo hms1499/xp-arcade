@@ -26,8 +26,15 @@ type NftLoadState = {
 
 type GameFilter = "all" | GameId;
 type RarityFilter = "all" | string;
+type SortMode = "score-desc" | "newest" | "game" | "season-desc";
 
 const GAME_FILTERS: GameFilter[] = ["all", "snake", "tetris", "pacman"];
+const SORT_LABELS: Record<SortMode, string> = {
+  "score-desc": "Highest score",
+  newest: "Newest",
+  game: "Game",
+  "season-desc": "Season",
+};
 
 function filterLabel(gameId: GameFilter) {
   if (gameId === "all") return "All";
@@ -41,6 +48,7 @@ export function MyNftsWindow() {
   const [loadState, setLoadState] = useState<NftLoadState | null>(null);
   const [gameFilter, setGameFilter] = useState<GameFilter>("all");
   const [rarityFilter, setRarityFilter] = useState<RarityFilter>("all");
+  const [sortMode, setSortMode] = useState<SortMode>("score-desc");
 
   useEffect(() => {
     if (!w || !address) return;
@@ -75,14 +83,26 @@ export function MyNftsWindow() {
     return Array.from(new Set(nfts.map((nft) => nft.rarity).filter(Boolean) as string[]))
       .sort((a, b) => a.localeCompare(b));
   }, [nfts]);
-  const filteredNfts = useMemo(() => {
+  const visibleNfts = useMemo(() => {
     if (!nfts) return null;
-    return nfts.filter((nft) => {
+    const filtered = nfts.filter((nft) => {
       const matchesGame = gameFilter === "all" || nft.gameId === gameFilter;
       const matchesRarity = rarityFilter === "all" || nft.rarity === rarityFilter;
       return matchesGame && matchesRarity;
     });
-  }, [nfts, gameFilter, rarityFilter]);
+    return [...filtered].sort((a, b) => {
+      if (sortMode === "newest") {
+        return b.id - a.id || a.gameId.localeCompare(b.gameId);
+      }
+      if (sortMode === "game") {
+        return a.gameId.localeCompare(b.gameId) || (b.score ?? 0) - (a.score ?? 0);
+      }
+      if (sortMode === "season-desc") {
+        return (b.season ?? 0) - (a.season ?? 0) || (b.score ?? 0) - (a.score ?? 0);
+      }
+      return (b.score ?? 0) - (a.score ?? 0) || b.id - a.id;
+    });
+  }, [nfts, gameFilter, rarityFilter, sortMode]);
 
   if (!w) return null;
 
@@ -135,6 +155,23 @@ export function MyNftsWindow() {
                   </option>
                 ))}
               </select>
+              <select
+                aria-label="Sort NFTs"
+                value={sortMode}
+                onMouseDown={(e) => e.stopPropagation()}
+                onChange={(e) => setSortMode(e.target.value as SortMode)}
+                style={{
+                  height: 22,
+                  fontSize: 10,
+                  fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
+                }}
+              >
+                {(Object.keys(SORT_LABELS) as SortMode[]).map((mode) => (
+                  <option key={mode} value={mode}>
+                    {SORT_LABELS[mode]}
+                  </option>
+                ))}
+              </select>
             </div>
             <button
               onMouseDown={(e) => e.stopPropagation()}
@@ -178,12 +215,12 @@ export function MyNftsWindow() {
             No NFTs yet. Play a game and mint a score!
           </p>
         )}
-        {nfts && nfts.length > 0 && filteredNfts?.length === 0 && (
+        {nfts && nfts.length > 0 && visibleNfts?.length === 0 && (
           <p className="text-sm text-gray-500">
             No NFTs match these filters.
           </p>
         )}
-        {filteredNfts && filteredNfts.length > 0 && (
+        {visibleNfts && visibleNfts.length > 0 && (
           <div
             style={{
               display: "grid",
@@ -191,7 +228,7 @@ export function MyNftsWindow() {
               gap: 8,
             }}
           >
-            {filteredNfts.map((nft) => (
+            {visibleNfts.map((nft) => (
               <NftCard key={scoreNftKey(nft)} nft={nft} />
             ))}
           </div>
