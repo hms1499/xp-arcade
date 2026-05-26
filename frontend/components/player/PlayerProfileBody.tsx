@@ -5,7 +5,7 @@ import Link from "next/link";
 import { shortAddress } from "@/lib/stacks-address";
 import { fetchAllScoreHoldings, scoreNftKey, type ScoreNft } from "@/lib/holdings";
 import { rarityColor } from "@/lib/metadata-svg";
-import { computePlayerStats } from "@/lib/player-stats";
+import { computePlayerStats, ustxToStx } from "@/lib/player-stats";
 import { GAMES, type GameId } from "@/lib/game-registry";
 import { PlayerStatsPanel } from "./PlayerStatsPanel";
 import { RarityBreakdown } from "./RarityBreakdown";
@@ -264,12 +264,60 @@ function GameBreakdown({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px]">
         {(Object.keys(GAMES) as GameId[]).map((id) => {
           const gameStats = stats.byGame[id];
+          const selected = active === id;
           return (
-            <div key={id} className="border border-gray-300 bg-white p-2">
-              <div className="font-bold">{GAMES[id].label}</div>
-              <div>Best {gameStats.bestScore}</div>
-              <div>Mints {gameStats.totalMints}</div>
-            </div>
+            <button
+              key={id}
+              onClick={() => onSelect(id)}
+              className="text-left"
+              style={{
+                border: selected ? "2px solid #000080" : "1px solid #c0c0c0",
+                background: selected ? "#eef3ff" : "#ffffff",
+                padding: selected ? 7 : 8,
+                fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
+              }}
+            >
+              <div
+                className="font-bold mb-1"
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 6,
+                }}
+              >
+                <span>
+                  {GAMES[id].emoji} {GAMES[id].label}
+                </span>
+                <span style={{ color: gameStats.totalMints > 0 ? "#007700" : "#777" }}>
+                  {gameStats.totalMints}
+                </span>
+              </div>
+              {gameStats.totalMints > 0 ? (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 4,
+                    color: "#555",
+                  }}
+                >
+                  <span>Best</span>
+                  <b style={{ textAlign: "right", color: "#000" }}>
+                    {gameStats.bestScore}
+                  </b>
+                  <span>Seasons</span>
+                  <b style={{ textAlign: "right", color: "#000" }}>
+                    {gameStats.seasonsPlayed}
+                  </b>
+                  <span>Fees</span>
+                  <b style={{ textAlign: "right", color: "#000" }}>
+                    {ustxToStx(gameStats.mintFeesUstx)} STX
+                  </b>
+                </div>
+              ) : (
+                <div style={{ color: "#777" }}>No minted scores</div>
+              )}
+            </button>
           );
         })}
       </div>
