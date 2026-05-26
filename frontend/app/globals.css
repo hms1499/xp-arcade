@@ -122,6 +122,35 @@ body {
   }
 }
 
+@media (max-width: 640px) {
+  .desktop-icon-grid {
+    top: 12px !important;
+    left: 8px !important;
+    right: 8px !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .desktop-icon-grid > button {
+    width: 100% !important;
+    min-height: 84px;
+  }
+
+  .xp-taskbar {
+    height: 32px !important;
+  }
+
+  .taskbar-leaderboard-ticker,
+  .taskbar-wallet-chip {
+    display: none !important;
+  }
+
+  .taskbar-window-list button {
+    max-width: 112px !important;
+    padding: 0 6px !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .xp-bar-slider    { animation: none !important; }
   .boot-fade-out    { animation: none !important; }

@@ -57,7 +57,7 @@ export function Window({
               top: 0,
               left: 0,
               right: 0,
-              bottom: 28,
+              bottom: compactViewport ? 32 : 28,
               zIndex: win.z,
               display: "flex",
               flexDirection: "column",

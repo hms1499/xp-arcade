@@ -68,7 +68,7 @@ export function Desktop({ children }: { children: React.ReactNode }) {
     >
       <DesktopWallpaper />
       <div
-        className="absolute top-4 left-4 grid grid-cols-1 gap-4"
+        className="desktop-icon-grid absolute top-4 left-4 grid grid-cols-1 gap-4"
         style={{ zIndex: 1 }}
       >
         {Object.values(GAMES).map((game) => (

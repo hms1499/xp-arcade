@@ -49,6 +49,7 @@ export function Taskbar({
 
   return (
     <div
+      className="xp-taskbar"
       style={{
         position: "absolute",
         bottom: 0,
@@ -94,6 +95,7 @@ export function Taskbar({
 
       {walletAddress && (
         <button
+          className="taskbar-wallet-chip"
           onClick={() => useWindows.getState().open("player-profile", { address: walletAddress })}
           style={{
             height: 22,
@@ -111,7 +113,7 @@ export function Taskbar({
         </button>
       )}
 
-      <div style={{ display: "flex", gap: 2, flex: 1, overflow: "hidden" }}>
+      <div className="taskbar-window-list" style={{ display: "flex", gap: 2, flex: 1, overflow: "hidden" }}>
         {windows.map((w) => (
           <button
             key={w.id}

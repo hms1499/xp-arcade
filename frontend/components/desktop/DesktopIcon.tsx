@@ -11,6 +11,15 @@ export function DesktopIcon({
   onOpen: () => void;
 }) {
   const [selected, setSelected] = useState(false);
+  const [singleTapOpen, setSingleTapOpen] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia("(pointer: coarse), (max-width: 640px)");
+    const update = () => setSingleTapOpen(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
 
   // Deselect when clicking anywhere outside
   useEffect(() => {
@@ -27,6 +36,9 @@ export function DesktopIcon({
     <button
       id={`icon-${label}`}
       onMouseDown={() => setSelected(true)}
+      onClick={() => {
+        if (singleTapOpen) onOpen();
+      }}
       onDoubleClick={onOpen}
       style={{
         display: "flex",

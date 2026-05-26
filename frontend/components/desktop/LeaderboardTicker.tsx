@@ -22,6 +22,7 @@ export function LeaderboardTicker({
 
   return (
     <button
+      className="taskbar-leaderboard-ticker"
       onClick={() => open("highscore")}
       title="Open High Scores"
       style={{
