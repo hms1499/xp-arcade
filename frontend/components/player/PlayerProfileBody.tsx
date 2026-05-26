@@ -10,6 +10,7 @@ import { GAMES, type GameId } from "@/lib/game-registry";
 import { PlayerStatsPanel } from "./PlayerStatsPanel";
 import { RarityBreakdown } from "./RarityBreakdown";
 import { CopyAddressButton } from "./CopyAddressButton";
+import { useWallet } from "@/state/wallet";
 
 type NftLoadState = {
   address: string;
@@ -28,6 +29,7 @@ export function PlayerProfileBody({
 }) {
   const [loadState, setLoadState] = useState<NftLoadState | null>(null);
   const [filter, setFilter] = useState<ProfileFilter>("all");
+  const walletAddress = useWallet((s) => s.address);
 
   useEffect(() => {
     let cancelled = false;
@@ -75,23 +77,13 @@ export function PlayerProfileBody({
           ← Back to desktop
         </Link>
       )}
-      <h2 className="text-sm font-bold mb-1 mt-1">
-        Player {shortAddress(address)}
-      </h2>
-      <p className="text-[10px] font-mono text-gray-700 mb-3 break-all">
-        {address}
-        <CopyAddressButton value={address} />
-        <a
-          href={`https://explorer.hiro.so/address/${address}?chain=${
-            address.startsWith("SP") ? "mainnet" : "testnet"
-          }`}
-          target="_blank"
-          rel="noreferrer"
-          className="text-[10px] ml-2 text-blue-700 underline"
-        >
-          Explorer ↗
-        </a>
-      </p>
+      <ProfileHeader
+        address={address}
+        isOwnProfile={walletAddress === address}
+        totalMints={stats?.totalMints}
+        bestScore={stats?.bestScore}
+        topGame={stats ? topGameLabel(stats) : null}
+      />
 
       {stats && nfts && nfts.length > 0 && (
         <>
@@ -141,6 +133,104 @@ export function PlayerProfileBody({
         </div>
       )}
     </div>
+  );
+}
+
+function topGameLabel(stats: ReturnType<typeof computePlayerStats>): string | null {
+  const [topGame] = (Object.keys(GAMES) as GameId[])
+    .map((id) => ({ id, bestScore: stats.byGame[id].bestScore }))
+    .sort((a, b) => b.bestScore - a.bestScore);
+  if (!topGame || topGame.bestScore === 0) return null;
+  return GAMES[topGame.id].label;
+}
+
+function ProfileHeader({
+  address,
+  isOwnProfile,
+  totalMints,
+  bestScore,
+  topGame,
+}: {
+  address: string;
+  isOwnProfile: boolean;
+  totalMints?: number;
+  bestScore?: number;
+  topGame: string | null;
+}) {
+  return (
+    <div
+      className="mb-3"
+      style={{
+        background: "#f5f5f0",
+        border: "1px solid #d0d0c8",
+        padding: 8,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 8,
+          flexWrap: "wrap",
+        }}
+      >
+        <div>
+          <div className="text-[10px] uppercase text-gray-500">
+            {isOwnProfile ? "My profile" : "Player profile"}
+          </div>
+          <h2 className="text-sm font-bold mb-1">
+            Player {shortAddress(address)}
+          </h2>
+        </div>
+        <div className="text-[10px] font-mono text-gray-700">
+          <CopyAddressButton value={address} />
+          <a
+            href={`https://explorer.hiro.so/address/${address}?chain=${
+              address.startsWith("SP") ? "mainnet" : "testnet"
+            }`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-blue-700 underline ml-1"
+          >
+            Explorer ↗
+          </a>
+        </div>
+      </div>
+      <p className="text-[10px] font-mono text-gray-700 mb-2 break-all">
+        {address}
+      </p>
+      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+        <ProfileChip label="NFTs" value={totalMints ?? "..."} />
+        <ProfileChip label="Best" value={bestScore ?? "..."} />
+        <ProfileChip label="Top game" value={topGame ?? "..."} />
+      </div>
+    </div>
+  );
+}
+
+function ProfileChip({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <span
+      className="text-[10px]"
+      style={{
+        display: "inline-flex",
+        gap: 4,
+        alignItems: "center",
+        border: "1px solid #c0c0c0",
+        background: "#ffffff",
+        padding: "2px 6px",
+      }}
+    >
+      <span className="text-gray-500">{label}</span>
+      <b>{value}</b>
+    </span>
   );
 }
 
