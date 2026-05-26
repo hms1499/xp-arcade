@@ -6,6 +6,7 @@ import { useMintTx } from "@/state/mint-tx";
 import { type TxStatus } from "@/lib/tx-tracker";
 import { recordScore } from "@/lib/high-score";
 import { GAMES, type GameId } from "@/lib/game-registry";
+import { useWindows } from "@/state/window-manager";
 
 const STATUS_LABEL: Record<TxStatus, string> = {
   pending: "Submitted · confirming on-chain",
@@ -62,6 +63,7 @@ export function SharedMintDialog({
   const connect = useWallet((s) => s.connect);
   const mintStatus = useMintTx((s) => s.status);
   const startMintTx = useMintTx((s) => s.start);
+  const openWindow = useWindows((s) => s.open);
   const [busy, setBusy] = useState(false);
   const [txId, setTxId] = useState<string | null>(null);
   const defaultName = address ? address.slice(-8) : "anon";
@@ -261,6 +263,14 @@ export function SharedMintDialog({
             <button onClick={onPlayAgain} style={PRIMARY_ACTION}>
               Play Again
             </button>
+            {mintStatus === "success" && (
+              <button
+                onClick={() => openWindow("mynfts")}
+                style={SECONDARY_ACTION}
+              >
+                View My NFTs
+              </button>
+            )}
             <button onClick={onClose} style={TERTIARY_ACTION}>
               Close
             </button>

@@ -12,6 +12,7 @@ import { RarityBreakdown } from "./RarityBreakdown";
 import { CopyAddressButton } from "./CopyAddressButton";
 import { useWallet } from "@/state/wallet";
 import { useWindows } from "@/state/window-manager";
+import { useMintTx } from "@/state/mint-tx";
 
 type NftLoadState = {
   address: string;
@@ -39,32 +40,40 @@ export function PlayerProfileBody({
   const [filter, setFilter] = useState<ProfileFilter>("all");
   const walletAddress = useWallet((s) => s.address);
   const openWindow = useWindows((s) => s.open);
+  const mintTxId = useMintTx((s) => s.txId);
+  const mintStatus = useMintTx((s) => s.status);
+  const confirmedOwnMintTxId =
+    walletAddress === address && mintStatus === "success" ? mintTxId : null;
 
   useEffect(() => {
     let cancelled = false;
-    fetchAllScoreHoldings(address)
-      .then((list) => {
-        if (cancelled) return;
-        setLoadState({
-          address,
-          nfts: [...list].sort(
-            (a, b) => (b.score ?? 0) - (a.score ?? 0) || b.id - a.id
-          ),
-          error: null,
+    const delayMs = confirmedOwnMintTxId ? 2500 : 0;
+    const timer = window.setTimeout(() => {
+      fetchAllScoreHoldings(address)
+        .then((list) => {
+          if (cancelled) return;
+          setLoadState({
+            address,
+            nfts: [...list].sort(
+              (a, b) => (b.score ?? 0) - (a.score ?? 0) || b.id - a.id
+            ),
+            error: null,
+          });
+        })
+        .catch((e) => {
+          if (cancelled) return;
+          setLoadState({
+            address,
+            nfts: null,
+            error: e instanceof Error ? e.message : "Load failed",
+          });
         });
-      })
-      .catch((e) => {
-        if (cancelled) return;
-        setLoadState({
-          address,
-          nfts: null,
-          error: e instanceof Error ? e.message : "Load failed",
-        });
-      });
+    }, delayMs);
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
-  }, [address]);
+  }, [address, confirmedOwnMintTxId]);
 
   const activeState = loadState?.address === address ? loadState : null;
   const nfts = activeState?.nfts ?? null;

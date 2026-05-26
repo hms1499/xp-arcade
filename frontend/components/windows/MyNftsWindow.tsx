@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useWindows } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
+import { useMintTx } from "@/state/mint-tx";
 import { Window } from "@/components/windows/Window";
 import { fetchAllScoreHoldings, scoreNftKey, type ScoreNft } from "@/lib/holdings";
 import { rarityColor } from "@/lib/metadata-svg";
@@ -49,31 +50,38 @@ export function MyNftsWindow() {
   const [gameFilter, setGameFilter] = useState<GameFilter>("all");
   const [rarityFilter, setRarityFilter] = useState<RarityFilter>("all");
   const [sortMode, setSortMode] = useState<SortMode>("score-desc");
+  const mintTxId = useMintTx((s) => s.txId);
+  const mintStatus = useMintTx((s) => s.status);
+  const confirmedMintTxId = mintStatus === "success" ? mintTxId : null;
 
   useEffect(() => {
     if (!w || !address) return;
     let cancelled = false;
-    fetchAllScoreHoldings(address)
-      .then((list) => {
-        if (cancelled) return;
-        setLoadState({
-          address,
-          nfts: [...list].sort((a, b) => (b.score ?? 0) - (a.score ?? 0) || b.id - a.id),
-          error: null,
+    const delayMs = confirmedMintTxId ? 2500 : 0;
+    const timer = window.setTimeout(() => {
+      fetchAllScoreHoldings(address)
+        .then((list) => {
+          if (cancelled) return;
+          setLoadState({
+            address,
+            nfts: [...list].sort((a, b) => (b.score ?? 0) - (a.score ?? 0) || b.id - a.id),
+            error: null,
+          });
+        })
+        .catch((e) => {
+          if (cancelled) return;
+          setLoadState({
+            address,
+            nfts: null,
+            error: e instanceof Error ? e.message : "Load failed",
+          });
         });
-      })
-      .catch((e) => {
-        if (cancelled) return;
-        setLoadState({
-          address,
-          nfts: null,
-          error: e instanceof Error ? e.message : "Load failed",
-        });
-      });
+    }, delayMs);
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
-  }, [w, address]);
+  }, [w, address, confirmedMintTxId]);
 
   const activeState = loadState?.address === address ? loadState : null;
   const nfts = activeState?.nfts ?? null;
