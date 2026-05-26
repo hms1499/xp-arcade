@@ -317,7 +317,11 @@ function ProfileHeader({
           style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}
         >
           {onOpenMyNfts && (
-            <button onClick={onOpenMyNfts} style={{ fontSize: 10 }}>
+            <button
+              type="button"
+              onClick={onOpenMyNfts}
+              style={{ fontSize: 10 }}
+            >
               My NFTs
             </button>
           )}
@@ -390,6 +394,8 @@ function GameBreakdown({
           return (
             <button
               key={id}
+              type="button"
+              aria-pressed={active === id}
               onClick={() => onSelect(id)}
               style={{ fontWeight: active === id ? "bold" : "normal" }}
             >
@@ -405,6 +411,8 @@ function GameBreakdown({
           return (
             <button
               key={id}
+              type="button"
+              aria-pressed={selected}
               onClick={() => onSelect(id)}
               className="text-left"
               style={{

@@ -50,6 +50,8 @@ export function WalletBalloon() {
     >
       {/* Close button */}
       <button
+        type="button"
+        aria-label="Dismiss wallet reminder"
         onClick={dismiss}
         style={{
           position: "absolute", top: 4, right: 6,
@@ -67,7 +69,11 @@ export function WalletBalloon() {
           <div style={{ color: "#444", marginBottom: 6, lineHeight: 1.4 }}>
             Save scores on-chain &amp; mint NFTs
           </div>
-          <button onClick={connect} style={{ fontSize: 10, padding: "2px 10px" }}>
+          <button
+            type="button"
+            onClick={connect}
+            style={{ fontSize: 10, padding: "2px 10px" }}
+          >
             Connect Now
           </button>
         </div>

@@ -125,6 +125,8 @@ export function MyNftsWindow() {
               <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                 {GAME_FILTERS.map((id) => (
                   <button
+                    type="button"
+                    aria-pressed={gameFilter === id}
                     key={id}
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
@@ -176,6 +178,7 @@ export function MyNftsWindow() {
                 </select>
                 {filtersActive && (
                   <button
+                    type="button"
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -189,6 +192,7 @@ export function MyNftsWindow() {
                 )}
               </div>
               <button
+                type="button"
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -260,6 +264,7 @@ export function MyNftsWindow() {
           >
             <p className="mb-2">No NFTs match these filters.</p>
             <button
+              type="button"
               onClick={() => {
                 setGameFilter("all");
                 setRarityFilter("all");

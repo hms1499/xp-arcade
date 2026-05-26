@@ -64,6 +64,7 @@ export function SystemTray() {
     >
       {txId && (
         <button
+          type="button"
           className="tray-tx-chip"
           onClick={() => {
             window.open(
@@ -104,8 +105,10 @@ export function SystemTray() {
       <div style={sunken}>
         {address ? (
           <button
+            type="button"
             className="tray-wallet-button"
             onClick={disconnect}
+            aria-label="Disconnect wallet"
             title={address}
             style={{ background: "none", border: "none", cursor: "default", fontSize: 11, display: "flex", gap: 4, alignItems: "center", fontFamily: "inherit" }}
           >
@@ -114,8 +117,10 @@ export function SystemTray() {
           </button>
         ) : (
           <button
+            type="button"
             className="tray-wallet-button"
             onClick={connect}
+            aria-label="Connect wallet"
             style={{ background: "none", border: "none", cursor: "default", fontSize: 11, fontFamily: "inherit" }}
           >
             Connect Wallet

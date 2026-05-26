@@ -12,7 +12,12 @@ export function CopyAddressButton({ value }: { value: string }) {
   }
 
   return (
-    <button onClick={copy} className="text-[10px] ml-2">
+    <button
+      type="button"
+      onClick={copy}
+      className="text-[10px] ml-2"
+      aria-label="Copy player address"
+    >
       {copied ? "Copied!" : "Copy"}
     </button>
   );
