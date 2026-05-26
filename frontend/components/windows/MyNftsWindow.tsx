@@ -103,6 +103,7 @@ export function MyNftsWindow() {
       return (b.score ?? 0) - (a.score ?? 0) || b.id - a.id;
     });
   }, [nfts, gameFilter, rarityFilter, sortMode]);
+  const filtersActive = gameFilter !== "all" || rarityFilter !== "all";
 
   if (!w) return null;
 
@@ -110,80 +111,112 @@ export function MyNftsWindow() {
     <Window id={w.id} title="💾 My NFTs" width={480}>
       <div className="p-2">
         {address && (
-          <div
-            className="mb-2"
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 8,
-              flexWrap: "wrap",
-            }}
-          >
-            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-              {GAME_FILTERS.map((id) => (
-                <button
-                  key={id}
+          <>
+            <div
+              className="mb-2"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 8,
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                {GAME_FILTERS.map((id) => (
+                  <button
+                    key={id}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setGameFilter(id);
+                    }}
+                    style={{
+                      fontSize: 10,
+                      fontWeight: gameFilter === id ? "bold" : "normal",
+                    }}
+                  >
+                    {filterLabel(id)}
+                  </button>
+                ))}
+                <select
+                  aria-label="Filter by rarity"
+                  value={rarityFilter}
                   onMouseDown={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setGameFilter(id);
-                  }}
+                  onChange={(e) => setRarityFilter(e.target.value)}
                   style={{
+                    height: 22,
                     fontSize: 10,
-                    fontWeight: gameFilter === id ? "bold" : "normal",
+                    fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
                   }}
                 >
-                  {filterLabel(id)}
-                </button>
-              ))}
-              <select
-                aria-label="Filter by rarity"
-                value={rarityFilter}
+                  <option value="all">All rarity</option>
+                  {rarityOptions.map((rarity) => (
+                    <option key={rarity} value={rarity}>
+                      {rarity}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  aria-label="Sort NFTs"
+                  value={sortMode}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onChange={(e) => setSortMode(e.target.value as SortMode)}
+                  style={{
+                    height: 22,
+                    fontSize: 10,
+                    fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
+                  }}
+                >
+                  {(Object.keys(SORT_LABELS) as SortMode[]).map((mode) => (
+                    <option key={mode} value={mode}>
+                      {SORT_LABELS[mode]}
+                    </option>
+                  ))}
+                </select>
+                {filtersActive && (
+                  <button
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setGameFilter("all");
+                      setRarityFilter("all");
+                    }}
+                    style={{ fontSize: 10 }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <button
                 onMouseDown={(e) => e.stopPropagation()}
-                onChange={(e) => setRarityFilter(e.target.value)}
-                style={{
-                  height: 22,
-                  fontSize: 10,
-                  fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
+                onClick={(e) => {
+                  e.stopPropagation();
+                  useWindows.getState().open("player-profile", { address });
                 }}
+                className="text-xs"
               >
-                <option value="all">All rarity</option>
-                {rarityOptions.map((rarity) => (
-                  <option key={rarity} value={rarity}>
-                    {rarity}
-                  </option>
-                ))}
-              </select>
-              <select
-                aria-label="Sort NFTs"
-                value={sortMode}
-                onMouseDown={(e) => e.stopPropagation()}
-                onChange={(e) => setSortMode(e.target.value as SortMode)}
-                style={{
-                  height: 22,
-                  fontSize: 10,
-                  fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
-                }}
-              >
-                {(Object.keys(SORT_LABELS) as SortMode[]).map((mode) => (
-                  <option key={mode} value={mode}>
-                    {SORT_LABELS[mode]}
-                  </option>
-                ))}
-              </select>
+                Open my profile
+              </button>
             </div>
-            <button
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                useWindows.getState().open("player-profile", { address });
-              }}
-              className="text-xs"
-            >
-              Open my profile
-            </button>
-          </div>
+            {nfts && (
+              <div
+                className="mb-2 text-[10px] text-gray-500"
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 8,
+                  borderTop: "1px solid #d0d0c8",
+                  paddingTop: 4,
+                }}
+              >
+                <span>
+                  Showing <b>{visibleNfts?.length ?? 0}</b> of <b>{nfts.length}</b>
+                </span>
+                <span>Sorted by {SORT_LABELS[sortMode].toLowerCase()}</span>
+              </div>
+            )}
+          </>
         )}
         {!address && (
           <p className="text-sm">Connect your wallet to see your NFTs.</p>
@@ -216,9 +249,25 @@ export function MyNftsWindow() {
           </p>
         )}
         {nfts && nfts.length > 0 && visibleNfts?.length === 0 && (
-          <p className="text-sm text-gray-500">
-            No NFTs match these filters.
-          </p>
+          <div
+            className="text-sm text-gray-500"
+            style={{
+              textAlign: "center",
+              padding: "18px 8px",
+              border: "1px solid #d0d0c8",
+              background: "#f5f5f0",
+            }}
+          >
+            <p className="mb-2">No NFTs match these filters.</p>
+            <button
+              onClick={() => {
+                setGameFilter("all");
+                setRarityFilter("all");
+              }}
+            >
+              Clear filters
+            </button>
+          </div>
         )}
         {visibleNfts && visibleNfts.length > 0 && (
           <div
