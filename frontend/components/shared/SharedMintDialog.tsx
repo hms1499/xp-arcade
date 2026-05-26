@@ -1,7 +1,11 @@
 "use client";
 import { useState, useEffect, type CSSProperties } from "react";
 import { useWallet } from "@/state/wallet";
-import { mintScoreForGame, getMintsRemaining } from "@/lib/contract-calls";
+import {
+  mintScoreForGame,
+  getMintsRemaining,
+  getTopTenForGame,
+} from "@/lib/contract-calls";
 import { useMintTx } from "@/state/mint-tx";
 import { type TxStatus } from "@/lib/tx-tracker";
 import { recordScore } from "@/lib/high-score";
@@ -45,6 +49,11 @@ const TERTIARY_ACTION: CSSProperties = {
   color: "#555",
 };
 
+type LeaderboardHint = {
+  tone: "success" | "info" | "warning";
+  text: string;
+};
+
 export function SharedMintDialog({
   gameId,
   score,
@@ -70,6 +79,7 @@ export function SharedMintDialog({
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [mintsRemaining, setMintsRemaining] = useState<number | null>(null);
+  const [leaderboardHint, setLeaderboardHint] = useState<LeaderboardHint | null>(null);
 
   useEffect(() => {
     if (!address) return;
@@ -77,6 +87,56 @@ export function SharedMintDialog({
       .then(setMintsRemaining)
       .catch(() => setMintsRemaining(null));
   }, [address, gameId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getTopTenForGame(gameId)
+      .then((rows) => {
+        if (cancelled) return;
+        const sorted = [...rows].sort((a, b) => b.score - a.score);
+        if (sorted.length === 0) {
+          setLeaderboardHint({
+            tone: "success",
+            text: "This leaderboard is empty. Minting will put your score on the board.",
+          });
+          return;
+        }
+        const rank = sorted.filter((entry) => entry.score >= score).length + 1;
+        if (rank === 1) {
+          setLeaderboardHint({
+            tone: "success",
+            text: "This would be the current #1 minted score.",
+          });
+          return;
+        }
+        if (rank <= 10 || sorted.length < 10) {
+          setLeaderboardHint({
+            tone: "success",
+            text: `This can enter the current leaderboard around rank #${rank}.`,
+          });
+          return;
+        }
+        const cutoff = sorted[9]?.score;
+        if (typeof cutoff === "number") {
+          const needed = Math.max(1, cutoff - score + 1);
+          setLeaderboardHint({
+            tone: "warning",
+            text: `Needs ${needed} more point${needed === 1 ? "" : "s"} to beat the current #10 cutoff (${cutoff}).`,
+          });
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLeaderboardHint({
+            tone: "info",
+            text: "Leaderboard cutoff could not be checked right now.",
+          });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [gameId, score]);
 
   const [hs] = useState(() =>
     gameId === "snake"
@@ -180,6 +240,22 @@ export function SharedMintDialog({
             {mintsRemaining === 0
               ? "Mint limit reached for this season (10/10)"
               : `${mintsRemaining} mint${mintsRemaining === 1 ? "" : "s"} remaining this season`}
+          </span>
+        )}
+        {leaderboardHint && (
+          <span
+            className="block mt-2"
+            style={{
+              color:
+                leaderboardHint.tone === "success"
+                  ? "#007700"
+                  : leaderboardHint.tone === "warning"
+                  ? "#8a5a00"
+                  : "#555",
+              fontWeight: leaderboardHint.tone === "success" ? "bold" : "normal",
+            }}
+          >
+            {leaderboardHint.text}
           </span>
         )}
       </div>
