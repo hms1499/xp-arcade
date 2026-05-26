@@ -20,6 +20,13 @@ type NftLoadState = {
 
 type ProfileFilter = "all" | GameId;
 
+const RARITY_RANK: Record<string, number> = {
+  Legendary: 4,
+  Epic: 3,
+  Rare: 2,
+  Common: 1,
+};
+
 export function PlayerProfileBody({
   address,
   showBackToDesktop = false,
@@ -69,6 +76,18 @@ export function PlayerProfileBody({
     () => (filteredNfts ? computePlayerStats(filteredNfts) : null),
     [filteredNfts],
   );
+  const featuredNfts = useMemo(() => {
+    if (!nfts) return null;
+    return [...nfts]
+      .sort(
+        (a, b) =>
+          (RARITY_RANK[b.rarity ?? ""] ?? 0) -
+            (RARITY_RANK[a.rarity ?? ""] ?? 0) ||
+          (b.score ?? 0) - (a.score ?? 0) ||
+          b.id - a.id,
+      )
+      .slice(0, 3);
+  }, [nfts]);
 
   return (
     <div className="p-2">
@@ -90,6 +109,9 @@ export function PlayerProfileBody({
           <PlayerStatsPanel stats={filteredStats ?? stats} />
           <GameBreakdown stats={stats} active={filter} onSelect={setFilter} />
           <RarityBreakdown counts={(filteredStats ?? stats).rarityCounts} />
+          {featuredNfts && featuredNfts.length > 0 && filter === "all" && (
+            <FeaturedNfts nfts={featuredNfts} />
+          )}
         </>
       )}
 
@@ -133,6 +155,58 @@ export function PlayerProfileBody({
         </div>
       )}
     </div>
+  );
+}
+
+function FeaturedNfts({ nfts }: { nfts: ScoreNft[] }) {
+  return (
+    <section className="mb-3">
+      <div
+        className="text-[10px] uppercase text-gray-500 mb-1"
+        style={{ display: "flex", justifyContent: "space-between", gap: 8 }}
+      >
+        <span>Featured NFTs</span>
+        <span>Top rarity, then score</span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        {nfts.map((nft) => {
+          const game = GAMES[nft.gameId];
+          return (
+            <div
+              key={scoreNftKey(nft)}
+              className="border border-gray-300 bg-white p-1 text-xs"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "56px 1fr",
+                gap: 6,
+                alignItems: "center",
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={nft.image} alt={nft.name} className="w-full h-auto" />
+              <div style={{ minWidth: 0 }}>
+                <div className="font-bold truncate">
+                  {game.emoji} {nft.name}
+                </div>
+                {typeof nft.score === "number" && (
+                  <div className="text-[10px] text-gray-700">
+                    Score <b>{nft.score}</b>
+                  </div>
+                )}
+                {nft.rarity && (
+                  <div
+                    className="text-[10px] font-bold"
+                    style={{ color: rarityColor(nft.rarity) }}
+                  >
+                    {nft.rarity}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
