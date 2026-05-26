@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, type CSSProperties } from "react";
 import { useWallet } from "@/state/wallet";
+import { useMintTx } from "@/state/mint-tx";
 import { WalletBalloon } from "./WalletBalloon";
 
 const sunken: CSSProperties = {
@@ -16,13 +17,36 @@ const sunken: CSSProperties = {
   background: "#c0c0c0",
 };
 
+const TX_LABEL = {
+  pending: "Mint pending",
+  success: "Mint confirmed",
+  abort_by_response: "Mint failed",
+  abort_by_post_condition: "Mint blocked",
+  failed: "Mint failed",
+} as const;
+
+const TX_COLOR = {
+  pending: "#000080",
+  success: "#007700",
+  abort_by_response: "#cc0000",
+  abort_by_post_condition: "#cc0000",
+  failed: "#cc0000",
+} as const;
+
+function shortTx(txId: string) {
+  return `${txId.slice(0, 6)}…${txId.slice(-4)}`;
+}
+
 export function SystemTray() {
   const address = useWallet((s) => s.address);
   const connect = useWallet((s) => s.connect);
   const disconnect = useWallet((s) => s.disconnect);
   const hydrate = useWallet((s) => s.hydrate);
   const mintPending = useWallet((s) => s.mintPending);
+  const txId = useMintTx((s) => s.txId);
+  const txStatus = useMintTx((s) => s.status);
   const [now, setNow] = useState(() => new Date());
+  const chain = process.env.NEXT_PUBLIC_NETWORK === "mainnet" ? "mainnet" : "testnet";
 
   useEffect(() => {
     hydrate();
@@ -35,7 +59,33 @@ export function SystemTray() {
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 2, paddingRight: 4 }}>
-      {mintPending && (
+      {txId && (
+        <button
+          onClick={() => {
+            window.open(
+              `https://explorer.hiro.so/txid/${txId}?chain=${chain}`,
+              "_blank",
+              "noopener,noreferrer",
+            );
+          }}
+          title={`Open transaction ${txId}`}
+          style={{
+            ...sunken,
+            color: TX_COLOR[txStatus],
+            maxWidth: 148,
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+            cursor: "default",
+          }}
+        >
+          {txStatus === "pending" && <div className="tray-spinner" />}
+          <span>{TX_LABEL[txStatus]}</span>
+          <span style={{ color: "#555", fontFamily: "monospace" }}>
+            {shortTx(txId)}
+          </span>
+        </button>
+      )}
+      {mintPending && !txId && (
         <div
           style={{
             ...sunken,
