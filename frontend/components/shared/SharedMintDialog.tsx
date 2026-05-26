@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import { useWallet } from "@/state/wallet";
 import { mintScoreForGame, getMintsRemaining } from "@/lib/contract-calls";
 import { useMintTx } from "@/state/mint-tx";
@@ -21,6 +21,27 @@ const STATUS_COLOR: Record<TxStatus, string> = {
   abort_by_response: "#cc0000",
   abort_by_post_condition: "#cc0000",
   failed: "#cc0000",
+};
+
+const ACTION_ROW: CSSProperties = {
+  display: "flex",
+  gap: 6,
+  flexWrap: "wrap",
+  alignItems: "center",
+};
+
+const PRIMARY_ACTION: CSSProperties = {
+  fontWeight: "bold",
+  minWidth: 92,
+  boxShadow: "inset -1px -1px #0a0a0a, inset 1px 1px #ffffff",
+};
+
+const SECONDARY_ACTION: CSSProperties = {
+  minWidth: 92,
+};
+
+const TERTIARY_ACTION: CSSProperties = {
+  color: "#555",
 };
 
 export function SharedMintDialog({
@@ -122,7 +143,7 @@ export function SharedMintDialog({
           🏆 NEW HIGH SCORE — top-10 on this season&apos;s leaderboard!
         </div>
       )}
-      <p className="mb-3">
+      <p className="mb-2">
         <b>Game Over</b> - Score: <b>{score}</b>
         <span className="block text-xs mt-1">
           {hs.isNewRecord ? (
@@ -133,11 +154,21 @@ export function SharedMintDialog({
             </span>
           )}
         </span>
-        <span className="block text-xs text-gray-500 mt-1">
-          Play again is free. Mint only if you want this exact score recorded as an NFT.
-        </span>
-        <span className="block text-xs text-gray-500 mt-1">
-          Mint cost: <b>{feeStx} STX</b>. Scores are client-submitted and public on-chain.
+      </p>
+
+      <div
+        className="mb-3 text-xs"
+        style={{
+          background: "#f5f5f0",
+          border: "1px solid #d0d0c8",
+          padding: "5px 6px",
+          lineHeight: 1.35,
+        }}
+      >
+        <b>Play again is free.</b> Mint only if you want this exact score saved
+        as an NFT.
+        <span className="block text-gray-500 mt-1">
+          Mint cost: <b>{feeStx} STX</b>. Scores are public on-chain.
         </span>
         {mintsRemaining !== null && (
           <span
@@ -149,17 +180,23 @@ export function SharedMintDialog({
               : `${mintsRemaining} mint${mintsRemaining === 1 ? "" : "s"} remaining this season`}
           </span>
         )}
-      </p>
+      </div>
 
       {!address ? (
         <div>
           <p className="text-xs mb-2 text-gray-500">
-            Connect a wallet to mint your score as an NFT.
+            Connect a wallet only when you are ready to mint this score.
           </p>
-          <div style={{ display: "flex", gap: 6 }}>
-            <button onClick={onPlayAgain}>Play Again</button>
-            <button onClick={connect}>Connect Wallet</button>
-            <button onClick={onClose}>Close</button>
+          <div style={ACTION_ROW}>
+            <button onClick={onPlayAgain} style={PRIMARY_ACTION}>
+              Play Again
+            </button>
+            <button onClick={connect} style={SECONDARY_ACTION}>
+              Connect Wallet
+            </button>
+            <button onClick={onClose} style={TERTIARY_ACTION}>
+              Close
+            </button>
           </div>
         </div>
       ) : !txId ? (
@@ -181,12 +218,23 @@ export function SharedMintDialog({
           <p className="text-[10px] text-gray-500 mb-2">
             Wallet confirmation should show an exact {feeStx} STX transfer.
           </p>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <button onClick={onPlayAgain}>Play Again</button>
-            <button onClick={handleMint} disabled={isMintDisabled}>
+          <div style={ACTION_ROW}>
+            <button onClick={onPlayAgain} style={PRIMARY_ACTION}>
+              Play Again
+            </button>
+            <button
+              onClick={handleMint}
+              disabled={isMintDisabled}
+              style={{
+                ...SECONDARY_ACTION,
+                fontWeight: isTopScore ? "bold" : "normal",
+              }}
+            >
               {mintButtonLabel}
             </button>
-            <button onClick={onClose}>Close</button>
+            <button onClick={onClose} style={TERTIARY_ACTION}>
+              Close
+            </button>
           </div>
         </div>
       ) : (
@@ -209,9 +257,13 @@ export function SharedMintDialog({
               </a>
             </p>
           )}
-          <div style={{ display: "flex", gap: 6 }}>
-            <button onClick={onPlayAgain}>Play Again</button>
-            <button onClick={onClose}>Close</button>
+          <div style={ACTION_ROW}>
+            <button onClick={onPlayAgain} style={PRIMARY_ACTION}>
+              Play Again
+            </button>
+            <button onClick={onClose} style={TERTIARY_ACTION}>
+              Close
+            </button>
           </div>
         </div>
       )}
