@@ -5,19 +5,26 @@ import { useWallet } from "@/state/wallet";
 import { SystemTray } from "./SystemTray";
 import { StartMenu } from "./StartMenu";
 import { LeaderboardTicker } from "./LeaderboardTicker";
-import type { GameId } from "@/lib/game-registry";
+import { GAMES, type GameId } from "@/lib/game-registry";
 import type { LeaderboardSummary } from "@/lib/leaderboard-showcase";
 
 const TYPE_LABEL: Record<string, string> = {
-  game: "Snake",
-  leaderboard: "High Scores",
-  "my-nfts": "My NFTs",
+  highscore: "High Scores",
+  mynfts: "My NFTs",
   "season-admin": "Season Admin",
   "player-profile": "Player Profile",
 };
 
 function shortAddr(addr: string) {
   return `${addr.slice(0, 4)}…${addr.slice(-3)}`;
+}
+
+function windowLabel(type: string) {
+  if (type.startsWith("game-")) {
+    const gameId = type.replace("game-", "") as GameId;
+    return GAMES[gameId]?.label ?? type;
+  }
+  return TYPE_LABEL[type] ?? type;
 }
 
 function Win95Flag() {
@@ -46,6 +53,7 @@ export function Taskbar({
   const windows = useWindows((s) => s.windows);
   const focus = useWindows((s) => s.focus);
   const walletAddress = useWallet((s) => s.address);
+  const maxZ = Math.max(...windows.filter((w) => !w.minimized).map((w) => w.z), 0);
 
   return (
     <div
@@ -66,6 +74,9 @@ export function Taskbar({
       }}
     >
       <button
+        type="button"
+        data-start-button="true"
+        aria-expanded={open}
         style={{
           display: "flex",
           alignItems: "center",
@@ -95,6 +106,7 @@ export function Taskbar({
 
       {walletAddress && (
         <button
+          type="button"
           className="taskbar-wallet-chip"
           onClick={() => useWindows.getState().open("player-profile", { address: walletAddress })}
           style={{
@@ -114,24 +126,36 @@ export function Taskbar({
       )}
 
       <div className="taskbar-window-list" style={{ display: "flex", gap: 2, flex: 1, overflow: "hidden" }}>
-        {windows.map((w) => (
-          <button
-            key={w.id}
-            onClick={() => focus(w.id)}
-            style={{
-              height: 22,
-              padding: "0 8px",
-              maxWidth: 150,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              fontSize: 11,
-              fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
-            }}
-          >
-            {TYPE_LABEL[w.type] ?? w.type}
-          </button>
-        ))}
+        {windows.map((w) => {
+          const active = !w.minimized && w.z === maxZ;
+          return (
+            <button
+              key={w.id}
+              type="button"
+              aria-pressed={active}
+              onClick={() => focus(w.id)}
+              style={{
+                height: 22,
+                padding: "0 8px",
+                maxWidth: 150,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                fontSize: 11,
+                fontWeight: active ? "bold" : "normal",
+                color: w.minimized ? "#555" : "#000",
+                borderColor: active
+                  ? "#808080 #ffffff #ffffff #808080"
+                  : undefined,
+                background: active ? "#d8d8d8" : undefined,
+                fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
+              }}
+            >
+              {w.minimized ? "▁ " : ""}
+              {windowLabel(w.type)}
+            </button>
+          );
+        })}
       </div>
 
       <LeaderboardTicker summaries={leaderboardSummaries} />

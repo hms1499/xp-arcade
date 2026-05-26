@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useWindows } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
 import { AboutDialog } from "@/components/dialogs/AboutDialog";
@@ -65,12 +65,22 @@ export function StartMenu({
   const [showAbout, setShowAbout] = useState(false);
   const theme = useDesktopTheme((s) => s.theme);
   const setTheme = useDesktopTheme((s) => s.setTheme);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target;
+      if (target instanceof Element && target.closest("[data-start-button='true']")) return;
+      if (!menuRef.current?.contains(e.target as Node)) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onPointerDown);
+    };
   }, [open, onClose]);
 
   if (!open) return null;
@@ -79,6 +89,7 @@ export function StartMenu({
     <>
     {showAbout && <AboutDialog onClose={() => { setShowAbout(false); onClose(); }} />}
     <div
+      ref={menuRef}
       style={{
         position: "absolute",
         bottom: 28,
