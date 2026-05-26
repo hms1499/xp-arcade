@@ -58,9 +58,13 @@ export function SystemTray() {
   }, []);
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 2, paddingRight: 4 }}>
+    <div
+      className="system-tray"
+      style={{ display: "flex", alignItems: "center", gap: 2, paddingRight: 4 }}
+    >
       {txId && (
         <button
+          className="tray-tx-chip"
           onClick={() => {
             window.open(
               `https://explorer.hiro.so/txid/${txId}?chain=${chain}`,
@@ -100,6 +104,7 @@ export function SystemTray() {
       <div style={sunken}>
         {address ? (
           <button
+            className="tray-wallet-button"
             onClick={disconnect}
             title={address}
             style={{ background: "none", border: "none", cursor: "default", fontSize: 11, display: "flex", gap: 4, alignItems: "center", fontFamily: "inherit" }}
@@ -109,6 +114,7 @@ export function SystemTray() {
           </button>
         ) : (
           <button
+            className="tray-wallet-button"
             onClick={connect}
             style={{ background: "none", border: "none", cursor: "default", fontSize: 11, fontFamily: "inherit" }}
           >
@@ -116,7 +122,7 @@ export function SystemTray() {
           </button>
         )}
       </div>
-      <div style={sunken}>
+      <div className="tray-clock" style={sunken}>
         {now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
       </div>
       <WalletBalloon />

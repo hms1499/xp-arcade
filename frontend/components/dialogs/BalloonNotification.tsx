@@ -22,6 +22,7 @@ export function Balloons() {
 
   return (
     <div
+      className="toast-stack"
       style={{
         position: "fixed",
         bottom: 36,

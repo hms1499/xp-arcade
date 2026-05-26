@@ -149,6 +149,33 @@ body {
     max-width: 112px !important;
     padding: 0 6px !important;
   }
+
+  .system-tray {
+    padding-right: 2px !important;
+  }
+
+  .tray-clock {
+    display: none !important;
+  }
+
+  .tray-wallet-button {
+    max-width: 88px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .tray-tx-chip {
+    max-width: 108px !important;
+    padding: 0 4px !important;
+  }
+
+  .toast-stack,
+  .wallet-balloon {
+    right: 6px !important;
+    bottom: 40px !important;
+    max-width: calc(100vw - 12px) !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

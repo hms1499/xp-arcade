@@ -33,6 +33,7 @@ export function WalletBalloon() {
 
   return (
     <div
+      className="wallet-balloon"
       style={{
         position: "fixed",
         bottom: 36,
