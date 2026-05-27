@@ -83,6 +83,8 @@ NEXT_PUBLIC_SEASON_END_ISO=2026-06-01T00:00:00Z
 ```
 
 Set the same vars in Vercel Project Settings for deployment.
+`NEXT_PUBLIC_CONTRACT_ADDRESS` is a guardrail for the primary Snake contract and must match `frontend/lib/game-registry.ts`; the app fails fast if it points at an unexpected contract.
+If `NEXT_PUBLIC_NETWORK` is omitted, the frontend defaults to `mainnet` to match the checked-in v2 contract registry.
 
 ---
 

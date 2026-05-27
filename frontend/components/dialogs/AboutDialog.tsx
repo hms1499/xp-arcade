@@ -9,7 +9,7 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
     ? `${stacks.contractAddress}.${stacks.contractName}`
     : "not configured";
   const explorerBase = "https://explorer.hiro.so";
-  const chain = process.env.NEXT_PUBLIC_NETWORK === "mainnet" ? "mainnet" : "testnet";
+  const chain = stacks.networkName;
   const explorerUrl = stacks.contractAddress
     ? `${explorerBase}/txid/${stacks.contractAddress}.${stacks.contractName}?chain=${chain}`
     : null;
@@ -66,7 +66,7 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
               <tr>
                 <td style={{ color: "#666", paddingRight: 8, paddingBottom: 2 }}>Network</td>
                 <td style={{ fontFamily: "monospace", fontSize: 10 }}>
-                  {process.env.NEXT_PUBLIC_NETWORK ?? "mainnet"}
+                  {stacks.networkName}
                 </td>
               </tr>
               <tr>

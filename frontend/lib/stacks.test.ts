@@ -3,9 +3,9 @@ import { parseContractId, parseNetworkName } from "./stacks";
 import { GAMES } from "./game-registry";
 
 describe("parseNetworkName", () => {
-  it("defaults to testnet when unset", () => {
-    expect(parseNetworkName(undefined)).toBe("testnet");
-    expect(parseNetworkName("")).toBe("testnet");
+  it("defaults to mainnet when unset", () => {
+    expect(parseNetworkName(undefined)).toBe("mainnet");
+    expect(parseNetworkName("")).toBe("mainnet");
   });
 
   it("accepts mainnet and testnet", () => {
@@ -31,6 +31,12 @@ describe("parseContractId", () => {
       contractAddress: GAMES.snake.contractAddress,
       contractName: GAMES.snake.contractName,
     });
+  });
+
+  it("rejects a contract id that does not match registry config", () => {
+    expect(() =>
+      parseContractId("SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.snake-score"),
+    ).toThrow(/must match configured Snake contract/);
   });
 
   it("rejects malformed ids", () => {

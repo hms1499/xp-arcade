@@ -1,6 +1,5 @@
-const DEPLOYER = "SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV";
-
 export type GameId = "snake" | "tetris" | "pacman";
+export type NetworkName = "mainnet" | "testnet";
 
 export interface GameDef {
   id: GameId;
@@ -13,13 +12,18 @@ export interface GameDef {
   nftAssetName: string;
 }
 
-const GAME_DEFS: Record<GameId, GameDef> = {
+type GameConfig = Omit<GameDef, "id" | "label" | "emoji" | "mintFeeUstx" | "metaSegment" | "nftAssetName">;
+
+const MAINNET_DEPLOYER = "SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV";
+
+const GAME_METADATA: Record<
+  GameId,
+  Pick<GameDef, "id" | "label" | "emoji" | "mintFeeUstx" | "metaSegment" | "nftAssetName">
+> = {
   snake: {
     id: "snake",
     label: "Snake",
     emoji: "🐍",
-    contractAddress: DEPLOYER,
-    contractName: "snake-score-v2",
     mintFeeUstx: BigInt(10_000),
     metaSegment: "score",
     nftAssetName: "snake-score",
@@ -28,8 +32,6 @@ const GAME_DEFS: Record<GameId, GameDef> = {
     id: "tetris",
     label: "Tetris",
     emoji: "🧱",
-    contractAddress: DEPLOYER,
-    contractName: "tetris-score-v2",
     mintFeeUstx: BigInt(20_000),
     metaSegment: "tetris",
     nftAssetName: "tetris-score",
@@ -38,15 +40,41 @@ const GAME_DEFS: Record<GameId, GameDef> = {
     id: "pacman",
     label: "Pac-Man",
     emoji: "👾",
-    contractAddress: DEPLOYER,
-    contractName: "pacman-score-v2",
     mintFeeUstx: BigInt(20_000),
     metaSegment: "pacman",
     nftAssetName: "pacman-score",
   },
 };
 
-const GAME_IDS: GameId[] = ["snake", "tetris", "pacman"];
+const GAME_CONTRACTS: Record<NetworkName, Record<GameId, GameConfig>> = {
+  mainnet: {
+    snake: { contractAddress: MAINNET_DEPLOYER, contractName: "snake-score-v2" },
+    tetris: { contractAddress: MAINNET_DEPLOYER, contractName: "tetris-score-v2" },
+    pacman: { contractAddress: MAINNET_DEPLOYER, contractName: "pacman-score-v2" },
+  },
+  testnet: {
+    snake: { contractAddress: MAINNET_DEPLOYER, contractName: "snake-score-v2" },
+    tetris: { contractAddress: MAINNET_DEPLOYER, contractName: "tetris-score-v2" },
+    pacman: { contractAddress: MAINNET_DEPLOYER, contractName: "pacman-score-v2" },
+  },
+};
+
+export const GAME_IDS: GameId[] = ["snake", "tetris", "pacman"];
+
+export function parseRegistryNetwork(value: string | undefined): NetworkName {
+  if (value === "mainnet" || value === "testnet") return value;
+  if (value == null || value === "") return "mainnet";
+  throw new Error(`Invalid NEXT_PUBLIC_NETWORK: ${value}`);
+}
+
+function buildGameRegistry(networkName: NetworkName): Record<GameId, GameDef> {
+  const contracts = GAME_CONTRACTS[networkName];
+  return validateGameRegistry({
+    snake: { ...GAME_METADATA.snake, ...contracts.snake },
+    tetris: { ...GAME_METADATA.tetris, ...contracts.tetris },
+    pacman: { ...GAME_METADATA.pacman, ...contracts.pacman },
+  });
+}
 
 export function validateGameDef(game: GameDef): GameDef {
   if (!GAME_IDS.includes(game.id)) {
@@ -70,7 +98,7 @@ export function validateGameDef(game: GameDef): GameDef {
   return game;
 }
 
-function validateGameRegistry(games: Record<GameId, GameDef>): Record<GameId, GameDef> {
+export function validateGameRegistry(games: Record<GameId, GameDef>): Record<GameId, GameDef> {
   for (const id of GAME_IDS) {
     if (games[id].id !== id) throw new Error(`Game registry key mismatch: ${id}`);
     validateGameDef(games[id]);
@@ -78,4 +106,9 @@ function validateGameRegistry(games: Record<GameId, GameDef>): Record<GameId, Ga
   return games;
 }
 
-export const GAMES: Record<GameId, GameDef> = validateGameRegistry(GAME_DEFS);
+export const NETWORK_NAME = parseRegistryNetwork(process.env.NEXT_PUBLIC_NETWORK);
+export const GAMES: Record<GameId, GameDef> = buildGameRegistry(NETWORK_NAME);
+
+export function expectedPrimaryContractId(games: Record<GameId, GameDef> = GAMES): string {
+  return `${games.snake.contractAddress}.${games.snake.contractName}`;
+}

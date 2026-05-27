@@ -40,6 +40,7 @@ On-chain right now: 1 score NFT minted (token #1, score 2, player `SPV5...QFH8Y`
 | (this session) | **CI:** added `frontend` CI scripts, GitHub Actions for frontend + contract checks, and metadata route coverage for invalid IDs, missing NFTs, success responses, and rate limiting. |
 | (this session) | **Safety:** hardened Season Admin payouts with typed `SEND` confirmation, full recipient/amount/memo preview, owner-balance preflight, and guards against resending rows already marked pending or paid. |
 | (this session) | **Review:** added frontend score-risk checks for mint dialogs and Season Admin. This flags unusually high or too-fast scores for admin review without changing contract behavior. |
+| (this session) | **Config:** hardened frontend network/contract config. `game-registry.ts` is the source of game contract names, `.env.example` points to v2, and `NEXT_PUBLIC_CONTRACT_ADDRESS` must match the configured Snake contract. |
 
 ---
 

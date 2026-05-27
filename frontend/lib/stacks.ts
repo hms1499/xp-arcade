@@ -1,23 +1,24 @@
 import { STACKS_TESTNET, STACKS_MAINNET } from "@stacks/network";
-import { GAMES } from "./game-registry";
-
-export type NetworkName = "mainnet" | "testnet";
+import {
+  expectedPrimaryContractId,
+  parseRegistryNetwork,
+  type NetworkName,
+} from "./game-registry";
 
 export type ContractIdParts = {
   contractAddress: string;
   contractName: string;
 };
 
-const DEFAULT_CONTRACT_ID = `${GAMES.snake.contractAddress}.${GAMES.snake.contractName}`;
-
 export function parseNetworkName(value: string | undefined): NetworkName {
-  if (value == null || value === "") return "testnet";
-  if (value === "mainnet" || value === "testnet") return value;
-  throw new Error(`Invalid NEXT_PUBLIC_NETWORK: ${value}`);
+  return parseRegistryNetwork(value);
 }
 
-export function parseContractId(value: string | undefined): ContractIdParts {
-  const fullId = value == null || value === "" ? DEFAULT_CONTRACT_ID : value;
+export function parseContractId(
+  value: string | undefined,
+  expectedContractId = expectedPrimaryContractId(),
+): ContractIdParts {
+  const fullId = value == null || value === "" ? expectedContractId : value;
   const parts = fullId.split(".");
   if (parts.length !== 2 || !parts[0] || !parts[1]) {
     throw new Error("NEXT_PUBLIC_CONTRACT_ADDRESS must use ADDRESS.contract-name format");
@@ -28,6 +29,11 @@ export function parseContractId(value: string | undefined): ContractIdParts {
   }
   if (!/^[a-zA-Z]([a-zA-Z0-9-])*[a-zA-Z0-9]$/.test(contractName)) {
     throw new Error(`Invalid contract name in NEXT_PUBLIC_CONTRACT_ADDRESS: ${contractName}`);
+  }
+  if (fullId !== expectedContractId) {
+    throw new Error(
+      `NEXT_PUBLIC_CONTRACT_ADDRESS (${fullId}) must match configured Snake contract (${expectedContractId})`,
+    );
   }
   return { contractAddress, contractName };
 }

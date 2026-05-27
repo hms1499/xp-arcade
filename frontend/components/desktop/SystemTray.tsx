@@ -3,6 +3,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { useWallet } from "@/state/wallet";
 import { useMintTx } from "@/state/mint-tx";
 import { WalletBalloon } from "./WalletBalloon";
+import { stacks } from "@/lib/stacks";
 
 const sunken: CSSProperties = {
   border: "1px solid",
@@ -46,7 +47,7 @@ export function SystemTray() {
   const txId = useMintTx((s) => s.txId);
   const txStatus = useMintTx((s) => s.status);
   const [now, setNow] = useState(() => new Date());
-  const chain = process.env.NEXT_PUBLIC_NETWORK === "mainnet" ? "mainnet" : "testnet";
+  const chain = stacks.networkName;
 
   useEffect(() => {
     hydrate();

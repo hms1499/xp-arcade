@@ -11,6 +11,7 @@ import { type TxStatus } from "@/lib/tx-tracker";
 import { recordScore } from "@/lib/high-score";
 import { GAMES, type GameId } from "@/lib/game-registry";
 import { useWindows } from "@/state/window-manager";
+import { stacks } from "@/lib/stacks";
 import {
   scoreRiskColor,
   scoreRiskLabel,
@@ -152,7 +153,7 @@ export function SharedMintDialog({
   );
 
   const feeStx = (Number(game.mintFeeUstx) / 1_000_000).toFixed(2);
-  const chain = process.env.NEXT_PUBLIC_NETWORK === "mainnet" ? "mainnet" : "testnet";
+  const chain = stacks.networkName;
   const isMintDisabled = busy || mintsRemaining === 0;
   const mintButtonLabel = busy
     ? "Opening wallet..."

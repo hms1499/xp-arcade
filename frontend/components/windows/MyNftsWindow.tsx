@@ -8,6 +8,7 @@ import { fetchAllScoreHoldings, scoreNftKey, type ScoreNft } from "@/lib/holding
 import { rarityColor } from "@/lib/metadata-svg";
 import { GAMES, type GameId } from "@/lib/game-registry";
 import { shortAddress } from "@/lib/stacks-address";
+import { stacks } from "@/lib/stacks";
 
 const GAME_BADGE_BG: Record<string, string> = {
   snake: "#d4edda",
@@ -419,7 +420,7 @@ function NftDetailDialog({
   onClose: () => void;
 }) {
   const game = GAMES[nft.gameId];
-  const chain = process.env.NEXT_PUBLIC_NETWORK === "mainnet" ? "mainnet" : "testnet";
+  const chain = stacks.networkName;
   const metadataHref = `/api/metadata/${game.metaSegment}/${nft.id}`;
   const contractHref = `https://explorer.hiro.so/address/${game.contractAddress}.${game.contractName}?chain=${chain}`;
 

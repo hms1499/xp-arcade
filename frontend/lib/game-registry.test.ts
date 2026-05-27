@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { GAMES, validateGameDef, type GameId } from "./game-registry";
+import {
+  expectedPrimaryContractId,
+  GAMES,
+  parseRegistryNetwork,
+  validateGameDef,
+  validateGameRegistry,
+  type GameId,
+} from "./game-registry";
 
 describe("game-registry", () => {
   it("has snake, tetris, pacman entries", () => {
@@ -41,5 +48,36 @@ describe("game-registry", () => {
         mintFeeUstx: BigInt(0),
       }),
     ).toThrow(/mint fee/);
+  });
+
+  it("rejects key/id mismatches", () => {
+    expect(() =>
+      validateGameRegistry({
+        ...GAMES,
+        snake: { ...GAMES.snake, id: "tetris" },
+      }),
+    ).toThrow(/key mismatch/);
+  });
+
+  it("exposes the expected primary Snake contract id", () => {
+    expect(expectedPrimaryContractId()).toBe(
+      "SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.snake-score-v2",
+    );
+  });
+});
+
+describe("parseRegistryNetwork", () => {
+  it("defaults to mainnet when unset", () => {
+    expect(parseRegistryNetwork(undefined)).toBe("mainnet");
+    expect(parseRegistryNetwork("")).toBe("mainnet");
+  });
+
+  it("accepts mainnet and testnet", () => {
+    expect(parseRegistryNetwork("mainnet")).toBe("mainnet");
+    expect(parseRegistryNetwork("testnet")).toBe("testnet");
+  });
+
+  it("rejects invalid values", () => {
+    expect(() => parseRegistryNetwork("devnet")).toThrow(/NEXT_PUBLIC_NETWORK/);
   });
 });
