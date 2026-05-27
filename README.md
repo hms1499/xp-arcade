@@ -143,7 +143,7 @@ HANDOFF.md                  Live operational notes
 - **Score is client-trusted.** No on-chain proof of gameplay. Cap (`u9999`) and mint cap (10/season) reduce worst-case abuse.
 - **Scoring calibrated across games.** Snake +1/food · Tetris `[0,1,3,5,8]×level` · Pac-Man dot=1, pellet=5, ghost=20. All 3 games target a 0–400 practical range so rarity tiers (Common < 167, Rare 167–499, Epic 500–999, Legendary ≥ 1000) are equally meaningful.
 - **Mint fee goes to `contract-owner` directly.** Contract only increments an accounting counter. Prize payouts are sent manually by the owner via Season Admin.
-- **`claim-prize` is record-only.** Returns `(ok payout)` and marks as claimed but does not transfer STX. Owner sends manually.
+- **`claim-prize` is record-only.** Returns `(ok payout)` and marks as claimed but does not transfer STX. Owner sends manually. Season Admin requires a typed confirmation and shows recipient, amount, memo, and ledger state before each payout.
 - **Season end is fully manual.** No on-chain deadline; the countdown in the UI is a soft display-only deadline from env config.
 
 ---
@@ -156,7 +156,7 @@ cd contract && npm test          # 42 tests
 cd contract && clarinet check    # syntax/type/lint checks for .clar files
 
 # frontend (Vitest)
-cd frontend && npm test          # 115 tests
+cd frontend && npm test          # 119 tests
 cd frontend && npm run typecheck # type-check
 cd frontend && npm run build     # production build
 cd frontend && npm run ci        # full local frontend CI

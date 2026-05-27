@@ -24,6 +24,12 @@ import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
 import { GAMES, type GameId } from "@/lib/game-registry";
 import { formatPayoutMemo } from "@/lib/payout-memo";
 import { getStxBalance } from "@/lib/stx-balance";
+import {
+  buildBatchPayoutConfirmation,
+  buildPayoutConfirmation,
+  formatStx,
+  getPayoutBlockReason,
+} from "@/lib/payout-safety";
 
 type PayoutRow = {
   player: string;
@@ -58,6 +64,10 @@ function downloadCsv(filename: string, content: string) {
   URL.revokeObjectURL(url);
 }
 
+function confirmPayoutAction(message: string): boolean {
+  return window.prompt(`${message}\n\nType SEND to continue.`) === "SEND";
+}
+
 function renderPayoutCell(args: {
   entry: PayoutEntry | undefined;
   busy: boolean;
@@ -78,14 +88,24 @@ function renderPayoutCell(args: {
   }
   if (entry.status === "pending") {
     return (
-      <a href={`${EXPLORER}/${entry.txId}`} target="_blank" rel="noreferrer">
+      <a
+        href={`${EXPLORER}/${entry.txId}`}
+        target="_blank"
+        rel="noreferrer"
+        title="A payout transaction is already pending for this row"
+      >
         ⏳ Pending
       </a>
     );
   }
   if (entry.status === "success") {
     return (
-      <a href={`${EXPLORER}/${entry.txId}`} target="_blank" rel="noreferrer">
+      <a
+        href={`${EXPLORER}/${entry.txId}`}
+        target="_blank"
+        rel="noreferrer"
+        title="Ledger marks this row paid; no further STX should be sent"
+      >
         ✓ Paid
       </a>
     );
@@ -237,22 +257,45 @@ export function SeasonAdminWindow() {
   }
 
   async function handlePay(row: PayoutRow, season: number) {
-    const stxAmount = (row.payoutUstx / 1_000_000).toFixed(4);
-    if (
-      !confirm(
-        `Send ${stxAmount} STX to ${row.player} for ${gameId} Season ${season} rank #${row.rank}?`,
-      )
-    )
+    const existingEntry = usePayoutLedger.getState().get(gameId, season, row.player);
+    const blockReason = getPayoutBlockReason(existingEntry);
+    if (blockReason === "already-paid") {
+      setError(
+        `Blocked: ${GAMES[gameId].label} Season ${season} rank #${row.rank} is already marked paid (${existingEntry?.txId}).`,
+      );
       return;
+    }
+    if (blockReason === "pending") {
+      setError(
+        `Blocked: ${GAMES[gameId].label} Season ${season} rank #${row.rank} already has a pending payout (${existingEntry?.txId}).`,
+      );
+      return;
+    }
+    if (ownerBalance != null && ownerBalance < row.payoutUstx) {
+      setError(
+        `Owner balance (${formatStx(ownerBalance, 4)}) is below this payout (${formatStx(row.payoutUstx, 4)}). Top up first.`,
+      );
+      return;
+    }
+    const memo = formatPayoutMemo({ gameId, season, rank: row.rank });
+    if (!confirmPayoutAction(buildPayoutConfirmation({
+      gameId,
+      gameLabel: GAMES[gameId].label,
+      season,
+      row,
+      memo,
+      existingEntry,
+      ownerBalanceUstx: ownerBalance,
+    }))) return;
+    const stxAmount = formatStx(row.payoutUstx, 4);
     const key = `${season}-${row.player}`;
     setBusyPay(key);
     try {
-      const memo = formatPayoutMemo({ gameId, season, rank: row.rank });
       const txId = await transferStx(row.player, row.payoutUstx, memo);
       usePayoutLedger.getState().submit(gameId, season, row.player, txId);
       useToasts.getState().push({
         title: "Payout submitted",
-        body: `${stxAmount} STX → ${row.player.slice(0, 6)}… (watching…)`,
+        body: `${stxAmount} → ${row.player.slice(0, 6)}… (watching…)`,
       });
       watchTx(txId, (s) => {
         if (s === "success") {
@@ -260,13 +303,13 @@ export function SeasonAdminWindow() {
           refreshOwnerBalance();
           useToasts.getState().push({
             title: "Payout confirmed",
-            body: `${stxAmount} STX → ${row.player.slice(0, 6)}…`,
+            body: `${stxAmount} → ${row.player.slice(0, 6)}…`,
           });
         } else if (s !== "pending") {
           usePayoutLedger.getState().updateStatus(gameId, season, row.player, "failed");
           useToasts.getState().push({
             title: "Payout failed",
-            body: `${stxAmount} STX → ${row.player.slice(0, 6)}… rejected.`,
+            body: `${stxAmount} → ${row.player.slice(0, 6)}… rejected.`,
           });
         }
       });
@@ -284,18 +327,19 @@ export function SeasonAdminWindow() {
     });
     if (unpaid.length === 0) return;
     const totalUstx = unpaid.reduce((a, r) => a + r.payoutUstx, 0);
-    const totalStx = (totalUstx / 1_000_000).toFixed(4);
     if (ownerBalance != null && ownerBalance < totalUstx) {
       setError(
-        `Owner balance (${(ownerBalance / 1_000_000).toFixed(4)} STX) is below the unpaid total (${totalStx} STX). Top up first.`,
+        `Owner balance (${formatStx(ownerBalance, 4)}) is below the unpaid total (${formatStx(totalUstx, 4)}). Top up first.`,
       );
       return;
     }
-    if (
-      !confirm(
-        `Send ${unpaid.length} payouts (${totalStx} STX total) for ${gameId} Season ${season}? Each row needs a separate wallet signature.`,
-      )
-    )
+    if (!confirmPayoutAction(buildBatchPayoutConfirmation({
+      gameId,
+      gameLabel: GAMES[gameId].label,
+      season,
+      rows: unpaid,
+      ownerBalanceUstx: ownerBalance,
+    })))
       return;
     setBusyBatch(season);
     setBatchProgress({ sent: 0, total: unpaid.length });
