@@ -85,6 +85,11 @@ export function Desktop({ children }: { children: React.ReactNode }) {
           onOpen={() => open("highscore")}
         />
         <DesktopIcon
+          label="Hall of Fame"
+          emoji="🎖️"
+          onOpen={() => open("hall-of-fame")}
+        />
+        <DesktopIcon
           label="My NFTs"
           emoji="💾"
           onOpen={() => open("mynfts")}

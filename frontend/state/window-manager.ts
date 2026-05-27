@@ -5,6 +5,7 @@ import { type GameId } from "@/lib/game-registry";
 export type WindowType =
   | `game-${GameId}`
   | "highscore"
+  | "hall-of-fame"
   | "mynfts"
   | "season-admin"
   | "player-profile";

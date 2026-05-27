@@ -17,6 +17,7 @@ import {
   scoreRiskLabel,
   type ScoreRiskReport,
 } from "@/lib/score-risk";
+import { ShareScoreCard } from "@/components/shared/ShareScoreCard";
 
 const STATUS_LABEL: Record<TxStatus, string> = {
   pending: "Submitted · confirming on-chain",
@@ -283,6 +284,14 @@ export function SharedMintDialog({
           </span>
         )}
       </div>
+
+      <ShareScoreCard
+        gameId={gameId}
+        score={score}
+        player={address}
+        rankHint={leaderboardHint?.text}
+        txId={txId}
+      />
 
       {!address ? (
         <div>

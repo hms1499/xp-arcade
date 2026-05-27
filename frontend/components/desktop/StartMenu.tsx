@@ -148,6 +148,11 @@ export function StartMenu({
             onClick={() => { openWin("highscore"); onClose(); }}
           />
           <MenuItem
+            icon="🎖️"
+            label="Hall of Fame"
+            onClick={() => { openWin("hall-of-fame"); onClose(); }}
+          />
+          <MenuItem
             icon="💾"
             label="My NFTs"
             onClick={() => { openWin("mynfts"); onClose(); }}

@@ -97,8 +97,26 @@ test("start menu opens shared utility windows", async ({ page }) => {
   await expect(page.locator(".title-bar-text", { hasText: "🏆 High Scores" })).toBeVisible();
 
   await page.getByRole("button", { name: /^Start$/i }).click();
+  await page.getByRole("menuitem", { name: /Hall of Fame/i }).click();
+  await expect(page.locator(".title-bar-text", { hasText: "🎖️ Hall of Fame" })).toBeVisible();
+
+  await page.getByRole("button", { name: /^Start$/i }).click();
   await page.getByRole("menuitem", { name: /My NFTs/i }).click();
   await expect(page.locator(".title-bar-text", { hasText: "💾 My NFTs" })).toBeVisible();
+});
+
+test("snake game over shows mint dialog with downloadable score card", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await bootFast(page);
+
+  await page.getByRole("button", { name: /Snake\.exe/i }).dblclick();
+  const snakeWindow = windowByTitle(page, "🐍 Snake");
+  await expect(snakeWindow.locator("canvas")).toBeVisible();
+
+  await expect(snakeWindow.getByText(/Game Over/i)).toBeVisible({ timeout: 8_000 });
+  await expect(snakeWindow.getByLabel("Shareable score card preview")).toBeVisible();
+  await expect(snakeWindow.getByRole("button", { name: /Download PNG/i })).toBeVisible();
+  await expect(snakeWindow.getByRole("button", { name: /Connect Wallet/i })).toBeVisible();
 });
 
 test("mobile launcher opens a fullscreen game without horizontal overflow", async ({ page }) => {
