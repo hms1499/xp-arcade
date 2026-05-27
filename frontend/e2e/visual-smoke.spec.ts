@@ -8,8 +8,29 @@ async function bootFast(page: Page) {
   await expect(page.getByRole("button", { name: /Start/i })).toBeVisible();
 }
 
-async function expectCanvasHasPixels(page: Page) {
-  const hasPixels = await page.locator("canvas").first().evaluate((canvas) => {
+async function emulateCoarsePointer(page: Page) {
+  await page.addInitScript(() => {
+    const original = window.matchMedia.bind(window);
+    window.matchMedia = (query: string) => {
+      if (query.includes("pointer: coarse")) {
+        return {
+          matches: true,
+          media: query,
+          onchange: null,
+          addEventListener: () => undefined,
+          removeEventListener: () => undefined,
+          addListener: () => undefined,
+          removeListener: () => undefined,
+          dispatchEvent: () => false,
+        };
+      }
+      return original(query);
+    };
+  });
+}
+
+async function expectCanvasHasPixels(locator: ReturnType<Page["locator"]>) {
+  const hasPixels = await locator.evaluate((canvas) => {
     const ctx = (canvas as HTMLCanvasElement).getContext("2d");
     if (!ctx) return false;
     const { width, height } = canvas as HTMLCanvasElement;
@@ -22,14 +43,20 @@ async function expectCanvasHasPixels(page: Page) {
   expect(hasPixels).toBe(true);
 }
 
+function windowByTitle(page: Page, title: string) {
+  return page.locator(".window", {
+    has: page.locator(".title-bar-text", { hasText: title }),
+  });
+}
+
 test("desktop renders core windows and game canvas", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await bootFast(page);
 
   await page.getByRole("button", { name: /Snake\.exe/i }).dblclick();
   await expect(page.locator(".title-bar-text", { hasText: "🐍 Snake" })).toBeVisible();
-  await expect(page.locator("canvas")).toBeVisible();
-  await expectCanvasHasPixels(page);
+  await expect(windowByTitle(page, "🐍 Snake").locator("canvas")).toBeVisible();
+  await expectCanvasHasPixels(windowByTitle(page, "🐍 Snake").locator("canvas"));
 
   await page.getByRole("button", { name: /High Scores/i }).first().dblclick();
   await expect(page.locator(".title-bar-text", { hasText: "🏆 High Scores" })).toBeVisible();
@@ -38,13 +65,54 @@ test("desktop renders core windows and game canvas", async ({ page }) => {
   await expect(page.locator(".title-bar-text", { hasText: "💾 My NFTs" })).toBeVisible();
 });
 
+test("desktop launcher opens every game window", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await bootFast(page);
+
+  const games = [
+    { icon: /Snake\.exe/i, title: "🐍 Snake", canvas: true },
+    { icon: /Tetris\.exe/i, title: "🧱 Tetris", canvas: false },
+    { icon: /Pac-Man\.exe/i, title: "👾 Pac-Man", canvas: true },
+  ];
+
+  for (const game of games) {
+    await page.getByRole("button", { name: game.icon }).dblclick();
+    const win = windowByTitle(page, game.title);
+    await expect(win).toBeVisible();
+    if (game.canvas) {
+      await expect(win.locator("canvas")).toBeVisible();
+      await expectCanvasHasPixels(win.locator("canvas"));
+    } else {
+      await expect(win.getByText("Next")).toBeVisible();
+    }
+  }
+});
+
+test("start menu opens shared utility windows", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await bootFast(page);
+
+  await page.getByRole("button", { name: /^Start$/i }).click();
+  await page.getByRole("menuitem", { name: /Leaderboard/i }).click();
+  await expect(page.locator(".title-bar-text", { hasText: "🏆 High Scores" })).toBeVisible();
+
+  await page.getByRole("button", { name: /^Start$/i }).click();
+  await page.getByRole("menuitem", { name: /My NFTs/i }).click();
+  await expect(page.locator(".title-bar-text", { hasText: "💾 My NFTs" })).toBeVisible();
+});
+
 test("mobile launcher opens a fullscreen game without horizontal overflow", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await emulateCoarsePointer(page);
   await bootFast(page);
 
   await page.getByRole("button", { name: /Snake\.exe/i }).click();
   await expect(page.locator(".title-bar-text", { hasText: "🐍 Snake" })).toBeVisible();
   await expect(page.locator("canvas")).toBeVisible();
+  await expect(page.getByRole("button", { name: "▲" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "◀" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "▼" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "▶" })).toBeVisible();
 
   const noHorizontalOverflow = await page.evaluate(
     () => document.documentElement.scrollWidth <= window.innerWidth,
