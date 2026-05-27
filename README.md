@@ -64,6 +64,7 @@ cd frontend
 cp .env.example .env.local
 npm install
 npm run dev        # http://localhost:3000
+npm run ci         # lint + unit tests + type-check + production build
 
 # contract (optional)
 cd ../contract
@@ -152,12 +153,19 @@ HANDOFF.md                  Live operational notes
 ```bash
 # contract (Clarinet / Vitest)
 cd contract && npm test          # 42 tests
+cd contract && clarinet check    # syntax/type/lint checks for .clar files
 
 # frontend (Vitest)
-cd frontend && npm test          # 64 tests
-cd frontend && npx tsc --noEmit  # type-check
+cd frontend && npm test          # 115 tests
+cd frontend && npm run typecheck # type-check
 cd frontend && npm run build     # production build
+cd frontend && npm run ci        # full local frontend CI
 ```
+
+GitHub Actions runs two jobs on pushes to `main` and pull requests:
+
+- **Frontend:** `npm ci` then `npm run ci`.
+- **Contract:** `npm ci`, install Clarinet, `npm test`, then `clarinet check`.
 
 ---
 

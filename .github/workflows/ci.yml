@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+env:
+  CLARINET_VERSION: v3.14.1
+
+jobs:
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run frontend CI
+        run: npm run ci
+
+  contract:
+    name: Contract
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contract
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: contract/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Clarinet
+        run: |
+          wget -nv https://github.com/stx-labs/clarinet/releases/download/${CLARINET_VERSION}/clarinet-linux-x64-glibc.tar.gz -O clarinet-linux-x64.tar.gz
+          tar -xf clarinet-linux-x64.tar.gz
+          chmod +x ./clarinet
+          sudo mv ./clarinet /usr/local/bin/clarinet
+          clarinet --version
+
+      - name: Run contract tests
+        run: npm test
+
+      - name: Run Clarinet check
+        run: clarinet check

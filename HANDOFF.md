@@ -13,7 +13,7 @@
 | SIP-009 trait | `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.nft-trait` |
 | Deployer / `contract-owner` | `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV` |
 | Total deploy cost | ~0.098 STX |
-| Tests | contract: 34 ✓ · frontend: 6 ✓ · `tsc --noEmit`: clean |
+| Tests | contract: 42 ✓ · frontend: 115 ✓ · `npm run typecheck`: clean · `npm run build`: clean |
 | GitHub | `https://github.com/hms1499/xp-snake` (default branch: `main`) |
 
 On-chain right now: 1 score NFT minted (token #1, score 2, player `SPV5...QFH8Y`), pool = 0.01 STX, current season = 1.
@@ -37,10 +37,17 @@ On-chain right now: 1 score NFT minted (token #1, score 2, player `SPV5...QFH8Y`
 | (this session) | **Perf:** 1y immutable `Cache-Control` on `/api/metadata/score/[id]` + 60-req/min/IP rate limit |
 | (this session) | **Refactor:** extracted `lib/holdings.ts`, `lib/player-stats.ts`, `lib/stacks-address.ts`, `lib/rate-limit.ts` (each with vitest coverage) |
 | (this session) | **Feat:** PlayerProfileWindow — in-app XP window for player profiles. Leaderboard rows + MyNftsWindow now open the window in-place instead of redirecting. Window-manager extended with payload so the same window swaps between addresses. `/player/[address]` route still exists as the public shareable view (both wrap `PlayerProfileBody`). |
+| (this session) | **CI:** added `frontend` CI scripts, GitHub Actions for frontend + contract checks, and metadata route coverage for invalid IDs, missing NFTs, success responses, and rate limiting. |
 
 ---
 
 ## To-do for next session
+
+### 0. CI / hardening follow-up
+
+- [ ] Confirm the new GitHub Actions workflow is green on the remote branch.
+- [ ] Decide whether Clarinet warnings from `clarinet check` should fail CI in a future contract-hardening pass.
+- [ ] Add Playwright smoke coverage for desktop boot, game launch, mint dialog, High Score, My NFTs empty/error states, and mobile controls.
 
 ### 1. Production smoke test
 
