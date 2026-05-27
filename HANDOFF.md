@@ -13,7 +13,7 @@
 | SIP-009 trait | `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.nft-trait` |
 | Deployer / `contract-owner` | `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV` |
 | Total deploy cost | ~0.098 STX |
-| Tests | contract: 42 ✓ · frontend: 119 ✓ · `npm run typecheck`: clean · `npm run build`: clean |
+| Tests | contract: 42 ✓ · frontend: 125 ✓ · `npm run typecheck`: clean · `npm run build`: clean |
 | GitHub | `https://github.com/hms1499/xp-snake` (default branch: `main`) |
 
 On-chain right now: 1 score NFT minted (token #1, score 2, player `SPV5...QFH8Y`), pool = 0.01 STX, current season = 1.
@@ -39,6 +39,7 @@ On-chain right now: 1 score NFT minted (token #1, score 2, player `SPV5...QFH8Y`
 | (this session) | **Feat:** PlayerProfileWindow — in-app XP window for player profiles. Leaderboard rows + MyNftsWindow now open the window in-place instead of redirecting. Window-manager extended with payload so the same window swaps between addresses. `/player/[address]` route still exists as the public shareable view (both wrap `PlayerProfileBody`). |
 | (this session) | **CI:** added `frontend` CI scripts, GitHub Actions for frontend + contract checks, and metadata route coverage for invalid IDs, missing NFTs, success responses, and rate limiting. |
 | (this session) | **Safety:** hardened Season Admin payouts with typed `SEND` confirmation, full recipient/amount/memo preview, owner-balance preflight, and guards against resending rows already marked pending or paid. |
+| (this session) | **Review:** added frontend score-risk checks for mint dialogs and Season Admin. This flags unusually high or too-fast scores for admin review without changing contract behavior. |
 
 ---
 

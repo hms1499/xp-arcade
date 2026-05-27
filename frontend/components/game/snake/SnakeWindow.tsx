@@ -22,6 +22,7 @@ export function SnakeWindow() {
     finalScore,
     showMint,
     isTopScore,
+    riskReport,
     resetKey,
     handleGameOver,
     handlePlayAgain,
@@ -36,6 +37,7 @@ export function SnakeWindow() {
           gameId="snake"
           score={finalScore}
           isTopScore={isTopScore}
+          riskReport={riskReport}
           onClose={() => close(w.id)}
           onPlayAgain={handlePlayAgain}
         />

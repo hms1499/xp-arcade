@@ -22,6 +22,7 @@ export function PacManWindow() {
     finalScore,
     showMint,
     isTopScore,
+    riskReport,
     resetKey,
     handleGameOver,
     handlePlayAgain,
@@ -36,6 +37,7 @@ export function PacManWindow() {
           gameId="pacman"
           score={finalScore}
           isTopScore={isTopScore}
+          riskReport={riskReport}
           onClose={() => close(w.id)}
           onPlayAgain={handlePlayAgain}
         />

@@ -11,6 +11,11 @@ import { type TxStatus } from "@/lib/tx-tracker";
 import { recordScore } from "@/lib/high-score";
 import { GAMES, type GameId } from "@/lib/game-registry";
 import { useWindows } from "@/state/window-manager";
+import {
+  scoreRiskColor,
+  scoreRiskLabel,
+  type ScoreRiskReport,
+} from "@/lib/score-risk";
 
 const STATUS_LABEL: Record<TxStatus, string> = {
   pending: "Submitted · confirming on-chain",
@@ -58,12 +63,14 @@ export function SharedMintDialog({
   gameId,
   score,
   isTopScore = false,
+  riskReport,
   onClose,
   onPlayAgain,
 }: {
   gameId: GameId;
   score: number;
   isTopScore?: boolean;
+  riskReport?: ScoreRiskReport;
   onClose: () => void;
   onPlayAgain: () => void;
 }) {
@@ -256,6 +263,22 @@ export function SharedMintDialog({
             }}
           >
             {leaderboardHint.text}
+          </span>
+        )}
+        {riskReport && riskReport.level !== "low" && (
+          <span
+            className="block mt-2"
+            style={{
+              color: scoreRiskColor(riskReport.level),
+              fontWeight: "bold",
+            }}
+          >
+            {scoreRiskLabel(riskReport)}: {riskReport.reasons[0]}
+          </span>
+        )}
+        {riskReport?.durationSeconds != null && (
+          <span className="block text-[10px] text-gray-500 mt-1">
+            Session length: {riskReport.durationSeconds}s
           </span>
         )}
       </div>

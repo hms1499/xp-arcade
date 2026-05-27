@@ -30,6 +30,7 @@ import {
   formatStx,
   getPayoutBlockReason,
 } from "@/lib/payout-safety";
+import { assessScoreRisk, scoreRiskColor, scoreRiskLabel } from "@/lib/score-risk";
 
 type PayoutRow = {
   player: string;
@@ -482,6 +483,12 @@ export function SeasonAdminWindow() {
         )}
 
         {seasons.map((s) => {
+          const riskReports = s.rows.map((r) => ({
+            player: r.player,
+            report: assessScoreRisk({ gameId, score: r.score, durationMs: null }),
+          }));
+          const riskByPlayer = new Map(riskReports.map((r) => [r.player, r.report]));
+          const reviewCount = riskReports.filter((r) => r.report.level !== "low").length;
           const reconRows: ReconRow[] = s.rows.map((r) => ({
             player: r.player,
             rank: r.rank,
@@ -515,6 +522,14 @@ export function SeasonAdminWindow() {
               >
                 ⚠️ Tied scores detected. Admin payouts use sorted row order so the payout schedule stays
                 within the pool. Export the CSV before sending if you need an audit trail.
+              </p>
+            )}
+            {reviewCount > 0 && (
+              <p
+                className="text-[10px] px-1 mb-1"
+                style={{ color: "#8a5a00", background: "#fff8d6", border: "1px solid #e0c060", padding: "4px" }}
+              >
+                Score review: {reviewCount} row{reviewCount === 1 ? "" : "s"} exceed normal score thresholds. Verify before payout; on-chain snapshots do not include session duration.
               </p>
             )}
             {s.rows.length > 0 && (
@@ -578,6 +593,7 @@ export function SeasonAdminWindow() {
                     <th>#</th>
                     <th>Player</th>
                     <th>Score</th>
+                    <th>Risk</th>
                     <th>Payout</th>
                     <th>Claim?</th>
                     <th></th>
@@ -595,6 +611,12 @@ export function SeasonAdminWindow() {
                         <td>{r.rank}</td>
                         <td title={r.player}>{r.player.slice(0, 6)}…{r.player.slice(-4)}</td>
                         <td>{r.score}</td>
+                        <td
+                          title={riskByPlayer.get(r.player)?.reasons.join(" ") || "No score-only risk signal"}
+                          style={{ color: scoreRiskColor(riskByPlayer.get(r.player)?.level ?? "low") }}
+                        >
+                          {scoreRiskLabel(riskByPlayer.get(r.player) ?? { level: "low", reasons: [], durationSeconds: null })}
+                        </td>
                         <td>{(r.payoutUstx / 1_000_000).toFixed(4)}</td>
                         <td>{r.claimed ? "✓" : "—"}</td>
                         <td>

@@ -141,6 +141,7 @@ HANDOFF.md                  Live operational notes
 - **`nftAssetName` decouples deploy name from NFT type name.** `snake-score.clar` deployed as `snake-score-v2` still defines `(define-non-fungible-token snake-score ...)`. The asset identifier is `…snake-score-v2::snake-score`. `game-registry.ts` carries both `contractName` and `nftAssetName` so `holdings.ts` builds the correct identifier.
 - **Top-10 unsorted on-chain.** Min-eviction at insertion time. UI sorts on read.
 - **Score is client-trusted.** No on-chain proof of gameplay. Cap (`u9999`) and mint cap (10/season) reduce worst-case abuse.
+- **Frontend score-risk review.** The mint dialog and Season Admin flag unusually high or too-fast scores for review, but this is advisory only and does not change contract behavior.
 - **Scoring calibrated across games.** Snake +1/food · Tetris `[0,1,3,5,8]×level` · Pac-Man dot=1, pellet=5, ghost=20. All 3 games target a 0–400 practical range so rarity tiers (Common < 167, Rare 167–499, Epic 500–999, Legendary ≥ 1000) are equally meaningful.
 - **Mint fee goes to `contract-owner` directly.** Contract only increments an accounting counter. Prize payouts are sent manually by the owner via Season Admin.
 - **`claim-prize` is record-only.** Returns `(ok payout)` and marks as claimed but does not transfer STX. Owner sends manually. Season Admin requires a typed confirmation and shows recipient, amount, memo, and ledger state before each payout.
@@ -156,7 +157,7 @@ cd contract && npm test          # 42 tests
 cd contract && clarinet check    # syntax/type/lint checks for .clar files
 
 # frontend (Vitest)
-cd frontend && npm test          # 119 tests
+cd frontend && npm test          # 125 tests
 cd frontend && npm run typecheck # type-check
 cd frontend && npm run build     # production build
 cd frontend && npm run ci        # full local frontend CI

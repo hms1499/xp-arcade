@@ -1,9 +1,10 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { type GameId } from "@/lib/game-registry";
 import { getTopTenForGame } from "@/lib/contract-calls";
 import { useMintTx } from "@/state/mint-tx";
 import { useSessionStats } from "@/state/session-stats";
+import { assessScoreRisk, type ScoreRiskReport } from "@/lib/score-risk";
 
 export function useGameSession(gameId: GameId) {
   const [score, setScore] = useState(0);
@@ -11,6 +12,14 @@ export function useGameSession(gameId: GameId) {
   const [showMint, setShowMint] = useState(false);
   const [isTopScore, setIsTopScore] = useState(false);
   const [resetKey, setResetKey] = useState(0);
+  const [riskReport, setRiskReport] = useState<ScoreRiskReport>(() =>
+    assessScoreRisk({ gameId, score: 0, durationMs: 0 }),
+  );
+  const startedAtRef = useRef(0);
+
+  useEffect(() => {
+    startedAtRef.current = Date.now();
+  }, [resetKey]);
 
   const activeMintGameId = useMintTx((s) => s.gameId);
   const activeTxId = useMintTx((s) => s.txId);
@@ -19,8 +28,11 @@ export function useGameSession(gameId: GameId) {
 
   const handleGameOver = useCallback(
     async (s: number) => {
+      const startedAt = startedAtRef.current || Date.now();
+      const durationMs = Date.now() - startedAt;
       setFinalScore(s);
       setShowMint(true);
+      setRiskReport(assessScoreRisk({ gameId, score: s, durationMs }));
       useSessionStats.getState().recordResult(gameId, s);
       try {
         const top = await getTopTenForGame(gameId);
@@ -35,12 +47,14 @@ export function useGameSession(gameId: GameId) {
   );
 
   const handlePlayAgain = useCallback(() => {
+    startedAtRef.current = Date.now();
     setFinalScore(0);
     setScore(0);
     setShowMint(false);
     setIsTopScore(false);
+    setRiskReport(assessScoreRisk({ gameId, score: 0, durationMs: 0 }));
     setResetKey((k) => k + 1);
-  }, []);
+  }, [gameId]);
 
   return {
     score,
@@ -49,6 +63,7 @@ export function useGameSession(gameId: GameId) {
     showMint,
     setShowMint,
     isTopScore,
+    riskReport,
     resetKey,
     isMintPending,
     handleGameOver,
