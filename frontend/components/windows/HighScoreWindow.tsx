@@ -7,8 +7,13 @@ import {
   getBestScoreForGame,
   getCurrentSeasonForGame,
   getTopTenForGame,
+  getSeasonPrizeForGame,
+  hasClaimedPrizeForGame,
+  claimPrizeV3,
+  computePayoutUstx,
   type TopEntry,
 } from "@/lib/contract-calls";
+import { useToasts } from "@/state/toasts";
 import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
 
@@ -120,6 +125,29 @@ function LeaderboardTab({
   const lastUpdated = activeState?.lastUpdated ?? null;
   const season = activeState?.season ?? null;
   const playerBest = activeState?.playerBest ?? null;
+
+  const [claim, setClaim] = useState<null | { season: number; amountUstx: number }>(null);
+  const [claiming, setClaiming] = useState(false);
+
+  useEffect(() => {
+    if (!address || !season || season <= 1) { setClaim(null); return; }
+    const closed = season - 1;
+    let cancelled = false;
+    (async () => {
+      const [prize, already] = await Promise.all([
+        getSeasonPrizeForGame(gameId, closed),
+        hasClaimedPrizeForGame(gameId, address, closed),
+      ]);
+      if (cancelled || !prize || already) { setClaim(null); return; }
+      const mine = prize.topTen.find((e) => e.player === address);
+      if (!mine) { setClaim(null); return; }
+      const higher = prize.topTen.filter((e) => e.score > mine.score).length;
+      const rank = higher + 1;
+      setClaim({ season: closed, amountUstx: computePayoutUstx(prize.total, rank) });
+    })().catch(() => { if (!cancelled) setClaim(null); });
+    return () => { cancelled = true; };
+  }, [address, season, gameId]);
+
   const myRank =
     address && rows ? rows.findIndex((r) => r.player === address) + 1 : 0;
   const cutoff = rows && rows.length >= 10 ? rows[9].score : null;
@@ -159,6 +187,47 @@ function LeaderboardTab({
               : "Loading live scores"}
             {myRank > 0 && <> · Your rank: #{myRank}</>}
           </span>
+          {claim && (
+            <button
+              disabled={claiming}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={async (e) => {
+                e.stopPropagation();
+                setClaiming(true);
+                try {
+                  await claimPrizeV3(gameId, claim.season, address!);
+                  setClaim(null);
+                  useToasts.getState().push({
+                    title: "Claim submitted",
+                    body: `Prize for season ${claim.season} is on its way.`,
+                    type: "success",
+                  });
+                } catch (err) {
+                  const msg = err instanceof Error ? err.message : String(err);
+                  if (msg !== "cancelled") {
+                    useToasts.getState().push({
+                      title: "Claim failed",
+                      body: msg,
+                      type: "error",
+                    });
+                  }
+                } finally {
+                  setClaiming(false);
+                }
+              }}
+              style={{
+                marginTop: 3,
+                justifySelf: "start",
+                fontSize: 10,
+                fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
+                cursor: claiming ? "wait" : "default",
+              }}
+            >
+              {claiming
+                ? "Claiming..."
+                : `Claim ${(claim.amountUstx / 1_000_000).toFixed(2)} STX`}
+            </button>
+          )}
         </div>
         <div style={{ display: "grid", gap: 2, textAlign: "right" }}>
           <span>
