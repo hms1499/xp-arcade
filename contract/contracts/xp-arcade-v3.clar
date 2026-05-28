@@ -70,3 +70,9 @@
         rare-min: rare-min, epic-min: epic-min, legend-min: legend-min })
     (map-set current-season game-id u1)
     (ok true)))
+
+(define-public (set-game-active (game-id uint) (active bool))
+  (let ((g (unwrap! (map-get? games game-id) ERR-NO-GAME)))
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-OWNER)
+    (map-set games game-id (merge g { active: active }))
+    (ok true)))

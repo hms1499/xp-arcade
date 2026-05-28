@@ -74,3 +74,30 @@ describe("register-game", () => {
     expect(season).toBeUint(0);
   });
 });
+
+describe("set-game-active", () => {
+  it("owner toggles a game inactive", () => {
+    simnet.callPublicFn(C, "register-game",
+      [Cl.uint(1), Cl.stringAscii("Snake"), Cl.uint(10000), Cl.uint(50), Cl.uint(150), Cl.uint(300)], deployer);
+    const r = simnet.callPublicFn(C, "set-game-active", [Cl.uint(1), Cl.bool(false)], deployer).result;
+    expect(r).toBeOk(Cl.bool(true));
+    const g = simnet.callReadOnlyFn(C, "get-game", [Cl.uint(1)], deployer).result;
+    expect(g).toBeSome(Cl.tuple({
+      name: Cl.stringAscii("Snake"),
+      fee: Cl.uint(10000),
+      active: Cl.bool(false),
+      "rare-min": Cl.uint(50),
+      "epic-min": Cl.uint(150),
+      "legend-min": Cl.uint(300),
+    }));
+  });
+
+  it("rejects non-owner and unknown game", () => {
+    simnet.callPublicFn(C, "register-game",
+      [Cl.uint(1), Cl.stringAscii("Snake"), Cl.uint(10000), Cl.uint(50), Cl.uint(150), Cl.uint(300)], deployer);
+    expect(simnet.callPublicFn(C, "set-game-active", [Cl.uint(1), Cl.bool(false)], w(1)).result)
+      .toBeErr(Cl.uint(100)); // ERR-NOT-OWNER
+    expect(simnet.callPublicFn(C, "set-game-active", [Cl.uint(99), Cl.bool(false)], deployer).result)
+      .toBeErr(Cl.uint(110)); // ERR-NO-GAME
+  });
+});
