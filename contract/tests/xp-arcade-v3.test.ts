@@ -229,3 +229,28 @@ describe("top-ten", () => {
     expect((simnet.callReadOnlyFn(C, "get-top-ten", [Cl.uint(2)], w(1)).result as any).value.length).toBe(0);
   });
 });
+
+describe("rarity tiers (D11)", () => {
+  it("classifies Snake score 300 as Legendary but Tetris 300 as Epic", () => {
+    registerSnake(); // Snake legend-min 300
+    simnet.callPublicFn(C, "register-game",
+      [Cl.uint(2), Cl.stringAscii("Tetris"), Cl.uint(20000), Cl.uint(100), Cl.uint(300), Cl.uint(700)], deployer);
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(300), Cl.stringAscii("a")], w(1));
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(2), Cl.uint(300), Cl.stringAscii("b")], w(2));
+    const snake = simnet.callReadOnlyFn(C, "get-score-data", [Cl.uint(1)], w(1)).result;
+    const tetris = simnet.callReadOnlyFn(C, "get-score-data", [Cl.uint(2)], w(1)).result;
+    expect((snake as any).value.value.rarity.value).toBe("Legendary");
+    expect((tetris as any).value.value.rarity.value).toBe("Epic");
+  });
+
+  it("classifies all four tiers for Snake", () => {
+    registerSnake(); // rare 50, epic 150, legend 300
+    const cases: [number, string][] = [[10, "Common"], [50, "Rare"], [150, "Epic"], [300, "Legendary"]];
+    cases.forEach(([s], i) =>
+      simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(s), Cl.stringAscii(`p${i}`)], w(i + 1)));
+    cases.forEach(([, tier], i) => {
+      const d = simnet.callReadOnlyFn(C, "get-score-data", [Cl.uint(i + 1)], w(1)).result;
+      expect((d as any).value.value.rarity.value).toBe(tier);
+    });
+  });
+});
