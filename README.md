@@ -9,7 +9,7 @@ Four arcade games — Snake, Tetris, Pac-Man, and XP Bricks — with SIP-009 sco
 
 ## Live contracts (mainnet)
 
-Active contracts (v2 — mint cap + historical leaderboard):
+Active score contracts with mint cap and historical leaderboard support:
 
 | Contract | Address |
 |---|---|
@@ -17,8 +17,7 @@ Active contracts (v2 — mint cap + historical leaderboard):
 | `snake-score-v2` | [`SP2CMK...snake-score-v2`](https://explorer.hiro.so/txid/SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.snake-score-v2?chain=mainnet) |
 | `tetris-score-v2` | [`SP2CMK...tetris-score-v2`](https://explorer.hiro.so/txid/SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.tetris-score-v2?chain=mainnet) |
 | `pacman-score-v2` | [`SP2CMK...pacman-score-v2`](https://explorer.hiro.so/txid/SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.pacman-score-v2?chain=mainnet) |
-
-Planned before public launch: `breakout-score-v1` for XP Bricks.
+| `breakout-score-v1` | [`0x9b150d...a1bae0`](https://explorer.hiro.so/txid/0x9b150d7fc8f2ca47a8b2b6f1fae8228232226c7b523e574784feba4eeca1bae0?chain=mainnet) |
 
 Deployer / `contract-owner`: `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV`
 
@@ -41,11 +40,11 @@ Deployer / `contract-owner`: `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV`
 - 🐍 **Snake** — classic arrow-key controls, +1 per food, 20×20 grid.
 - 🧱 **Tetris** — 7 tetrominoes, wall kicks, ghost piece, level speed scaling, next-piece preview.
 - 👾 **Pac-Man** — 21×21 maze, 4 ghosts with scatter/chase/frightened AI, power pellets, 3 lives.
-- 🧱 **XP Bricks** — Breakout-style paddle/brick arcade game with lives, combos, level clear bonuses, and touch controls.
+- 🏓 **XP Bricks** — Breakout-style paddle/brick arcade game with lives, combos, level clear bonuses, and touch controls.
 - 💾 **Score NFTs (SIP-009)** — mint any score post-game. Snake: 0.01 STX · other games: 0.02 STX. **Capped at 10 mints per player per season.** Metadata served from `/api/metadata/{game}/[id]`.
-- 🏆 **Unified High Score window** — single window with 3 tabs (one per game), rank-change indicators, live polling.
-- 🎨 **NFT rarity** — Common / Rare / Epic / Legendary based on score. Scoring is calibrated across all 3 games so rarity tiers carry equal weight regardless of game.
-- 🖼️ **My NFTs window** — shows all score NFTs across all 3 games with color-coded game badges, sorted by score.
+- 🏆 **Unified High Score window** — single window with one tab per game, rank-change indicators, live polling.
+- 🎨 **NFT rarity** — Common / Rare / Epic / Legendary based on score. Scoring is calibrated across games so rarity tiers carry equal weight regardless of game.
+- 🖼️ **My NFTs window** — shows all score NFTs across all registered games with color-coded game badges, sorted by score.
 - 💰 **Prize pool** — every mint fee accumulates into the current season's pool. Owner closes seasons manually; payouts are sent via Season Admin.
 - 🛠️ **Season Admin (owner-only)** — see accumulated pool, end season, send STX payouts to top-10 players.
 - ⏳ **Soft season countdown** — display-only deadline from `NEXT_PUBLIC_SEASON_END_ISO`.
