@@ -397,3 +397,31 @@ describe("claim-prize", () => {
     expect(r).toBeErr(Cl.uint(106)); // ERR-EMPTY-POOL
   });
 });
+
+describe("SIP-009 surface", () => {
+  it("get-token-uri returns base-uri concatenated with the token id", () => {
+    registerSnake();
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(10), Cl.stringAscii("a")], w(1));
+    const uri = simnet.callReadOnlyFn(C, "get-token-uri", [Cl.uint(1)], w(1)).result;
+    expect(uri).toBeOk(Cl.some(Cl.stringAscii("https://xparcade.example/api/metadata/score/1")));
+  });
+
+  it("transfer moves the NFT only when called by the owner", () => {
+    registerSnake();
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(10), Cl.stringAscii("a")], w(1));
+    expect(simnet.callPublicFn(C, "transfer",
+      [Cl.uint(1), Cl.principal(w(1)), Cl.principal(w(2))], w(2)).result).toBeErr(Cl.uint(100));
+    expect(simnet.callPublicFn(C, "transfer",
+      [Cl.uint(1), Cl.principal(w(1)), Cl.principal(w(2))], w(1)).result).toBeOk(Cl.bool(true));
+    expect(simnet.callReadOnlyFn(C, "get-owner", [Cl.uint(1)], w(1)).result)
+      .toBeOk(Cl.some(Cl.principal(w(2))));
+  });
+
+  it("transfer-ownership is owner-only and updates get-contract-owner", () => {
+    expect(simnet.callPublicFn(C, "transfer-ownership", [Cl.principal(w(1))], w(2)).result)
+      .toBeErr(Cl.uint(100));
+    expect(simnet.callPublicFn(C, "transfer-ownership", [Cl.principal(w(1))], deployer).result)
+      .toBeOk(Cl.bool(true));
+    expect(simnet.callReadOnlyFn(C, "get-contract-owner", [], w(1)).result).toBePrincipal(w(1));
+  });
+});

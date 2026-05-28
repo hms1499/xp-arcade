@@ -244,3 +244,24 @@
     (bump-best-score game-id score new-id season)
     (try-insert-top-ten game-id { player: tx-sender, score: score })
     (ok new-id)))
+
+;; --- SIP-009 surface ---
+(define-read-only (get-token-uri (token-id uint))
+  (ok (some (concat (var-get base-uri) (int-to-ascii token-id)))))
+
+(define-public (transfer (token-id uint) (sender principal) (recipient principal))
+  (begin
+    (asserts! (is-eq tx-sender sender) ERR-NOT-OWNER)
+    (nft-transfer? xp-score token-id sender recipient)))
+
+(define-public (set-base-uri (uri (string-ascii 80)))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-OWNER)
+    (var-set base-uri uri)
+    (ok true)))
+
+(define-public (transfer-ownership (new-owner principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-OWNER)
+    (var-set contract-owner new-owner)
+    (ok true)))
