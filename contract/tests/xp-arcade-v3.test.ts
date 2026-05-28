@@ -425,3 +425,29 @@ describe("SIP-009 surface", () => {
     expect(simnet.callReadOnlyFn(C, "get-contract-owner", [], w(1)).result).toBePrincipal(w(1));
   });
 });
+
+describe("multi-game isolation (integration)", () => {
+  it("two games run independent pools, seasons, and claims in one contract", () => {
+    registerSnake();
+    simnet.callPublicFn(C, "register-game",
+      [Cl.uint(2), Cl.stringAscii("Tetris"), Cl.uint(20000), Cl.uint(100), Cl.uint(300), Cl.uint(700)], deployer);
+
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(80), Cl.stringAscii("a")], w(1));
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(2), Cl.uint(500), Cl.stringAscii("a")], w(1));
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(2), Cl.uint(300), Cl.stringAscii("b")], w(2));
+
+    expect(simnet.callReadOnlyFn(C, "get-prize-pool-balance", [Cl.uint(1)], w(1)).result).toBeUint(10000);
+    expect(simnet.callReadOnlyFn(C, "get-prize-pool-balance", [Cl.uint(2)], w(1)).result).toBeUint(40000);
+
+    expect(simnet.callReadOnlyFn(C, "get-last-token-id", [], w(1)).result).toBeOk(Cl.uint(3));
+
+    simnet.callPublicFn(C, "end-season", [Cl.uint(2)], deployer);
+    expect(simnet.callReadOnlyFn(C, "get-current-season", [Cl.uint(1)], w(1)).result).toBeUint(1);
+    expect(simnet.callReadOnlyFn(C, "get-current-season", [Cl.uint(2)], w(1)).result).toBeUint(2);
+
+    expect(simnet.callPublicFn(C, "claim-prize", [Cl.uint(2), Cl.uint(1)], w(1)).result)
+      .toBeOk(Cl.uint(8000)); // 40000 * 20 / 100, rank 1
+    expect(simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(1)).result)
+      .toBeErr(Cl.uint(105)); // Snake season 1 not closed
+  });
+});
