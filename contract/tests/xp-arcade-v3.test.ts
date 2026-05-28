@@ -131,9 +131,15 @@ describe("mint-score core", () => {
 
   it("routes the mint fee into the contract pool (as-contract)", () => {
     registerSnake();
+    const contractId = `${deployer}.${C}`;
+    const before = simnet.getAssetsMap().get("STX")?.get(contractId) ?? 0n;
     simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(42), Cl.stringAscii("a")], w(1));
+    // Accounting counter reflects the fee...
     const pool = simnet.callReadOnlyFn(C, "get-prize-pool-balance", [Cl.uint(1)], w(1)).result;
     expect(pool).toBeUint(10000);
+    // ...and the STX actually landed in the contract principal (proves as-contract transfer).
+    const after = simnet.getAssetsMap().get("STX")?.get(contractId) ?? 0n;
+    expect(after - before).toBe(10000n);
   });
 
   it("rejects mint for unregistered game", () => {
