@@ -1,5 +1,5 @@
 "use client";
-import { openContractCall, request } from "@stacks/connect";
+import { openContractCall } from "@stacks/connect";
 import {
   uintCV,
   stringAsciiCV,
@@ -7,9 +7,6 @@ import {
   cvToValue,
   fetchCallReadOnlyFunction,
   Pc,
-  makeUnsignedSTXTokenTransfer,
-  deserializeTransaction,
-  broadcastTransaction,
 } from "@stacks/transactions";
 import { stacks } from "./stacks";
 import { unwrap } from "./cv-unwrap";
@@ -182,56 +179,6 @@ export type SeasonPrize = {
   total: number;
   topTen: Array<{ player: string; score: number }>;
 } | null;
-
-export async function transferStx(
-  recipient: string,
-  amountUstx: number,
-  memo?: string,
-): Promise<string> {
-  // Xverse rejects stx_transferStx with a spurious "network mismatch" error
-  // (even on mainnet with a fresh session). stx_callContract works in the
-  // same session, so the bug is specific to stx_transferStx. Workaround:
-  // build the STX transfer transaction client-side and have the wallet
-  // sign+broadcast it via stx_signTransaction.
-  const addrResult = await request("stx_getAddresses");
-  const stxEntry = addrResult.addresses.find(
-    (a) => a.address.startsWith("SP") || a.address.startsWith("ST"),
-  );
-  if (!stxEntry?.publicKey) {
-    throw new Error("STX public key unavailable; reconnect wallet");
-  }
-  const unsignedTx = await makeUnsignedSTXTokenTransfer({
-    recipient,
-    amount: BigInt(amountUstx),
-    memo: memo ?? "",
-    publicKey: stxEntry.publicKey,
-    network: stacks.network,
-  });
-  const txHex = unsignedTx.serialize();
-  let result: { txid?: string; transaction: string };
-  try {
-    result = await request("stx_signTransaction", { transaction: txHex });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (/cancel|reject|denied/i.test(msg)) throw new Error("cancelled");
-    throw err;
-  }
-  // Xverse's stx_signTransaction signs but does not broadcast — broadcast
-  // the signed transaction ourselves.
-  if (result.txid) return result.txid;
-  if (!result.transaction) throw new Error("wallet returned no transaction");
-  const signedTx = deserializeTransaction(result.transaction);
-  const broadcast = await broadcastTransaction({
-    transaction: signedTx,
-    network: stacks.network,
-  });
-  const rejected = broadcast as { error?: string; reason?: string };
-  if (rejected.error) {
-    throw new Error(`Broadcast rejected: ${rejected.reason ?? rejected.error}`);
-  }
-  if (!broadcast.txid) throw new Error("broadcast returned no txid");
-  return broadcast.txid;
-}
 
 // Rank-based payout (mirrors the on-chain formula): top 1-3 get 20% each, rank 4-10 get 4/70 each.
 // Used by Season Admin for owner-initiated STX transfers.
