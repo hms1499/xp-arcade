@@ -1,6 +1,6 @@
 export const BREAKOUT_WIDTH = 360;
 export const BREAKOUT_HEIGHT = 480;
-export const PADDLE_WIDTH = 70;
+export const PADDLE_WIDTH = 62;
 export const PADDLE_HEIGHT = 12;
 export const BALL_RADIUS = 6;
 export const BRICK_ROWS = 6;
@@ -60,7 +60,7 @@ export type BreakoutInput = {
 };
 
 function ballSpeed(level: number): number {
-  return 300 + Math.min(5, level - 1) * 28;
+  return 315 + Math.min(5, level - 1) * 32;
 }
 
 function initialPaddleX() {
