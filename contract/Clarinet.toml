@@ -41,3 +41,8 @@ epoch = "latest"
 path = "contracts/pacman-score.clar"
 clarity_version = 4
 epoch = "latest"
+
+[contracts.breakout-score]
+path = "contracts/breakout-score.clar"
+clarity_version = 4
+epoch = "latest"

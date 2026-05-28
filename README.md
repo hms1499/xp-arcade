@@ -1,7 +1,7 @@
 # XP Arcade on Stacks
 
 A **multi-game arcade platform** with on-chain scores and prize pools, wrapped in a Windows 95 desktop UI.
-Three classic games — Snake, Tetris, Pac-Man — each with its own SIP-009 NFT contract deployed to **Stacks mainnet**.
+Four arcade games — Snake, Tetris, Pac-Man, and XP Bricks — with SIP-009 score NFT contracts.
 
 > Play a game → mint your score as an NFT → land in the top-10 → earn a share of the season's prize pool.
 
@@ -17,6 +17,8 @@ Active contracts (v2 — mint cap + historical leaderboard):
 | `snake-score-v2` | [`SP2CMK...snake-score-v2`](https://explorer.hiro.so/txid/SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.snake-score-v2?chain=mainnet) |
 | `tetris-score-v2` | [`SP2CMK...tetris-score-v2`](https://explorer.hiro.so/txid/SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.tetris-score-v2?chain=mainnet) |
 | `pacman-score-v2` | [`SP2CMK...pacman-score-v2`](https://explorer.hiro.so/txid/SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.pacman-score-v2?chain=mainnet) |
+
+Planned before public launch: `breakout-score-v1` for XP Bricks.
 
 Deployer / `contract-owner`: `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV`
 
@@ -39,7 +41,8 @@ Deployer / `contract-owner`: `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV`
 - 🐍 **Snake** — classic arrow-key controls, +1 per food, 20×20 grid.
 - 🧱 **Tetris** — 7 tetrominoes, wall kicks, ghost piece, level speed scaling, next-piece preview.
 - 👾 **Pac-Man** — 21×21 maze, 4 ghosts with scatter/chase/frightened AI, power pellets, 3 lives.
-- 💾 **Score NFTs (SIP-009)** — mint any score post-game. Snake: 0.01 STX · Tetris & Pac-Man: 0.02 STX. **Capped at 10 mints per player per season.** Metadata served from `/api/metadata/{game}/[id]`.
+- 🧱 **XP Bricks** — Breakout-style paddle/brick arcade game with lives, combos, level clear bonuses, and touch controls.
+- 💾 **Score NFTs (SIP-009)** — mint any score post-game. Snake: 0.01 STX · other games: 0.02 STX. **Capped at 10 mints per player per season.** Metadata served from `/api/metadata/{game}/[id]`.
 - 🏆 **Unified High Score window** — single window with 3 tabs (one per game), rank-change indicators, live polling.
 - 🎨 **NFT rarity** — Common / Rare / Epic / Legendary based on score. Scoring is calibrated across all 3 games so rarity tiers carry equal weight regardless of game.
 - 🖼️ **My NFTs window** — shows all score NFTs across all 3 games with color-coded game badges, sorted by score.
@@ -101,6 +104,7 @@ contract/
     snake-score-v2.mainnet-plan.yaml
     tetris-score-v2.mainnet-plan.yaml
     pacman-score-v2.mainnet-plan.yaml
+    breakout-score-v1.mainnet-plan.yaml
 
 frontend/
   app/
@@ -115,13 +119,13 @@ frontend/
       tetris/               TetrisWindow, TetrisCanvas, TetrisEngine
       pacman/               PacManWindow, PacManCanvas, PacManEngine, maze
     shared/                 GameShellWindow, SharedMintDialog
-    windows/                HighScoreWindow (3-tab), MyNftsWindow, SeasonAdminWindow, PlayerProfileWindow
+    windows/                HighScoreWindow, MyNftsWindow, SeasonAdminWindow, PlayerProfileWindow
     dialogs/                AboutDialog, BalloonNotification
   lib/
     game-registry.ts        Central registry: gameId → contract address, mint fee, nftAssetName
     contract-calls.ts       Read/write helpers (mint, leaderboard, season, mints-remaining)
     cv-unwrap.ts            Strips @stacks/transactions v7 {type, value} wrappers
-    holdings.ts             Fetch score NFT holdings across all 3 games
+    holdings.ts             Fetch score NFT holdings across all registered games
     snake-engine.ts         Pure Snake game logic
   state/
     wallet.ts               Connected address
@@ -144,7 +148,7 @@ HANDOFF.md                  Live operational notes
 - **Top-10 unsorted on-chain.** Min-eviction at insertion time. UI sorts on read.
 - **Score is client-trusted.** No on-chain proof of gameplay. Cap (`u9999`) and mint cap (10/season) reduce worst-case abuse.
 - **Frontend score-risk review.** The mint dialog and Season Admin flag unusually high or too-fast scores for review, but this is advisory only and does not change contract behavior.
-- **Scoring calibrated across games.** Snake +1/food · Tetris `[0,1,3,5,8]×level` · Pac-Man dot=1, pellet=5, ghost=20. All 3 games target a 0–400 practical range so rarity tiers (Common < 167, Rare 167–499, Epic 500–999, Legendary ≥ 1000) are equally meaningful.
+- **Scoring calibrated across games.** Snake +1/food · Tetris `[0,1,3,5,8]×level` · Pac-Man dot=1, pellet=5, ghost=20 · XP Bricks brick/combo/level-clear bonuses. All games target comparable practical ranges so rarity tiers (Common < 167, Rare 167–499, Epic 500–999, Legendary ≥ 1000) are meaningful.
 - **Mint fee goes to `contract-owner` directly.** Contract only increments an accounting counter. Prize payouts are sent manually by the owner via Season Admin.
 - **`claim-prize` is record-only.** Returns `(ok payout)` and marks as claimed but does not transfer STX. Owner sends manually. Season Admin requires a typed confirmation and shows recipient, amount, memo, and ledger state before each payout.
 - **Season end is fully manual.** No on-chain deadline; the countdown in the UI is a soft display-only deadline from env config.
@@ -181,6 +185,7 @@ cd contract
 clarinet deployments apply -p deployments/snake-score-v2.mainnet-plan.yaml --no-dashboard
 clarinet deployments apply -p deployments/tetris-score-v2.mainnet-plan.yaml --no-dashboard
 clarinet deployments apply -p deployments/pacman-score-v2.mainnet-plan.yaml --no-dashboard
+clarinet deployments apply -p deployments/breakout-score-v1.mainnet-plan.yaml --no-dashboard
 ```
 
 After deployment, update `contractName` and `nftAssetName` in `frontend/lib/game-registry.ts` and redeploy the frontend.
