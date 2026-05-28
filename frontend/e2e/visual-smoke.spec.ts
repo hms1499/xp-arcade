@@ -73,6 +73,7 @@ test("desktop launcher opens every game window", async ({ page }) => {
     { icon: /Snake\.exe/i, title: "🐍 Snake", canvas: true },
     { icon: /Tetris\.exe/i, title: "🧱 Tetris", canvas: false },
     { icon: /Pac-Man\.exe/i, title: "👾 Pac-Man", canvas: true },
+    { icon: /XP Bricks\.exe/i, title: "🧱 XP Bricks", canvas: true },
   ];
 
   for (const game of games) {
@@ -86,6 +87,40 @@ test("desktop launcher opens every game window", async ({ page }) => {
       await expect(win.getByText("Next")).toBeVisible();
     }
   }
+});
+
+test("XP Bricks opens, paints the playfield, and launches", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await bootFast(page);
+
+  await page.getByRole("button", { name: /XP Bricks\.exe/i }).dblclick();
+  const bricksWindow = windowByTitle(page, "🧱 XP Bricks");
+  const canvas = bricksWindow.getByLabel("XP Bricks playfield");
+
+  await expect(canvas).toBeVisible();
+  await expectCanvasHasPixels(canvas);
+  await expect(bricksWindow.getByText("Bricks:")).toBeVisible();
+
+  const before = await canvas.evaluate((node) => {
+    const canvasNode = node as HTMLCanvasElement;
+    const ctx = canvasNode.getContext("2d")!;
+    const data = ctx.getImageData(0, 0, canvasNode.width, canvasNode.height).data;
+    let checksum = 0;
+    for (let i = 0; i < data.length; i += 97) checksum = (checksum + data[i] * (i + 1)) % 1_000_000_007;
+    return checksum;
+  });
+  await page.keyboard.press("Space");
+  await page.waitForTimeout(250);
+  const after = await canvas.evaluate((node) => {
+    const canvasNode = node as HTMLCanvasElement;
+    const ctx = canvasNode.getContext("2d")!;
+    const data = ctx.getImageData(0, 0, canvasNode.width, canvasNode.height).data;
+    let checksum = 0;
+    for (let i = 0; i < data.length; i += 97) checksum = (checksum + data[i] * (i + 1)) % 1_000_000_007;
+    return checksum;
+  });
+
+  expect(after).not.toBe(before);
 });
 
 test("start menu opens shared utility windows", async ({ page }) => {
@@ -131,6 +166,23 @@ test("mobile launcher opens a fullscreen game without horizontal overflow", asyn
   await expect(page.getByRole("button", { name: "◀" })).toBeVisible();
   await expect(page.getByRole("button", { name: "▼" })).toBeVisible();
   await expect(page.getByRole("button", { name: "▶" })).toBeVisible();
+
+  const noHorizontalOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth <= window.innerWidth,
+  );
+  expect(noHorizontalOverflow).toBe(true);
+});
+
+test("mobile XP Bricks uses a compact layout without horizontal overflow", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await emulateCoarsePointer(page);
+  await bootFast(page);
+
+  await page.getByRole("button", { name: /XP Bricks\.exe/i }).click();
+  const bricksWindow = windowByTitle(page, "🧱 XP Bricks");
+  await expect(bricksWindow).toBeVisible();
+  await expect(bricksWindow.getByLabel("XP Bricks playfield")).toBeVisible();
+  await expect(bricksWindow.getByRole("button", { name: "Launch" }).first()).toBeVisible();
 
   const noHorizontalOverflow = await page.evaluate(
     () => document.documentElement.scrollWidth <= window.innerWidth,

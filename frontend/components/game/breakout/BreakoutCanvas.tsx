@@ -215,11 +215,22 @@ export function BreakoutCanvas({
     inputRef.current.paddleTargetX = ((clientX - rect.left) / rect.width) * BREAKOUT_WIDTH;
   };
 
+  const compact = isTouch;
+
   return (
-    <div style={{ display: "flex", gap: 8, userSelect: "none", alignItems: "flex-start" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: compact ? "column" : "row",
+        gap: 8,
+        userSelect: "none",
+        alignItems: compact ? "center" : "flex-start",
+      }}
+    >
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
         <canvas
           ref={canvasRef}
+          aria-label="XP Bricks playfield"
           width={BREAKOUT_WIDTH}
           height={BREAKOUT_HEIGHT}
           onPointerDown={(e) => {
@@ -277,19 +288,20 @@ export function BreakoutCanvas({
       </div>
       <div
         style={{
-          width: 150,
+          width: compact ? BREAKOUT_WIDTH : 150,
           display: "flex",
-          flexDirection: "column",
+          flexDirection: compact ? "row" : "column",
+          flexWrap: "wrap",
           gap: 8,
           fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
           fontSize: 11,
         }}
       >
-        <div style={{ background: "#222", border: "2px inset #888", color: "#fff", padding: 8 }}>
+        <div style={{ background: "#222", border: "2px inset #888", color: "#fff", padding: 8, flex: compact ? "1 1 120px" : "0 0 auto" }}>
           <div style={{ color: "#aaa", fontSize: 10, textTransform: "uppercase" }}>Score</div>
           <div style={{ fontSize: 22, fontWeight: "bold" }}>{renderState.score}</div>
         </div>
-        <div style={{ background: "#222", border: "2px inset #888", color: "#fff", padding: 8, display: "grid", gap: 6 }}>
+        <div style={{ background: "#222", border: "2px inset #888", color: "#fff", padding: 8, display: "grid", gap: 6, flex: compact ? "2 1 200px" : "0 0 auto" }}>
           <div>Level: <b>{renderState.level}</b></div>
           <div>Lives: <b>{renderState.lives}</b></div>
           <div>Bricks: <b>{renderState.bricks.length}</b></div>
