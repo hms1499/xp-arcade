@@ -76,3 +76,55 @@
     (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-OWNER)
     (map-set games game-id (merge g { active: active }))
     (ok true)))
+
+;; --- mint-score core ---
+
+(define-private (compute-rarity (game-id uint) (score uint))
+  (let ((g (unwrap-panic (map-get? games game-id))))
+    (if (>= score (get legend-min g)) "Legendary"
+      (if (>= score (get epic-min g)) "Epic"
+        (if (>= score (get rare-min g)) "Rare" "Common")))))
+
+;; STUB - expanded in Task 5
+(define-private (try-insert-top-ten (game-id uint) (entry { player: principal, score: uint }))
+  (let ((current (default-to (list) (map-get? top-ten game-id))))
+    (if (< (len current) u10)
+      (map-set top-ten game-id (unwrap-panic (as-max-len? (append current entry) u10)))
+      false)
+    true))
+
+;; STUB - expanded in Task 4 (read added there)
+(define-private (bump-best-score (game-id uint) (score uint) (token-id uint) (season uint))
+  (let ((prev (map-get? best-score { player: tx-sender, game-id: game-id })))
+    (if (or (is-none prev) (> score (get score (unwrap-panic prev))))
+      (map-set best-score { player: tx-sender, game-id: game-id }
+        { score: score, token-id: token-id, season: season })
+      true)
+    true))
+
+(define-read-only (get-score-data (token-id uint))
+  (map-get? score-data token-id))
+
+(define-read-only (get-owner (token-id uint))
+  (ok (nft-get-owner? xp-score token-id)))
+
+(define-read-only (get-prize-pool-balance (game-id uint))
+  (default-to u0 (map-get? season-accumulated game-id)))
+
+(define-public (mint-score (game-id uint) (score uint) (player-name (string-ascii 24)))
+  (let ((g (unwrap! (map-get? games game-id) ERR-NO-GAME))
+        (season (unwrap! (map-get? current-season game-id) ERR-NO-GAME))
+        (new-id (+ (var-get last-token-id) u1)))
+    (asserts! (get active g) ERR-GAME-INACTIVE)
+    (asserts! (<= score MAX-SCORE) ERR-SCORE-TOO-HIGH)
+    (try! (stx-transfer? (get fee g) tx-sender (as-contract tx-sender)))
+    (map-set season-accumulated game-id
+      (+ (default-to u0 (map-get? season-accumulated game-id)) (get fee g)))
+    (try! (nft-mint? xp-score new-id tx-sender))
+    (map-set score-data new-id {
+      game-id: game-id, player: tx-sender, score: score, player-name: player-name,
+      block: stacks-block-height, season: season, rarity: (compute-rarity game-id score) })
+    (var-set last-token-id new-id)
+    (bump-best-score game-id score new-id season)
+    (try-insert-top-ten game-id { player: tx-sender, score: score })
+    (ok new-id)))

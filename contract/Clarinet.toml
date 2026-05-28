@@ -49,5 +49,5 @@ epoch = "latest"
 
 [contracts.xp-arcade-v3]
 path = "contracts/xp-arcade-v3.clar"
-clarity_version = 4
+clarity_version = 3
 epoch = "latest"

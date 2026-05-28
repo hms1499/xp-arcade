@@ -101,3 +101,59 @@ describe("set-game-active", () => {
       .toBeErr(Cl.uint(110)); // ERR-NO-GAME
   });
 });
+
+function registerSnake() {
+  simnet.callPublicFn(C, "register-game",
+    [Cl.uint(1), Cl.stringAscii("Snake"), Cl.uint(10000), Cl.uint(50), Cl.uint(150), Cl.uint(300)], deployer);
+}
+
+describe("mint-score core", () => {
+  it("mints an NFT with correct score-data and global token-id", () => {
+    registerSnake();
+    const r = simnet.callPublicFn(C, "mint-score",
+      [Cl.uint(1), Cl.uint(42), Cl.stringAscii("alice")], w(1)).result;
+    expect(r).toBeOk(Cl.uint(1));
+
+    const owner = simnet.callReadOnlyFn(C, "get-owner", [Cl.uint(1)], w(1)).result;
+    expect(owner).toBeOk(Cl.some(Cl.principal(w(1))));
+
+    const data = simnet.callReadOnlyFn(C, "get-score-data", [Cl.uint(1)], w(1)).result;
+    expect(data).toBeSome(Cl.tuple({
+      "game-id": Cl.uint(1),
+      player: Cl.principal(w(1)),
+      score: Cl.uint(42),
+      "player-name": Cl.stringAscii("alice"),
+      block: Cl.uint(simnet.blockHeight),
+      season: Cl.uint(1),
+      rarity: Cl.stringAscii("Common"),
+    }));
+  });
+
+  it("routes the mint fee into the contract pool (as-contract)", () => {
+    registerSnake();
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(42), Cl.stringAscii("a")], w(1));
+    const pool = simnet.callReadOnlyFn(C, "get-prize-pool-balance", [Cl.uint(1)], w(1)).result;
+    expect(pool).toBeUint(10000);
+  });
+
+  it("rejects mint for unregistered game", () => {
+    const r = simnet.callPublicFn(C, "mint-score",
+      [Cl.uint(99), Cl.uint(10), Cl.stringAscii("x")], w(1)).result;
+    expect(r).toBeErr(Cl.uint(110)); // ERR-NO-GAME
+  });
+
+  it("rejects mint for inactive game", () => {
+    registerSnake();
+    simnet.callPublicFn(C, "set-game-active", [Cl.uint(1), Cl.bool(false)], deployer);
+    const r = simnet.callPublicFn(C, "mint-score",
+      [Cl.uint(1), Cl.uint(10), Cl.stringAscii("x")], w(1)).result;
+    expect(r).toBeErr(Cl.uint(112)); // ERR-GAME-INACTIVE
+  });
+
+  it("rejects score above MAX-SCORE", () => {
+    registerSnake();
+    const r = simnet.callPublicFn(C, "mint-score",
+      [Cl.uint(1), Cl.uint(10000), Cl.stringAscii("x")], w(1)).result;
+    expect(r).toBeErr(Cl.uint(104)); // ERR-SCORE-TOO-HIGH
+  });
+});
