@@ -1,0 +1,53 @@
+;; xp-arcade-v3 -- single multi-game registry
+;; Task 0: scaffold with state, constants, and owner read-onlys.
+
+;; --- NFT ---
+(define-non-fungible-token xp-score uint)
+
+;; --- State vars ---
+(define-data-var last-token-id uint u0)
+(define-data-var contract-owner principal tx-sender)
+(define-data-var base-uri (string-ascii 80) "https://xparcade.example/api/metadata/score/")
+
+;; --- Maps ---
+(define-map games uint {
+  name: (string-ascii 24), fee: uint, active: bool,
+  rare-min: uint, epic-min: uint, legend-min: uint })
+
+(define-map current-season     uint uint)
+(define-map season-end-block   uint uint)
+(define-map season-accumulated uint uint)
+(define-map top-ten uint (list 10 { player: principal, score: uint }))
+(define-map best-score   { player: principal, game-id: uint } { score: uint, token-id: uint, season: uint })
+(define-map player-season-mints { player: principal, game-id: uint, season: uint } uint)
+(define-map season-prize { game-id: uint, season: uint }
+  { total: uint, top-ten: (list 10 { player: principal, score: uint }) })
+(define-map season-paid    { game-id: uint, season: uint } uint)
+(define-map prize-claimed  { player: principal, game-id: uint, season: uint } bool)
+(define-map score-data uint {
+  game-id: uint, player: principal, score: uint, player-name: (string-ascii 24),
+  block: uint, season: uint, rarity: (string-ascii 10) })
+
+;; --- Constants ---
+(define-constant MAX-MINTS-PER-SEASON u10)
+(define-constant MAX-SCORE u9999)
+(define-constant ERR-NOT-OWNER (err u100))
+(define-constant ERR-NOT-IN-TOP-TEN (err u101))
+(define-constant ERR-ALREADY-CLAIMED (err u102))
+(define-constant ERR-SCORE-TOO-HIGH (err u104))
+(define-constant ERR-SEASON-NOT-CLOSED (err u105))
+(define-constant ERR-EMPTY-POOL (err u106))
+(define-constant ERR-PRIZE-NOT-FOUND (err u107))
+(define-constant ERR-MINT-LIMIT-REACHED (err u108))
+(define-constant ERR-GAME-EXISTS (err u109))
+(define-constant ERR-NO-GAME (err u110))
+(define-constant ERR-BAD-FEE (err u111))
+(define-constant ERR-GAME-INACTIVE (err u112))
+(define-constant ERR-SEASON-STILL-OPEN (err u113))
+
+;; --- Read-onlys ---
+(define-read-only (get-contract-owner)
+  (var-get contract-owner))
+
+(define-read-only (get-last-token-id)
+  (ok (var-get last-token-id)))
