@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { fetchCallReadOnlyFunction } from "@stacks/transactions";
-import { scoreMetadataResponse } from "./metadata-route";
+import { scoreMetadataResponse, scoreMetadataResponseV3 } from "./metadata-route";
 import { _resetRateLimitForTests } from "./rate-limit";
 import { GAMES } from "./game-registry";
 
@@ -90,6 +90,26 @@ describe("scoreMetadataResponse", () => {
       { trait_type: "Season", value: "2" },
       { trait_type: "Score", value: "321" },
     ]);
+  });
+
+  it("resolves the game name from the token's on-chain game-id (v3)", async () => {
+    fetchReadOnly.mockResolvedValueOnce(readOnlyResult({
+      score: "500",
+      "player-name": "Satoshi",
+      rarity: "Epic",
+      season: "3",
+      "game-id": "2",
+    }));
+
+    const res = await scoreMetadataResponseV3(
+      new Request("http://x/api/metadata/score/5"),
+      Promise.resolve({ id: "5" }),
+    );
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.name).toContain("Tetris");
+    expect(body.attributes).toContainEqual({ trait_type: "Game", value: "Tetris" });
   });
 
   it("rate limits by client IP", async () => {

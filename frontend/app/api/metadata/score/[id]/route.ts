@@ -1,11 +1,5 @@
-import { GAMES } from "@/lib/game-registry";
-import { scoreMetadataResponse } from "@/lib/metadata-route";
+import { scoreMetadataResponseV3 } from "@/lib/metadata-route";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  return scoreMetadataResponse(req, params, {
-    game: GAMES.snake,
-    gameName: "Snake",
-    descriptionGameName: "snake",
-    rateLimitPrefix: "metadata",
-  });
+  return scoreMetadataResponseV3(req, params);
 }
