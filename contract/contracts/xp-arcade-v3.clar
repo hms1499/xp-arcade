@@ -117,7 +117,6 @@
             false))))
     true))
 
-;; STUB - expanded in Task 4 (read added there)
 (define-private (bump-best-score (game-id uint) (score uint) (token-id uint) (season uint))
   (let ((prev (map-get? best-score { player: tx-sender, game-id: game-id })))
     (if (or (is-none prev) (> score (get score (unwrap-panic prev))))
@@ -141,12 +140,22 @@
 (define-read-only (get-prize-pool-balance (game-id uint))
   (default-to u0 (map-get? season-accumulated game-id)))
 
+(define-read-only (get-mints-remaining (game-id uint) (player principal))
+  (let ((season (default-to u1 (map-get? current-season game-id)))
+        (used (default-to u0
+          (map-get? player-season-mints { player: player, game-id: game-id, season: (default-to u1 (map-get? current-season game-id)) }))))
+    (if (>= used MAX-MINTS-PER-SEASON) u0 (- MAX-MINTS-PER-SEASON used))))
+
 (define-public (mint-score (game-id uint) (score uint) (player-name (string-ascii 24)))
   (let ((g (unwrap! (map-get? games game-id) ERR-NO-GAME))
         (season (unwrap! (map-get? current-season game-id) ERR-NO-GAME))
-        (new-id (+ (var-get last-token-id) u1)))
+        (new-id (+ (var-get last-token-id) u1))
+        (current-mints (default-to u0
+          (map-get? player-season-mints
+            { player: tx-sender, game-id: game-id, season: (unwrap! (map-get? current-season game-id) ERR-NO-GAME) }))))
     (asserts! (get active g) ERR-GAME-INACTIVE)
     (asserts! (<= score MAX-SCORE) ERR-SCORE-TOO-HIGH)
+    (asserts! (< current-mints MAX-MINTS-PER-SEASON) ERR-MINT-LIMIT-REACHED)
     (try! (stx-transfer? (get fee g) tx-sender (as-contract tx-sender)))
     (map-set season-accumulated game-id
       (+ (default-to u0 (map-get? season-accumulated game-id)) (get fee g)))
@@ -155,6 +164,8 @@
       game-id: game-id, player: tx-sender, score: score, player-name: player-name,
       block: stacks-block-height, season: season, rarity: (compute-rarity game-id score) })
     (var-set last-token-id new-id)
+    (map-set player-season-mints { player: tx-sender, game-id: game-id, season: season }
+      (+ current-mints u1))
     (bump-best-score game-id score new-id season)
     (try-insert-top-ten game-id { player: tx-sender, score: score })
     (ok new-id)))

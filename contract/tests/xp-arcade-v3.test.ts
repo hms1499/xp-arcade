@@ -254,3 +254,36 @@ describe("rarity tiers (D11)", () => {
     });
   });
 });
+
+describe("mint cap", () => {
+  it("allows MAX-MINTS-PER-SEASON then rejects the 11th", () => {
+    registerSnake();
+    for (let i = 0; i < 10; i++)
+      expect(simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(10), Cl.stringAscii("a")], w(1)).result)
+        .toBeOk(Cl.uint(i + 1));
+    const r = simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(10), Cl.stringAscii("a")], w(1)).result;
+    expect(r).toBeErr(Cl.uint(108)); // ERR-MINT-LIMIT-REACHED
+  });
+
+  it("get-mints-remaining counts down per (player, game, season)", () => {
+    registerSnake();
+    expect(simnet.callReadOnlyFn(C, "get-mints-remaining", [Cl.uint(1), Cl.principal(w(1))], w(1)).result)
+      .toBeUint(10);
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(10), Cl.stringAscii("a")], w(1));
+    expect(simnet.callReadOnlyFn(C, "get-mints-remaining", [Cl.uint(1), Cl.principal(w(1))], w(1)).result)
+      .toBeUint(9);
+  });
+
+  it("cap is isolated per game", () => {
+    registerSnake();
+    simnet.callPublicFn(C, "register-game",
+      [Cl.uint(2), Cl.stringAscii("Tetris"), Cl.uint(20000), Cl.uint(100), Cl.uint(300), Cl.uint(700)], deployer);
+    for (let i = 0; i < 10; i++)
+      simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(10), Cl.stringAscii("a")], w(1));
+    // Snake exhausted, Tetris fresh
+    expect(simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(10), Cl.stringAscii("a")], w(1)).result)
+      .toBeErr(Cl.uint(108));
+    expect(simnet.callPublicFn(C, "mint-score", [Cl.uint(2), Cl.uint(10), Cl.stringAscii("a")], w(1)).result)
+      .toBeOk(Cl.uint(11));
+  });
+});
