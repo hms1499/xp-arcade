@@ -60,7 +60,7 @@ export type BreakoutInput = {
 };
 
 function ballSpeed(level: number): number {
-  return 270 + Math.min(5, level - 1) * 24;
+  return 300 + Math.min(5, level - 1) * 28;
 }
 
 function initialPaddleX() {
@@ -215,7 +215,7 @@ export function tickBreakout(
   if (state.status === "game-over") return state;
 
   const dt = Math.min(Math.max(deltaMs, 0), 50) / 1000;
-  const paddleSpeed = 360 + state.level * 18;
+  const paddleSpeed = 390 + state.level * 20;
   const rawPaddleX =
     input.paddleTargetX != null
       ? input.paddleTargetX - PADDLE_WIDTH / 2
