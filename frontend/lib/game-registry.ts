@@ -47,7 +47,7 @@ const GAME_METADATA: Record<
   breakout: {
     id: "breakout",
     label: "XP Bricks",
-    emoji: "🧱",
+    emoji: "🏓",
     mintFeeUstx: BigInt(20_000),
     metaSegment: "breakout",
     nftAssetName: "breakout-score",

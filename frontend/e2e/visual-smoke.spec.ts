@@ -73,7 +73,7 @@ test("desktop launcher opens every game window", async ({ page }) => {
     { icon: /Snake\.exe/i, title: "🐍 Snake", canvas: true },
     { icon: /Tetris\.exe/i, title: "🧱 Tetris", canvas: false },
     { icon: /Pac-Man\.exe/i, title: "👾 Pac-Man", canvas: true },
-    { icon: /XP Bricks\.exe/i, title: "🧱 XP Bricks", canvas: true },
+    { icon: /XP Bricks\.exe/i, title: "🏓 XP Bricks", canvas: true },
   ];
 
   for (const game of games) {
@@ -94,7 +94,7 @@ test("XP Bricks opens, paints the playfield, and launches", async ({ page }) => 
   await bootFast(page);
 
   await page.getByRole("button", { name: /XP Bricks\.exe/i }).dblclick();
-  const bricksWindow = windowByTitle(page, "🧱 XP Bricks");
+  const bricksWindow = windowByTitle(page, "🏓 XP Bricks");
   const canvas = bricksWindow.getByLabel("XP Bricks playfield");
 
   await expect(canvas).toBeVisible();
@@ -179,7 +179,7 @@ test("mobile XP Bricks uses a compact layout without horizontal overflow", async
   await bootFast(page);
 
   await page.getByRole("button", { name: /XP Bricks\.exe/i }).click();
-  const bricksWindow = windowByTitle(page, "🧱 XP Bricks");
+  const bricksWindow = windowByTitle(page, "🏓 XP Bricks");
   await expect(bricksWindow).toBeVisible();
   await expect(bricksWindow.getByLabel("XP Bricks playfield")).toBeVisible();
   await expect(bricksWindow.getByRole("button", { name: "Launch" }).first()).toBeVisible();
