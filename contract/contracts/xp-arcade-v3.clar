@@ -153,6 +153,12 @@
 (define-read-only (get-season-prize (game-id uint) (season uint))
   (map-get? season-prize { game-id: game-id, season: season }))
 
+(define-read-only (has-claimed-prize (player principal) (game-id uint) (season uint))
+  (default-to false (map-get? prize-claimed { player: player, game-id: game-id, season: season })))
+
+(define-read-only (get-season-paid (game-id uint) (season uint))
+  (default-to u0 (map-get? season-paid { game-id: game-id, season: season })))
+
 (define-public (end-season (game-id uint))
   (let ((season (unwrap! (map-get? current-season game-id) ERR-NO-GAME))
         (deadline (default-to u0 (map-get? season-end-block game-id)))
@@ -167,6 +173,47 @@
     (map-set top-ten game-id (list))
     (map-set current-season game-id (+ season u1))
     (ok true)))
+
+(define-data-var rank-player principal tx-sender)
+
+(define-private (find-caller-score
+    (e { player: principal, score: uint })
+    (acc { found: bool, score: uint }))
+  (if (and (not (get found acc)) (is-eq (get player e) (var-get rank-player)))
+    { found: true, score: (get score e) }
+    acc))
+
+(define-private (rank-fold
+    (e { player: principal, score: uint })
+    (acc { caller-score: uint, higher: uint }))
+  { caller-score: (get caller-score acc),
+    higher: (if (> (get score e) (get caller-score acc)) (+ (get higher acc) u1) (get higher acc)) })
+
+(define-public (claim-prize (game-id uint) (season uint))
+  (let ((current (unwrap! (map-get? current-season game-id) ERR-NO-GAME))
+        (claimed (default-to false
+          (map-get? prize-claimed { player: tx-sender, game-id: game-id, season: season })))
+        (prize-info (map-get? season-prize { game-id: game-id, season: season }))
+        (player tx-sender))
+    (asserts! (< season current) ERR-SEASON-NOT-CLOSED)
+    (asserts! (is-some prize-info) ERR-PRIZE-NOT-FOUND)
+    (asserts! (not claimed) ERR-ALREADY-CLAIMED)
+    (let ((total (get total (unwrap-panic prize-info)))
+          (snapshot (get top-ten (unwrap-panic prize-info))))
+      (asserts! (> total u0) ERR-EMPTY-POOL)
+      (var-set rank-player player)
+      (let ((caller (fold find-caller-score snapshot { found: false, score: u0 })))
+        (asserts! (get found caller) ERR-NOT-IN-TOP-TEN)
+        (let ((rank (+ u1 (get higher (fold rank-fold snapshot { caller-score: (get score caller), higher: u0 }))))
+              (paid (default-to u0 (map-get? season-paid { game-id: game-id, season: season }))))
+          (let ((computed (if (<= rank u3) (/ (* total u20) u100) (/ (* total u4) u70)))
+                (remaining (- total paid)))
+            (asserts! (> remaining u0) ERR-EMPTY-POOL)
+            (let ((payout (if (> computed remaining) remaining computed)))
+              (map-set prize-claimed { player: player, game-id: game-id, season: season } true)
+              (map-set season-paid { game-id: game-id, season: season } (+ paid payout))
+              (try! (as-contract (stx-transfer? payout tx-sender player)))
+              (ok payout))))))))
 
 (define-read-only (get-mints-remaining (game-id uint) (player principal))
   (let ((season (default-to u1 (map-get? current-season game-id)))

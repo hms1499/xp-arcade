@@ -348,3 +348,52 @@ describe("end-season", () => {
     expect(simnet.callReadOnlyFn(C, "get-current-season", [Cl.uint(2)], w(1)).result).toBeUint(1);
   });
 });
+
+describe("claim-prize", () => {
+  function setupClosedSeason() {
+    registerSnake();
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(80), Cl.stringAscii("a")], w(1));
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(40), Cl.stringAscii("b")], w(2));
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(20), Cl.stringAscii("c")], w(3));
+    simnet.callPublicFn(C, "end-season", [Cl.uint(1)], deployer); // total = 30000
+  }
+
+  it("transfers STX to a top-3 player and marks claimed", () => {
+    setupClosedSeason();
+    const before = simnet.getAssetsMap().get("STX")?.get(w(1)) ?? 0n;
+    const r = simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(1)).result;
+    expect(r).toBeOk(Cl.uint(6000)); // 30000*20/100
+    const after = simnet.getAssetsMap().get("STX")?.get(w(1)) ?? 0n;
+    expect(after - before).toBe(6000n);
+    expect(simnet.callReadOnlyFn(C, "has-claimed-prize", [Cl.principal(w(1)), Cl.uint(1), Cl.uint(1)], w(1)).result)
+      .toBeBool(true);
+    expect(simnet.callReadOnlyFn(C, "get-season-paid", [Cl.uint(1), Cl.uint(1)], w(1)).result).toBeUint(6000);
+  });
+
+  it("is idempotent — second claim reverts", () => {
+    setupClosedSeason();
+    simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(1));
+    const r = simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(1)).result;
+    expect(r).toBeErr(Cl.uint(102)); // ERR-ALREADY-CLAIMED
+  });
+
+  it("rejects a player not in the snapshot", () => {
+    setupClosedSeason();
+    const r = simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(5)).result;
+    expect(r).toBeErr(Cl.uint(101)); // ERR-NOT-IN-TOP-TEN
+  });
+
+  it("rejects claiming the still-open current season", () => {
+    registerSnake();
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(80), Cl.stringAscii("a")], w(1));
+    const r = simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(1)).result;
+    expect(r).toBeErr(Cl.uint(105)); // ERR-SEASON-NOT-CLOSED
+  });
+
+  it("rejects when the prize snapshot total is zero", () => {
+    registerSnake();
+    simnet.callPublicFn(C, "end-season", [Cl.uint(1)], deployer); // season 1 closed, total 0
+    const r = simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(1)).result;
+    expect(r).toBeErr(Cl.uint(106)); // ERR-EMPTY-POOL
+  });
+});
