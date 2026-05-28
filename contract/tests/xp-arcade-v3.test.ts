@@ -63,4 +63,14 @@ describe("register-game", () => {
       [Cl.uint(3), Cl.stringAscii("Free"), Cl.uint(0), Cl.uint(50), Cl.uint(150), Cl.uint(300)], deployer).result;
     expect(r).toBeErr(Cl.uint(111)); // ERR-BAD-FEE
   });
+
+  it("get-game returns none for an unregistered id", () => {
+    const g = simnet.callReadOnlyFn(C, "get-game", [Cl.uint(99)], deployer).result;
+    expect(g).toBeNone();
+  });
+
+  it("get-current-season returns u0 sentinel for an unregistered id", () => {
+    const season = simnet.callReadOnlyFn(C, "get-current-season", [Cl.uint(99)], deployer).result;
+    expect(season).toBeUint(0);
+  });
 });
