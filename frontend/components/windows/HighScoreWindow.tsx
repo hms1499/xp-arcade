@@ -195,7 +195,7 @@ function LeaderboardTab({
                 e.stopPropagation();
                 setClaiming(true);
                 try {
-                  await claimPrizeV3(gameId, claim.season, address!);
+                  await claimPrizeV3(gameId, claim.season, claim.amountUstx);
                   setClaim(null);
                   useToasts.getState().push({
                     title: "Claim submitted",

@@ -56,9 +56,10 @@ describe("contract-calls v3 arg shaping", () => {
     expect(calls[0].functionArgs[1]).toEqual(uintCV(42));
   });
 
-  it("claim-prize sends [game-id, season]", async () => {
-    claimPrizeV3("breakout", 1, ADDR).catch(() => {});
+  it("claim-prize sends [game-id, season] with a contract-send post-condition", async () => {
+    claimPrizeV3("breakout", 1, 8000).catch(() => {});
     expect(calls[0].functionName).toBe("claim-prize");
     expect(calls[0].functionArgs).toEqual([uintCV(4), uintCV(1)]);
+    expect(calls[0].postConditions).toHaveLength(1);
   });
 });

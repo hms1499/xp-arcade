@@ -149,14 +149,20 @@ export async function endSeasonForGame(gameId: GameId): Promise<string> {
 }
 
 export async function claimPrizeV3(
-  gameId: GameId, season: number, senderAddress: string,
+  gameId: GameId, season: number, payoutUstx: number,
 ): Promise<string> {
-  void senderAddress; // reserved for a future contract-send post-condition
+  const g = GAMES[gameId];
+  const contractId = `${g.contractAddress}.${g.contractName}`;
   return new Promise((resolve, reject) => {
     openContractCall({
       ...gameBase(gameId),
       functionName: "claim-prize",
       functionArgs: [uintCV(onchainIdFor(gameId)), uintCV(season)],
+      // The contract pays the caller via as-contract; wallets in deny-mode
+      // need a post-condition allowing the CONTRACT to send STX. The on-chain
+      // payout is capped to the remaining pool, so it is always <= our
+      // estimate -> willSendLte is the correct (never under-permitting) bound.
+      postConditions: [Pc.principal(contractId).willSendLte(payoutUstx).ustx()],
       onFinish: (data) => resolve(data.txId),
       onCancel: () => reject(new Error("cancelled")),
     });
