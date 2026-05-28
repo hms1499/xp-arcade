@@ -9,11 +9,14 @@ describe("formatPayoutMemo", () => {
     expect(formatPayoutMemo({ gameId: "pacman", season: 12, rank: 10 })).toBe(
       "xpa-pacman-s12-r10",
     );
+    expect(formatPayoutMemo({ gameId: "breakout", season: 2, rank: 3 })).toBe(
+      "xpa-breakout-s2-r3",
+    );
   });
 
   it("fits within the 34-byte STX memo budget", () => {
     const longest = formatPayoutMemo({
-      gameId: "pacman",
+      gameId: "breakout",
       season: 9999,
       rank: 10,
     });

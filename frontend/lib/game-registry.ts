@@ -1,4 +1,4 @@
-export type GameId = "snake" | "tetris" | "pacman";
+export type GameId = "snake" | "tetris" | "pacman" | "breakout";
 export type NetworkName = "mainnet" | "testnet";
 
 export interface GameDef {
@@ -44,6 +44,14 @@ const GAME_METADATA: Record<
     metaSegment: "pacman",
     nftAssetName: "pacman-score",
   },
+  breakout: {
+    id: "breakout",
+    label: "XP Bricks",
+    emoji: "🧱",
+    mintFeeUstx: BigInt(20_000),
+    metaSegment: "breakout",
+    nftAssetName: "breakout-score",
+  },
 };
 
 const GAME_CONTRACTS: Record<NetworkName, Record<GameId, GameConfig>> = {
@@ -51,15 +59,17 @@ const GAME_CONTRACTS: Record<NetworkName, Record<GameId, GameConfig>> = {
     snake: { contractAddress: MAINNET_DEPLOYER, contractName: "snake-score-v2" },
     tetris: { contractAddress: MAINNET_DEPLOYER, contractName: "tetris-score-v2" },
     pacman: { contractAddress: MAINNET_DEPLOYER, contractName: "pacman-score-v2" },
+    breakout: { contractAddress: MAINNET_DEPLOYER, contractName: "breakout-score-v1" },
   },
   testnet: {
     snake: { contractAddress: MAINNET_DEPLOYER, contractName: "snake-score-v2" },
     tetris: { contractAddress: MAINNET_DEPLOYER, contractName: "tetris-score-v2" },
     pacman: { contractAddress: MAINNET_DEPLOYER, contractName: "pacman-score-v2" },
+    breakout: { contractAddress: MAINNET_DEPLOYER, contractName: "breakout-score-v1" },
   },
 };
 
-export const GAME_IDS: GameId[] = ["snake", "tetris", "pacman"];
+export const GAME_IDS: GameId[] = ["snake", "tetris", "pacman", "breakout"];
 
 export function parseRegistryNetwork(value: string | undefined): NetworkName {
   if (value === "mainnet" || value === "testnet") return value;
@@ -73,6 +83,7 @@ function buildGameRegistry(networkName: NetworkName): Record<GameId, GameDef> {
     snake: { ...GAME_METADATA.snake, ...contracts.snake },
     tetris: { ...GAME_METADATA.tetris, ...contracts.tetris },
     pacman: { ...GAME_METADATA.pacman, ...contracts.pacman },
+    breakout: { ...GAME_METADATA.breakout, ...contracts.breakout },
   });
 }
 

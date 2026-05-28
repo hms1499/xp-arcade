@@ -6,7 +6,7 @@ import { shortAddress } from "@/lib/stacks-address";
 import { fetchAllScoreHoldings, scoreNftKey, type ScoreNft } from "@/lib/holdings";
 import { rarityColor } from "@/lib/metadata-svg";
 import { computePlayerStats, ustxToStx } from "@/lib/player-stats";
-import { GAMES, type GameId } from "@/lib/game-registry";
+import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
 import { PlayerStatsPanel } from "./PlayerStatsPanel";
 import { RarityBreakdown } from "./RarityBreakdown";
 import { CopyAddressButton } from "./CopyAddressButton";
@@ -273,7 +273,7 @@ function FeaturedNfts({ nfts }: { nfts: ScoreNft[] }) {
 }
 
 function topGameLabel(stats: ReturnType<typeof computePlayerStats>): string | null {
-  const [topGame] = (Object.keys(GAMES) as GameId[])
+  const [topGame] = GAME_IDS
     .map((id) => ({ id, bestScore: stats.byGame[id].bestScore }))
     .sort((a, b) => b.bestScore - a.bestScore);
   if (!topGame || topGame.bestScore === 0) return null;
@@ -393,7 +393,7 @@ function GameBreakdown({
   active: ProfileFilter;
   onSelect: (filter: ProfileFilter) => void;
 }) {
-  const filters: ProfileFilter[] = ["all", "snake", "tetris", "pacman"];
+  const filters: ProfileFilter[] = ["all", ...GAME_IDS];
   return (
     <div className="mb-3">
       <div className="flex flex-wrap gap-1 mb-2">
@@ -414,7 +414,7 @@ function GameBreakdown({
         })}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px]">
-        {(Object.keys(GAMES) as GameId[]).map((id) => {
+        {GAME_IDS.map((id) => {
           const gameStats = stats.byGame[id];
           const selected = active === id;
           return (

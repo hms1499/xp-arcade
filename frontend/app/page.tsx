@@ -3,6 +3,7 @@ import { Desktop } from "@/components/desktop/Desktop";
 import { SnakeWindow } from "@/components/game/snake/SnakeWindow";
 import { TetrisWindow } from "@/components/game/tetris/TetrisWindow";
 import { PacManWindow } from "@/components/game/pacman/PacManWindow";
+import { BreakoutWindow } from "@/components/game/breakout/BreakoutWindow";
 import { HighScoreWindow } from "@/components/windows/HighScoreWindow";
 import { HallOfFameWindow } from "@/components/windows/HallOfFameWindow";
 import { MyNftsWindow } from "@/components/windows/MyNftsWindow";
@@ -17,6 +18,7 @@ export default function Home() {
         <SnakeWindow />
         <TetrisWindow />
         <PacManWindow />
+        <BreakoutWindow />
         <HighScoreWindow />
         <HallOfFameWindow />
         <MyNftsWindow />

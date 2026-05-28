@@ -1,6 +1,6 @@
 "use client";
 import { create } from "zustand";
-import { type GameId } from "@/lib/game-registry";
+import { GAME_IDS, type GameId } from "@/lib/game-registry";
 
 export type GameSessionStats = {
   runs: number;
@@ -23,11 +23,9 @@ const EMPTY_GAME_STATS: GameSessionStats = {
 };
 
 function emptyStats(): Record<GameId, GameSessionStats> {
-  return {
-    snake: { ...EMPTY_GAME_STATS },
-    tetris: { ...EMPTY_GAME_STATS },
-    pacman: { ...EMPTY_GAME_STATS },
-  };
+  return Object.fromEntries(
+    GAME_IDS.map((gameId) => [gameId, { ...EMPTY_GAME_STATS }]),
+  ) as Record<GameId, GameSessionStats>;
 }
 
 export const useSessionStats = create<SessionStatsState>((set) => ({

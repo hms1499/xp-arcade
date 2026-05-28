@@ -6,25 +6,21 @@ import {
   getTopTenForGame,
   type TopEntry,
 } from "@/lib/contract-calls";
-import { GAMES, type GameId } from "@/lib/game-registry";
+import { GAME_IDS, type GameId } from "@/lib/game-registry";
 import { summarizeLeaderboard, type LeaderboardSummary } from "@/lib/leaderboard-showcase";
-
-const GAME_IDS = Object.keys(GAMES) as GameId[];
 
 type RowsByGame = Record<GameId, TopEntry[]>;
 type SeasonsByGame = Record<GameId, number | null>;
 
-const EMPTY_ROWS: RowsByGame = {
-  snake: [],
-  tetris: [],
-  pacman: [],
-};
+const EMPTY_ROWS = GAME_IDS.reduce((acc, gameId) => {
+  acc[gameId] = [];
+  return acc;
+}, {} as RowsByGame);
 
-const EMPTY_SEASONS: SeasonsByGame = {
-  snake: null,
-  tetris: null,
-  pacman: null,
-};
+const EMPTY_SEASONS = GAME_IDS.reduce((acc, gameId) => {
+  acc[gameId] = null;
+  return acc;
+}, {} as SeasonsByGame);
 
 export function useLeaderboardShowcase() {
   const [rowsByGame, setRowsByGame] = useState<RowsByGame>(EMPTY_ROWS);

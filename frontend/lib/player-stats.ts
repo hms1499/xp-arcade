@@ -1,4 +1,4 @@
-import { GAMES } from "./game-registry";
+import { GAME_IDS, GAMES } from "./game-registry";
 import type { GameId } from "./game-registry";
 import type { ScoreNft } from "./holdings";
 
@@ -24,7 +24,7 @@ export function computePlayerStats(nfts: ScoreNft[]): PlayerStats {
   const seasons = new Set<number>();
   const rarityCounts: Record<string, number> = {};
   const byGame = Object.fromEntries(
-    (Object.keys(GAMES) as GameId[]).map((id) => [
+    GAME_IDS.map((id) => [
       id,
       {
         totalMints: 0,
@@ -35,11 +35,9 @@ export function computePlayerStats(nfts: ScoreNft[]): PlayerStats {
       },
     ]),
   ) as Record<GameId, GamePlayerStats>;
-  const gameSeasons: Record<GameId, Set<number>> = {
-    snake: new Set(),
-    tetris: new Set(),
-    pacman: new Set(),
-  };
+  const gameSeasons = Object.fromEntries(
+    GAME_IDS.map((id) => [id, new Set<number>()]),
+  ) as Record<GameId, Set<number>>;
   let bestScore = 0;
   let totalScore = 0;
   let mintFeesUstx = 0;
@@ -63,7 +61,7 @@ export function computePlayerStats(nfts: ScoreNft[]): PlayerStats {
     gameStats.mintFeesUstx += fee;
   }
 
-  for (const gameId of Object.keys(GAMES) as GameId[]) {
+  for (const gameId of GAME_IDS) {
     byGame[gameId].seasonsPlayed = gameSeasons[gameId].size;
   }
 

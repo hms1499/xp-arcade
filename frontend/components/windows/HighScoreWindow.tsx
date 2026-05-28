@@ -9,10 +9,9 @@ import {
   getTopTenForGame,
   type TopEntry,
 } from "@/lib/contract-calls";
-import { GAMES, type GameId } from "@/lib/game-registry";
+import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
 
-const GAME_IDS: GameId[] = ["snake", "tetris", "pacman"];
 const BADGE_BG: Record<number, string> = { 1: "#ffd700", 2: "#c0c0c0", 3: "#cd7f32" };
 
 type RankSnapshot = Record<string, number>;

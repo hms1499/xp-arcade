@@ -1,5 +1,5 @@
 import { stacks } from "./stacks";
-import { GAMES, type GameId } from "./game-registry";
+import { GAME_IDS, GAMES, type GameId } from "./game-registry";
 
 export type ScoreNft = {
   id: number;
@@ -76,7 +76,7 @@ export async function fetchScoreHoldings(
 
 export async function fetchAllScoreHoldings(addr: string): Promise<ScoreNft[]> {
   const results = await Promise.allSettled(
-    (["snake", "tetris", "pacman"] as GameId[]).map((id) =>
+    GAME_IDS.map((id) =>
       fetchScoreHoldings(addr, id)
     )
   );

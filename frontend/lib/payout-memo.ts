@@ -1,6 +1,6 @@
-import type { GameId } from "./game-registry";
+import { GAME_IDS, type GameId } from "./game-registry";
 
-const VALID_GAMES: readonly GameId[] = ["snake", "tetris", "pacman"] as const;
+const VALID_GAMES: readonly GameId[] = GAME_IDS;
 
 export type PayoutMemoFields = {
   gameId: GameId;
@@ -12,7 +12,7 @@ export function formatPayoutMemo(fields: PayoutMemoFields): string {
   return `xpa-${fields.gameId}-s${fields.season}-r${fields.rank}`;
 }
 
-const MEMO_RE = /^xpa-(snake|tetris|pacman)-s(\d+)-r(\d+)$/;
+const MEMO_RE = /^xpa-([a-z0-9-]+)-s(\d+)-r(\d+)$/;
 
 export function parsePayoutMemo(memo: string): PayoutMemoFields | null {
   const m = MEMO_RE.exec(memo);

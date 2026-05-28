@@ -25,5 +25,6 @@ describe("session stats", () => {
       totalScore: 7,
     });
     expect(byGame.pacman.runs).toBe(0);
+    expect(byGame.breakout.runs).toBe(0);
   });
 });

@@ -9,6 +9,7 @@ const GAME_BG: Record<GameId, string> = {
   snake: "#1a472a",
   tetris: "#6b3a2a",
   pacman: "#1a1a2e",
+  breakout: "#164e63",
 };
 
 export type ScoreCardInput = {

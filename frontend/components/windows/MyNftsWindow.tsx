@@ -6,7 +6,7 @@ import { useMintTx } from "@/state/mint-tx";
 import { Window } from "@/components/windows/Window";
 import { fetchAllScoreHoldings, scoreNftKey, type ScoreNft } from "@/lib/holdings";
 import { rarityColor } from "@/lib/metadata-svg";
-import { GAMES, type GameId } from "@/lib/game-registry";
+import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
 import { shortAddress } from "@/lib/stacks-address";
 import { stacks } from "@/lib/stacks";
 
@@ -14,11 +14,13 @@ const GAME_BADGE_BG: Record<string, string> = {
   snake: "#d4edda",
   tetris: "#d1ecf1",
   pacman: "#fff3cd",
+  breakout: "#e0f2fe",
 };
 const GAME_BADGE_COLOR: Record<string, string> = {
   snake: "#155724",
   tetris: "#0c5460",
   pacman: "#856404",
+  breakout: "#075985",
 };
 
 type NftLoadState = {
@@ -31,7 +33,7 @@ type GameFilter = "all" | GameId;
 type RarityFilter = "all" | string;
 type SortMode = "score-desc" | "newest" | "game" | "season-desc";
 
-const GAME_FILTERS: GameFilter[] = ["all", "snake", "tetris", "pacman"];
+const GAME_FILTERS: GameFilter[] = ["all", ...GAME_IDS];
 const SORT_LABELS: Record<SortMode, string> = {
   "score-desc": "Highest score",
   newest: "Newest",
