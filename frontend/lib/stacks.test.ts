@@ -26,7 +26,7 @@ describe("parseContractId", () => {
     });
   });
 
-  it("defaults to the Snake registry contract when unset", () => {
+  it("defaults to the shared v3 registry contract when unset", () => {
     expect(parseContractId(undefined)).toEqual({
       contractAddress: GAMES.snake.contractAddress,
       contractName: GAMES.snake.contractName,
@@ -35,13 +35,13 @@ describe("parseContractId", () => {
 
   it("rejects a contract id that does not match registry config", () => {
     expect(() =>
-      parseContractId("SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.snake-score"),
-    ).toThrow(/must match configured Snake contract/);
+      parseContractId("SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.snake-score-v2"),
+    ).toThrow(/must match configured/);
   });
 
   it("rejects malformed ids", () => {
     expect(() => parseContractId(".")).toThrow(/ADDRESS\.contract-name/);
-    expect(() => parseContractId("snake-score-v2")).toThrow(/ADDRESS\.contract-name/);
-    expect(() => parseContractId("bad.snake-score-v2")).toThrow(/Invalid contract address/);
+    expect(() => parseContractId("xp-arcade-v3")).toThrow(/ADDRESS\.contract-name/);
+    expect(() => parseContractId("bad.xp-arcade-v3")).toThrow(/Invalid contract address/);
   });
 });

@@ -32,7 +32,7 @@ export function parseContractId(
   }
   if (fullId !== expectedContractId) {
     throw new Error(
-      `NEXT_PUBLIC_CONTRACT_ADDRESS (${fullId}) must match configured Snake contract (${expectedContractId})`,
+      `NEXT_PUBLIC_CONTRACT_ADDRESS (${fullId}) must match configured contract (${expectedContractId})`,
     );
   }
   return { contractAddress, contractName };
