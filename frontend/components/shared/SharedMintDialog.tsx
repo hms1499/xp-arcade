@@ -356,6 +356,24 @@ export function SharedMintDialog({
               2. {STATUS_LABEL[mintStatus]}
             </li>
           </ol>
+          {mintStatus === "success" && (
+            <div
+              className="text-xs mb-2"
+              style={{
+                background: "#f0fff4",
+                border: "1px solid #8bc48b",
+                color: "#155724",
+                padding: "5px 6px",
+                lineHeight: 1.35,
+              }}
+            >
+              <b>{game.label} NFT confirmed.</b>
+              <span className="block mt-1">
+                It can take a few seconds for the indexer to show the NFT in
+                My NFTs.
+              </span>
+            </div>
+          )}
           {txId && (
             <p className="text-xs mb-2">
               <a
@@ -374,10 +392,10 @@ export function SharedMintDialog({
             </button>
             {mintStatus === "success" && (
               <button
-                onClick={() => openWindow("mynfts")}
+                onClick={() => openWindow("mynfts", { initialGame: gameId })}
                 style={SECONDARY_ACTION}
               >
-                View My NFTs
+                View {game.label} NFT
               </button>
             )}
             <button onClick={onClose} style={TERTIARY_ACTION}>

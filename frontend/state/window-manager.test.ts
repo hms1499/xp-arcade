@@ -91,3 +91,23 @@ describe("toggleMaximize", () => {
     expect(w.z).toBe(11);
   });
 });
+
+describe("open payload updates", () => {
+  beforeEach(() => {
+    useWindows.setState({ windows: [], topZ: 10 });
+  });
+
+  it("updates an existing window payload when reopening", () => {
+    useWindows.getState().open("mynfts", { initialGame: "snake" });
+    const first = useWindows.getState().windows[0];
+    expect(first.payload?.initialGame).toBe("snake");
+
+    useWindows.getState().open("mynfts", { initialGame: "breakout" });
+    const st = useWindows.getState();
+
+    expect(st.windows).toHaveLength(1);
+    expect(st.windows[0].id).toBe(first.id);
+    expect(st.windows[0].payload?.initialGame).toBe("breakout");
+    expect(st.windows[0].z).toBeGreaterThan(first.z);
+  });
+});

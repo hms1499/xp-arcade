@@ -51,7 +51,20 @@ export function MyNftsWindow() {
   const w = useWindows((s) => s.windows.find((win) => win.type === "mynfts"));
   const address = useWallet((s) => s.address);
   const [loadState, setLoadState] = useState<NftLoadState | null>(null);
-  const [gameFilter, setGameFilter] = useState<GameFilter>("all");
+  const payloadGame = w?.payload?.initialGame;
+  const [gameFilterState, setGameFilterState] = useState<{
+    payloadGame?: GameId;
+    value: GameFilter;
+  }>(() => ({
+    payloadGame,
+    value: payloadGame ?? "all",
+  }));
+  const gameFilter =
+    gameFilterState.payloadGame === payloadGame
+      ? gameFilterState.value
+      : payloadGame ?? "all";
+  const setGameFilter = (value: GameFilter) =>
+    setGameFilterState({ payloadGame, value });
   const [rarityFilter, setRarityFilter] = useState<RarityFilter>("all");
   const [sortMode, setSortMode] = useState<SortMode>("score-desc");
   const [selectedNft, setSelectedNft] = useState<ScoreNft | null>(null);

@@ -10,7 +10,11 @@ export type WindowType =
   | "season-admin"
   | "player-profile";
 
-export type WindowPayload = { address?: string; initialTab?: GameId };
+export type WindowPayload = {
+  address?: string;
+  initialTab?: GameId;
+  initialGame?: GameId;
+};
 
 export type WindowEntry = {
   id: string;
