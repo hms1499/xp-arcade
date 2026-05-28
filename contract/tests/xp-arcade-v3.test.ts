@@ -163,3 +163,26 @@ describe("mint-score core", () => {
     expect(r).toBeErr(Cl.uint(104)); // ERR-SCORE-TOO-HIGH
   });
 });
+
+describe("best-score", () => {
+  it("keeps the max score per (player, game) and ignores lower follow-ups", () => {
+    registerSnake();
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(50), Cl.stringAscii("a")], w(1));
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(20), Cl.stringAscii("a")], w(1));
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(80), Cl.stringAscii("a")], w(1));
+    const best = simnet.callReadOnlyFn(C, "get-best-score", [Cl.uint(1), Cl.principal(w(1))], w(1)).result;
+    expect(best).toBeSome(Cl.tuple({ score: Cl.uint(80), "token-id": Cl.uint(3), season: Cl.uint(1) }));
+  });
+
+  it("isolates best-score across games", () => {
+    registerSnake();
+    simnet.callPublicFn(C, "register-game",
+      [Cl.uint(2), Cl.stringAscii("Tetris"), Cl.uint(20000), Cl.uint(100), Cl.uint(300), Cl.uint(700)], deployer);
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(90), Cl.stringAscii("a")], w(1));
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(2), Cl.uint(10), Cl.stringAscii("a")], w(1));
+    const snake = simnet.callReadOnlyFn(C, "get-best-score", [Cl.uint(1), Cl.principal(w(1))], w(1)).result;
+    const tetris = simnet.callReadOnlyFn(C, "get-best-score", [Cl.uint(2), Cl.principal(w(1))], w(1)).result;
+    expect((snake as any).value.value.score.value).toBe(90n);
+    expect((tetris as any).value.value.score.value).toBe(10n);
+  });
+});

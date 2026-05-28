@@ -102,6 +102,9 @@
       true)
     true))
 
+(define-read-only (get-best-score (game-id uint) (player principal))
+  (map-get? best-score { player: player, game-id: game-id }))
+
 (define-read-only (get-score-data (token-id uint))
   (map-get? score-data token-id))
 
