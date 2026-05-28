@@ -92,4 +92,4 @@ plan:
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
       path: contracts/xp-arcade-v3.clar
       clarity-version: 3
-    epoch: '3.4'
+    epoch: '3.3'

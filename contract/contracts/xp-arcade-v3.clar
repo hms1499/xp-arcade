@@ -85,12 +85,36 @@
       (if (>= score (get epic-min g)) "Epic"
         (if (>= score (get rare-min g)) "Rare" "Common")))))
 
-;; STUB - expanded in Task 5
+(define-data-var pending-min uint u0)
+(define-data-var pending-removed bool false)
+(define-data-var filter-player principal tx-sender)
+
+(define-private (not-filter-player (e { player: principal, score: uint }))
+  (not (is-eq (get player e) (var-get filter-player))))
+
+(define-private (min-fold (e { player: principal, score: uint }) (acc { m: uint }))
+  (if (< (get score e) (get m acc)) { m: (get score e) } acc))
+
+(define-private (skip-first-min (e { player: principal, score: uint }))
+  (if (and (not (var-get pending-removed)) (is-eq (get score e) (var-get pending-min)))
+    (begin (var-set pending-removed true) false)
+    true))
+
 (define-private (try-insert-top-ten (game-id uint) (entry { player: principal, score: uint }))
-  (let ((current (default-to (list) (map-get? top-ten game-id))))
-    (if (< (len current) u10)
-      (map-set top-ten game-id (unwrap-panic (as-max-len? (append current entry) u10)))
-      false)
+  (begin
+    (var-set filter-player (get player entry))
+    (let ((cleaned (filter not-filter-player (default-to (list) (map-get? top-ten game-id)))))
+      (if (< (len cleaned) u10)
+        (map-set top-ten game-id (unwrap-panic (as-max-len? (append cleaned entry) u10)))
+        (let ((min-score (get m (fold min-fold cleaned
+                            { m: u340282366920938463463374607431768211455 }))))
+          (if (> (get score entry) min-score)
+            (begin
+              (var-set pending-min min-score)
+              (var-set pending-removed false)
+              (map-set top-ten game-id
+                (unwrap-panic (as-max-len? (append (filter skip-first-min cleaned) entry) u10))))
+            false))))
     true))
 
 ;; STUB - expanded in Task 4 (read added there)
@@ -104,6 +128,9 @@
 
 (define-read-only (get-best-score (game-id uint) (player principal))
   (map-get? best-score { player: player, game-id: game-id }))
+
+(define-read-only (get-top-ten (game-id uint))
+  (default-to (list) (map-get? top-ten game-id)))
 
 (define-read-only (get-score-data (token-id uint))
   (map-get? score-data token-id))

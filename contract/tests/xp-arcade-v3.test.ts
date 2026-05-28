@@ -186,3 +186,46 @@ describe("best-score", () => {
     expect((tetris as any).value.value.score.value).toBe(10n);
   });
 });
+
+describe("top-ten", () => {
+  it("returns empty list for a registered game with no mints", () => {
+    registerSnake();
+    const top = simnet.callReadOnlyFn(C, "get-top-ten", [Cl.uint(1)], w(1)).result;
+    expect((top as any).value.length).toBe(0);
+  });
+
+  it("keeps best per player (later mint by same wallet replaces earlier entry)", () => {
+    registerSnake();
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(50), Cl.stringAscii("a")], w(1));
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(100), Cl.stringAscii("b")], w(2));
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(80), Cl.stringAscii("c")], w(3));
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(70), Cl.stringAscii("a")], w(1));
+    const top = simnet.callReadOnlyFn(C, "get-top-ten", [Cl.uint(1)], w(1)).result;
+    const scores = (top as any).value.map((t: any) => Number(t.value.score.value));
+    expect(scores.length).toBe(3);
+    expect(scores).toContain(100);
+    expect(scores).toContain(80);
+    expect(scores).toContain(70);
+    expect(scores).not.toContain(50);
+  });
+
+  it("caps at 10 and evicts the lowest when a higher score arrives", () => {
+    registerSnake();
+    const scoresIn = [10, 50, 30, 80, 20, 70, 60, 40];
+    scoresIn.forEach((s, i) =>
+      simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(s), Cl.stringAscii(`p${i}`)], w(i + 1)));
+    const top = simnet.callReadOnlyFn(C, "get-top-ten", [Cl.uint(1)], w(1)).result;
+    const scores = (top as any).value.map((t: any) => Number(t.value.score.value));
+    expect(scores.length).toBe(8);
+    expect(scores.sort((a: number, b: number) => b - a)[0]).toBe(80);
+  });
+
+  it("isolates top-ten across games", () => {
+    registerSnake();
+    simnet.callPublicFn(C, "register-game",
+      [Cl.uint(2), Cl.stringAscii("Tetris"), Cl.uint(20000), Cl.uint(100), Cl.uint(300), Cl.uint(700)], deployer);
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(50), Cl.stringAscii("a")], w(1));
+    expect((simnet.callReadOnlyFn(C, "get-top-ten", [Cl.uint(1)], w(1)).result as any).value.length).toBe(1);
+    expect((simnet.callReadOnlyFn(C, "get-top-ten", [Cl.uint(2)], w(1)).result as any).value.length).toBe(0);
+  });
+});
