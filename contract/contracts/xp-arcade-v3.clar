@@ -58,6 +58,16 @@
 (define-read-only (get-current-season (game-id uint))
   (default-to u0 (map-get? current-season game-id)))
 
+(define-read-only (get-season-end-block (game-id uint))
+  (default-to u0 (map-get? season-end-block game-id)))
+
+(define-public (set-season-end-block (game-id uint) (height uint))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-OWNER)
+    (asserts! (is-some (map-get? games game-id)) ERR-NO-GAME)
+    (map-set season-end-block game-id height)
+    (ok true)))
+
 (define-public (register-game
     (game-id uint) (name (string-ascii 24)) (fee uint)
     (rare-min uint) (epic-min uint) (legend-min uint))

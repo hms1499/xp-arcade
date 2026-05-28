@@ -287,3 +287,21 @@ describe("mint cap", () => {
       .toBeOk(Cl.uint(11));
   });
 });
+
+describe("season-end-block", () => {
+  it("owner sets the deadline block and it reads back", () => {
+    registerSnake();
+    const r = simnet.callPublicFn(C, "set-season-end-block", [Cl.uint(1), Cl.uint(500)], deployer).result;
+    expect(r).toBeOk(Cl.bool(true));
+    const b = simnet.callReadOnlyFn(C, "get-season-end-block", [Cl.uint(1)], deployer).result;
+    expect(b).toBeUint(500);
+  });
+
+  it("rejects non-owner and unknown game", () => {
+    registerSnake();
+    expect(simnet.callPublicFn(C, "set-season-end-block", [Cl.uint(1), Cl.uint(500)], w(1)).result)
+      .toBeErr(Cl.uint(100));
+    expect(simnet.callPublicFn(C, "set-season-end-block", [Cl.uint(99), Cl.uint(500)], deployer).result)
+      .toBeErr(Cl.uint(110));
+  });
+});
