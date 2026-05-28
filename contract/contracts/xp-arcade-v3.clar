@@ -150,6 +150,24 @@
 (define-read-only (get-prize-pool-balance (game-id uint))
   (default-to u0 (map-get? season-accumulated game-id)))
 
+(define-read-only (get-season-prize (game-id uint) (season uint))
+  (map-get? season-prize { game-id: game-id, season: season }))
+
+(define-public (end-season (game-id uint))
+  (let ((season (unwrap! (map-get? current-season game-id) ERR-NO-GAME))
+        (deadline (default-to u0 (map-get? season-end-block game-id)))
+        (is-owner (is-eq tx-sender (var-get contract-owner))))
+    (asserts! (or is-owner
+                  (and (> deadline u0) (>= stacks-block-height deadline)))
+              ERR-SEASON-STILL-OPEN)
+    (map-set season-prize { game-id: game-id, season: season }
+      { total: (default-to u0 (map-get? season-accumulated game-id)),
+        top-ten: (default-to (list) (map-get? top-ten game-id)) })
+    (map-set season-accumulated game-id u0)
+    (map-set top-ten game-id (list))
+    (map-set current-season game-id (+ season u1))
+    (ok true)))
+
 (define-read-only (get-mints-remaining (game-id uint) (player principal))
   (let ((season (default-to u1 (map-get? current-season game-id)))
         (used (default-to u0

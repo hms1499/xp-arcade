@@ -305,3 +305,46 @@ describe("season-end-block", () => {
       .toBeErr(Cl.uint(110));
   });
 });
+
+describe("end-season", () => {
+  it("owner closes: snapshots prize, resets pool/top-ten, bumps season", () => {
+    registerSnake();
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(80), Cl.stringAscii("a")], w(1));
+    simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(40), Cl.stringAscii("b")], w(2));
+
+    const r = simnet.callPublicFn(C, "end-season", [Cl.uint(1)], deployer).result;
+    expect(r).toBeOk(Cl.bool(true));
+
+    const prize = simnet.callReadOnlyFn(C, "get-season-prize", [Cl.uint(1), Cl.uint(1)], w(1)).result;
+    expect((prize as any).value.value.total.value).toBe(20000n);
+    expect((prize as any).value.value["top-ten"].value.length).toBe(2);
+
+    expect(simnet.callReadOnlyFn(C, "get-current-season", [Cl.uint(1)], w(1)).result).toBeUint(2);
+    expect(simnet.callReadOnlyFn(C, "get-prize-pool-balance", [Cl.uint(1)], w(1)).result).toBeUint(0);
+    expect((simnet.callReadOnlyFn(C, "get-top-ten", [Cl.uint(1)], w(1)).result as any).value.length).toBe(0);
+  });
+
+  it("rejects a non-owner before the deadline block", () => {
+    registerSnake();
+    simnet.callPublicFn(C, "set-season-end-block", [Cl.uint(1), Cl.uint(1000000)], deployer);
+    const r = simnet.callPublicFn(C, "end-season", [Cl.uint(1)], w(1)).result;
+    expect(r).toBeErr(Cl.uint(113)); // ERR-SEASON-STILL-OPEN
+  });
+
+  it("allows anyone after the deadline block", () => {
+    registerSnake();
+    simnet.callPublicFn(C, "set-season-end-block", [Cl.uint(1), Cl.uint(2)], deployer);
+    simnet.mineEmptyBlocks(5);
+    const r = simnet.callPublicFn(C, "end-season", [Cl.uint(1)], w(1)).result;
+    expect(r).toBeOk(Cl.bool(true));
+  });
+
+  it("is isolated per game", () => {
+    registerSnake();
+    simnet.callPublicFn(C, "register-game",
+      [Cl.uint(2), Cl.stringAscii("Tetris"), Cl.uint(20000), Cl.uint(100), Cl.uint(300), Cl.uint(700)], deployer);
+    simnet.callPublicFn(C, "end-season", [Cl.uint(1)], deployer);
+    expect(simnet.callReadOnlyFn(C, "get-current-season", [Cl.uint(1)], w(1)).result).toBeUint(2);
+    expect(simnet.callReadOnlyFn(C, "get-current-season", [Cl.uint(2)], w(1)).result).toBeUint(1);
+  });
+});
