@@ -20,9 +20,9 @@ describe("parseNetworkName", () => {
 
 describe("parseContractId", () => {
   it("parses ADDRESS.contract-name", () => {
-    expect(parseContractId("SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.snake-score-v2")).toEqual({
+    expect(parseContractId("SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v3")).toEqual({
       contractAddress: "SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV",
-      contractName: "snake-score-v2",
+      contractName: "xp-arcade-v3",
     });
   });
 

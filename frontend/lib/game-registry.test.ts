@@ -5,6 +5,8 @@ import {
   parseRegistryNetwork,
   validateGameDef,
   validateGameRegistry,
+  onchainIdFor,
+  gameIdFromOnchain,
   type GameId,
 } from "./game-registry";
 
@@ -30,11 +32,25 @@ describe("game-registry", () => {
     expect(GAMES.breakout.mintFeeUstx).toBe(BigInt(20_000));
   });
 
-  it("nftAssetName matches original contract token name for all games", () => {
-    expect(GAMES.snake.nftAssetName).toBe("snake-score");
-    expect(GAMES.tetris.nftAssetName).toBe("tetris-score");
-    expect(GAMES.pacman.nftAssetName).toBe("pacman-score");
-    expect(GAMES.breakout.nftAssetName).toBe("breakout-score");
+  it("uses the shared v3 NFT asset name for all games", () => {
+    expect(GAMES.snake.nftAssetName).toBe("xp-score");
+    expect(GAMES.tetris.nftAssetName).toBe("xp-score");
+    expect(GAMES.pacman.nftAssetName).toBe("xp-score");
+    expect(GAMES.breakout.nftAssetName).toBe("xp-score");
+  });
+
+  it("maps every game to the single shared v3 contract", () => {
+    for (const id of ["snake", "tetris", "pacman", "breakout"] as GameId[]) {
+      expect(GAMES[id].contractName).toBe("xp-arcade-v3");
+      expect(GAMES[id].contractAddress).toBe("SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV");
+    }
+  });
+
+  it("assigns unique positive onchainIds", () => {
+    expect(GAMES.snake.onchainId).toBe(1);
+    expect(GAMES.tetris.onchainId).toBe(2);
+    expect(GAMES.pacman.onchainId).toBe(3);
+    expect(GAMES.breakout.onchainId).toBe(4);
   });
 
   it("rejects invalid registry entries", () => {
@@ -61,10 +77,22 @@ describe("game-registry", () => {
     ).toThrow(/key mismatch/);
   });
 
-  it("exposes the expected primary Snake contract id", () => {
+  it("exposes the shared v3 contract id as primary", () => {
     expect(expectedPrimaryContractId()).toBe(
-      "SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.snake-score-v2",
+      "SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v3",
     );
+  });
+});
+
+describe("onchain id mapping", () => {
+  it("round-trips game id <-> onchain id", () => {
+    for (const id of ["snake", "tetris", "pacman", "breakout"] as GameId[]) {
+      expect(gameIdFromOnchain(onchainIdFor(id))).toBe(id);
+    }
+  });
+
+  it("throws on an unknown onchain id", () => {
+    expect(() => gameIdFromOnchain(99)).toThrow(/onchain id/);
   });
 });
 

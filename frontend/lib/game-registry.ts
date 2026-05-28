@@ -5,6 +5,7 @@ export interface GameDef {
   id: GameId;
   label: string;
   emoji: string;
+  onchainId: number;
   contractAddress: string;
   contractName: string;
   mintFeeUstx: bigint;
@@ -12,61 +13,26 @@ export interface GameDef {
   nftAssetName: string;
 }
 
-type GameConfig = Omit<GameDef, "id" | "label" | "emoji" | "mintFeeUstx" | "metaSegment" | "nftAssetName">;
+type GameConfig = Omit<GameDef, "id" | "label" | "emoji" | "onchainId" | "mintFeeUstx" | "metaSegment" | "nftAssetName">;
 
 const MAINNET_DEPLOYER = "SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV";
+const V3_CONTRACT_NAME = "xp-arcade-v3";
 
 const GAME_METADATA: Record<
   GameId,
-  Pick<GameDef, "id" | "label" | "emoji" | "mintFeeUstx" | "metaSegment" | "nftAssetName">
+  Pick<GameDef, "id" | "label" | "emoji" | "onchainId" | "mintFeeUstx" | "metaSegment" | "nftAssetName">
 > = {
-  snake: {
-    id: "snake",
-    label: "Snake",
-    emoji: "🐍",
-    mintFeeUstx: BigInt(10_000),
-    metaSegment: "score",
-    nftAssetName: "snake-score",
-  },
-  tetris: {
-    id: "tetris",
-    label: "Tetris",
-    emoji: "🧱",
-    mintFeeUstx: BigInt(20_000),
-    metaSegment: "tetris",
-    nftAssetName: "tetris-score",
-  },
-  pacman: {
-    id: "pacman",
-    label: "Pac-Man",
-    emoji: "👾",
-    mintFeeUstx: BigInt(20_000),
-    metaSegment: "pacman",
-    nftAssetName: "pacman-score",
-  },
-  breakout: {
-    id: "breakout",
-    label: "XP Bricks",
-    emoji: "🏓",
-    mintFeeUstx: BigInt(20_000),
-    metaSegment: "breakout",
-    nftAssetName: "breakout-score",
-  },
+  snake:    { id: "snake",    label: "Snake",     emoji: "🐍", onchainId: 1, mintFeeUstx: BigInt(10_000), metaSegment: "score",    nftAssetName: "xp-score" },
+  tetris:   { id: "tetris",   label: "Tetris",    emoji: "🧱", onchainId: 2, mintFeeUstx: BigInt(20_000), metaSegment: "tetris",   nftAssetName: "xp-score" },
+  pacman:   { id: "pacman",   label: "Pac-Man",   emoji: "👾", onchainId: 3, mintFeeUstx: BigInt(20_000), metaSegment: "pacman",   nftAssetName: "xp-score" },
+  breakout: { id: "breakout", label: "XP Bricks", emoji: "🏓", onchainId: 4, mintFeeUstx: BigInt(20_000), metaSegment: "breakout", nftAssetName: "xp-score" },
 };
 
+const SHARED_V3: GameConfig = { contractAddress: MAINNET_DEPLOYER, contractName: V3_CONTRACT_NAME };
+
 const GAME_CONTRACTS: Record<NetworkName, Record<GameId, GameConfig>> = {
-  mainnet: {
-    snake: { contractAddress: MAINNET_DEPLOYER, contractName: "snake-score-v2" },
-    tetris: { contractAddress: MAINNET_DEPLOYER, contractName: "tetris-score-v2" },
-    pacman: { contractAddress: MAINNET_DEPLOYER, contractName: "pacman-score-v2" },
-    breakout: { contractAddress: MAINNET_DEPLOYER, contractName: "breakout-score-v1" },
-  },
-  testnet: {
-    snake: { contractAddress: MAINNET_DEPLOYER, contractName: "snake-score-v2" },
-    tetris: { contractAddress: MAINNET_DEPLOYER, contractName: "tetris-score-v2" },
-    pacman: { contractAddress: MAINNET_DEPLOYER, contractName: "pacman-score-v2" },
-    breakout: { contractAddress: MAINNET_DEPLOYER, contractName: "breakout-score-v1" },
-  },
+  mainnet: { snake: SHARED_V3, tetris: SHARED_V3, pacman: SHARED_V3, breakout: SHARED_V3 },
+  testnet: { snake: SHARED_V3, tetris: SHARED_V3, pacman: SHARED_V3, breakout: SHARED_V3 },
 };
 
 export const GAME_IDS: GameId[] = ["snake", "tetris", "pacman", "breakout"];
@@ -106,6 +72,9 @@ export function validateGameDef(game: GameDef): GameDef {
   if (!game.nftAssetName || !/^[a-zA-Z]([a-zA-Z0-9-])*[a-zA-Z0-9]$/.test(game.nftAssetName)) {
     throw new Error(`Invalid ${game.id} NFT asset name`);
   }
+  if (!Number.isInteger(game.onchainId) || game.onchainId <= 0) {
+    throw new Error(`Invalid ${game.id} onchain id`);
+  }
   return game;
 }
 
@@ -122,4 +91,14 @@ export const GAMES: Record<GameId, GameDef> = buildGameRegistry(NETWORK_NAME);
 
 export function expectedPrimaryContractId(games: Record<GameId, GameDef> = GAMES): string {
   return `${games.snake.contractAddress}.${games.snake.contractName}`;
+}
+
+export function onchainIdFor(gameId: GameId): number {
+  return GAMES[gameId].onchainId;
+}
+
+export function gameIdFromOnchain(n: number): GameId {
+  const found = GAME_IDS.find((id) => GAMES[id].onchainId === n);
+  if (!found) throw new Error(`Unknown onchain id: ${n}`);
+  return found;
 }
