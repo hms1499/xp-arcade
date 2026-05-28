@@ -51,3 +51,22 @@
 
 (define-read-only (get-last-token-id)
   (ok (var-get last-token-id)))
+
+(define-read-only (get-game (game-id uint))
+  (map-get? games game-id))
+
+(define-read-only (get-current-season (game-id uint))
+  (default-to u0 (map-get? current-season game-id)))
+
+(define-public (register-game
+    (game-id uint) (name (string-ascii 24)) (fee uint)
+    (rare-min uint) (epic-min uint) (legend-min uint))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-OWNER)
+    (asserts! (is-none (map-get? games game-id)) ERR-GAME-EXISTS)
+    (asserts! (> fee u0) ERR-BAD-FEE)
+    (map-set games game-id
+      { name: name, fee: fee, active: true,
+        rare-min: rare-min, epic-min: epic-min, legend-min: legend-min })
+    (map-set current-season game-id u1)
+    (ok true)))
