@@ -1,6 +1,6 @@
-# Handoff — XP Snake on Stacks
+# Handoff — XP Arcade on Stacks
 
-**Status as of 2026-05-16:** Contract **deployed to Stacks mainnet**. Frontend live at **https://xp-snake.vercel.app**. Trophy UI removed, claim-prize UI removed, Season Admin window built, soft countdown via env var. Repo pushed to `github.com/hms1499/xp-snake`. **Production smoke test remains.**
+**Status as of 2026-05-29:** Single registry contract **`xp-arcade-v3` deployed to mainnet** (block 8114387, Clarity 3). All 4 games registered on-chain. Frontend cut over from the per-game v2 contracts to the shared v3 registry (on `main`). Trustless pool + atomic self-claim live. `set-base-uri` set to the production domain (`get-token-uri` verified on-chain). **Remaining: set Vercel env + redeploy frontend, then a live-wallet smoke test.**
 
 ---
 
@@ -9,96 +9,83 @@
 | Thing | Value |
 |---|---|
 | Network | Stacks **mainnet** |
-| Main contract | `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.snake-score` |
-| SIP-009 trait | `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.nft-trait` |
+| Active contract | `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v3` (Clarity 3) |
+| Registered games (on-chain id) | Snake (1) · Tetris (2) · Pac-Man (3) · XP Bricks (4) — all active |
+| SIP-009 NFT asset | `…xp-arcade-v3::xp-score` |
+| Base-uri | `https://xp-snake.vercel.app/api/metadata/score/` (set via `set-base-uri`; re-callable) |
 | Deployer / `contract-owner` | `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV` |
-| Total deploy cost | ~0.098 STX |
-| Tests | contract: 42 ✓ · frontend: 125 ✓ · `npm run typecheck`: clean · `npm run build`: clean |
+| Deploy fee | ~0.5 STX |
+| Tests | contract: 83 ✓ · frontend: 117 ✓ · `typecheck`: clean · `build`: clean |
 | GitHub | `https://github.com/hms1499/xp-snake` (default branch: `main`) |
 
-On-chain right now: 1 score NFT minted (token #1, score 2, player `SPV5...QFH8Y`), pool = 0.01 STX, current season = 1.
+> Legacy v1/v2 per-game contracts remain on mainnet but are frozen and no longer wired to the frontend. Their `.clar` sources stay in `contract/contracts/` for reference.
+
+To check live on-chain state, query the contract via Hiro Explorer or `clarinet console` (e.g. `get-current-season`, `get-game`, `get-top-ten-by-season`).
 
 ---
 
-## What changed this session
+## What changed (v3 cutover)
 
-| Commit | Summary |
+| Area | Summary |
 |---|---|
-| `538218c` | Added mainnet deployment plan; deployed both contracts |
-| `4690717` | Frontend env + UI fallbacks now point to mainnet |
-| `f2dbad9` | **Fix:** STX post-condition for mint fee (was being rejected by wallet) |
-| `f2dbad9` | **Fix:** `unwrap()` helper for nested `{type, value}` shape from `@stacks/transactions` v7 `cvToValue` — was rendering "undefined" / NaN in leaderboard |
-| `521efb4` | **Fix:** moved `unwrap` to `lib/cv-unwrap.ts` so server API routes (`/api/metadata/*`) can use it |
-| `5019071` | **Refactor:** dropped Trophy NFT UI — TrophyDialog, trophy metadata route, `claim-trophy` helper, `trophySvg`, `canvas-confetti` dep. Contract still exposes trophy functions; just not surfaced. |
-| `b9825dc` | **Feat:** `SeasonAdminWindow` (owner-only, gated by `address === stacks.contractAddress`) — End Season button + per-row Send STX for past-season payouts. `LeaderboardWindow` now discovers claimable past seasons automatically (was hardcoded to `season=1` which always failed). |
-| `6a3c683` | **Feat:** soft countdown via `NEXT_PUBLIC_SEASON_END_ISO` shown in Leaderboard header + Season Admin |
-| `50c04d7` + `2c7c22f` | README rewrite |
-| (this session) | **Feat:** public player profile at `/player/[address]` — NFT grid, best/mints/seasons/fees stats, rarity breakdown, copy-address + explorer link, linked from every leaderboard row and from MyNftsWindow |
-| (this session) | **Perf:** 1y immutable `Cache-Control` on `/api/metadata/score/[id]` + 60-req/min/IP rate limit |
-| (this session) | **Refactor:** extracted `lib/holdings.ts`, `lib/player-stats.ts`, `lib/stacks-address.ts`, `lib/rate-limit.ts` (each with vitest coverage) |
-| (this session) | **Feat:** PlayerProfileWindow — in-app XP window for player profiles. Leaderboard rows + MyNftsWindow now open the window in-place instead of redirecting. Window-manager extended with payload so the same window swaps between addresses. `/player/[address]` route still exists as the public shareable view (both wrap `PlayerProfileBody`). |
-| (this session) | **CI:** added `frontend` CI scripts, GitHub Actions for frontend + contract checks, and metadata route coverage for invalid IDs, missing NFTs, success responses, and rate limiting. |
-| (this session) | **Safety:** hardened Season Admin payouts with typed `SEND` confirmation, full recipient/amount/memo preview, owner-balance preflight, and guards against resending rows already marked pending or paid. |
-| (this session) | **Review:** added frontend score-risk checks for mint dialogs and Season Admin. This flags unusually high or too-fast scores for admin review without changing contract behavior. |
-| (this session) | **Config:** hardened frontend network/contract config. `game-registry.ts` is the source of game contract names, `.env.example` points to v2, and `NEXT_PUBLIC_CONTRACT_ADDRESS` must match the configured Snake contract. |
+| Contract | New `xp-arcade-v3.clar`: single registry (`register-game`/`set-game-active`), trustless `as-contract` pool, **atomic `claim-prize` STX payout** (idempotent, capped to pool), per-game data-driven rarity, per-game/season mint cap, fixed `get-token-uri` (concats token-id), `get-contract-owner` + `get-owner` read-onlys, `transfer-ownership`. |
+| Deploy | `xp-arcade-v3` deployed to mainnet; all 4 games registered. Plans committed in `contract/deployments/` (`xp-arcade-v3*.mainnet-plan.yaml`). |
+| `set-base-uri` | Set to `https://xp-snake.vercel.app/api/metadata/score/`. Verified: `get-token-uri(u1)` → `…/score/1`. |
+| Frontend | Repointed to the single v3 contract; `game-registry.ts` carries `onchainId` per game; every `*ForGame` call prepends the game-id; `claimPrizeV3` + **Claim UI in HighScoreWindow** (post-condition `willSendLte(payout)`); SeasonAdminWindow gutted to End Season + read-only; metadata collapsed to one route `/api/metadata/score/[id]`. |
+| Cleanup | Deleted dead v2 payout modules (payout-ledger/reconciliation/payout-csv/payout-memo/stx-balance/payout-safety + tests). |
+| Docs | README + this HANDOFF rewritten for v3. |
 
 ---
 
 ## To-do for next session
 
-### 0. CI / hardening follow-up
+### 1. Set Vercel env + redeploy
 
-- [ ] Confirm the new GitHub Actions workflow is green on the remote branch.
-- [ ] Decide whether Clarinet warnings from `clarinet check` should fail CI in a future contract-hardening pass.
-- [ ] Add Playwright smoke coverage for desktop boot, game launch, mint dialog, High Score, My NFTs empty/error states, and mobile controls.
+- [ ] In Vercel Project Settings, set:
+  - `NEXT_PUBLIC_CONTRACT_ADDRESS=SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v3`
+  - `NEXT_PUBLIC_NETWORK=mainnet`
+  - `NEXT_PUBLIC_APP_URL=https://xp-snake.vercel.app`
+  - `NEXT_PUBLIC_SEASON_END_ISO=<ISO 8601 UTC>`
+- [ ] Redeploy. (Local `frontend/.env.local` already points at v3.)
+- [ ] After deploy: fetch `https://xp-snake.vercel.app/api/metadata/score/1` → expect SIP-016 JSON with an `image` field (needs token #1 to exist on-chain).
 
-### 1. Production smoke test
+### 2. Live-wallet smoke test
 
-After Vercel is live, walk through every flow with the **owner wallet** and a **second non-owner wallet**:
+Walk through with the **owner wallet** and a **second non-owner wallet** on mainnet. The pool is trustless now — payouts are **self-claimed**, not owner-sent.
 
 **As non-owner player:**
-- [ ] Boot → desktop loads, taskbar + Start menu visible
-- [ ] Start → no "Season Admin" entry (correct — hidden from non-owners)
+- [ ] Boot → desktop, taskbar + Start menu load
+- [ ] Start → no "Season Admin" entry (hidden from non-owners)
 - [ ] Connect wallet (Leather / Xverse mainnet) → tray shows address
-- [ ] Play Snake → game over → MintDialog opens with "0.01 STX" copy
-- [ ] While playing, click another XP window → Snake auto-pauses ("⏸ PAUSED"); clicking back does NOT auto-resume; Esc/Resume continues
-- [ ] HUD shows `Score: n · Best: m`; beating the stored best makes `Best` climb live
-- [ ] Game-over overlay shows gold `NEW PERSONAL BEST!` on a record, else white `BEST: n`; on-chain `NEW HIGH SCORE` line (if top-10) still appears separately without overlapping `Press any key...`
-- [ ] Mint → wallet popup shows `Will transfer exactly 0.01 STX` post-condition → confirm
-- [ ] Balloon "Mint submitted" → wait ~30s → "NFT confirmed!"
-- [ ] My NFTs → score NFT renders with inline SVG + rarity badge
-- [ ] Leaderboard → top-10 shows real addresses + scores (no "undefined"/NaN); countdown ticks
-- [ ] Any window: click the middle titlebar button → fills desktop, stops above taskbar, button shows Restore glyph; click again restores exact prior position/size
-- [ ] Double-click a titlebar → toggles maximize/restore; titlebar drag is disabled while maximized
-- [ ] Maximize then minimize to taskbar then reopen → window is still maximized; maximizing the Snake window keeps the game playable; a maximized window with tall content scrolls (no clip behind taskbar)
-- [ ] ~~If in top-10 of a *past* season: claim box appears with computed payout~~ *(claim-prize UI removed — see Known limitations)*
+- [ ] Play each game → game over → SharedMintDialog shows the right fee (Snake 0.01 STX, others 0.02 STX) and remaining mints (cap 10/game/season)
+- [ ] Mint → wallet shows the mint-fee post-condition → confirm → balloon "submitted" → ~30s → "confirmed"
+- [ ] My NFTs → score NFT renders with inline SVG + rarity badge (game-colored)
+- [ ] High Score → per-game tab shows real addresses + scores (no "undefined"/NaN); countdown ticks
+- [ ] After a season is ended, if in that season's top-10: a **Claim** button appears → click → wallet shows the inbound STX (post-condition `willSendLte`) → confirm → STX arrives, button becomes claimed/idempotent
 
 **As owner:**
-- [ ] Connect with `SP2C...3SV` → Start menu now shows 🛠️ "Season Admin"
-- [ ] Season Admin → current season + pool match on-chain (verify via `clarinet console` or Hiro Explorer)
-- [ ] Click End Season → confirm dialog → wallet popup → tx submits
-- [ ] After mine: window auto-reloads, Season 1 appears as past season with payout table
-- [ ] Click "Send STX" on a row → wallet popup for `openSTXTransfer` with correct amount → confirm
-- [ ] Recipient receives STX *(no in-app claim flow — payouts are owner-initiated only)*
+- [ ] Connect with `SP2C...3SV` → Start menu shows 🛠️ "Season Admin"
+- [ ] Season Admin → pre-flight summary (season/pool/ranked/ties) matches on-chain
+- [ ] End Season → confirm → wallet popup → tx submits → window reloads, new season starts
+- [ ] Confirm payouts require **no owner action** — winners self-claim (see player flow)
 
-### 2. Demo prep
+### 3. Optional
 
-- 2–3 min Loom of the full owner + player flow
-- Screenshot the README's "Live contracts" link working in Hiro Explorer
-- Note the Stacks-explorer URL pattern for judges: `explorer.hiro.so/txid/SP2CMK69...snake-score?chain=mainnet`
+- [ ] `set-season-end-block` per game for an on-chain deadline (countdown is off-chain build-time otherwise — not required).
+- [ ] Switch `isOwnerAddress` to call the new `get-contract-owner` read-only instead of the `addr === contractAddress` heuristic (see Known limitations #4).
+- [ ] Playwright smoke coverage (desktop boot, game launch, mint, High Score, My NFTs empty/error, mobile controls).
 
 ---
 
 ## Known limitations / quirks (carry forward)
 
-1. **Claim-prize UI removed.** The `claim-prize` contract function and `hasClaimedPrize` / `getSeasonPrize` helpers remain on-chain and in `contract-calls.ts`, but the in-app claim flow (prize discovery in LeaderboardWindow, claim button, payout display) has been dropped. Payouts are owner-initiated: the Season Admin "Send STX" button is the only workflow. Players are not expected to trigger anything.
-2. **`as-contract` not used.** All STX goes through the owner wallet, not the contract.
-3. **Score is client-trusted.** No on-chain anti-cheat. Mention in the demo.
-4. **Soft deadline only.** `NEXT_PUBLIC_SEASON_END_ISO` is display-only; doesn't block mints past the date. Owner must call `end-season` manually to honour it.
-5. **Owner detection heuristic.** "Season Admin" entry shows when `wallet.address === stacks.contractAddress`. Breaks if `transfer-ownership` is called (contract has no read-only for `contract-owner` — would need a redeploy to add). Acceptable for MVP.
-6. **Trophy code still on-chain.** `claim-trophy`, `get-trophy-data` etc. live in mainnet contract; we just don't expose them. If someone calls them directly the contract still works.
-7. **Mint fee → owner wallet, not contract.** Pool is a counter (`season-accumulated`), not a balance. Real STX accumulates in owner wallet.
-8. **No path with spaces.** Vitest's worker pool fails on URL-encoded paths.
+1. **Score is client-trusted.** No on-chain anti-cheat. Score cap (`u9999`) + mint cap (10/game/season) limit abuse. Mention in the demo.
+2. **Soft deadline only.** `NEXT_PUBLIC_SEASON_END_ISO` is display-only; doesn't block mints. Owner calls `end-season` (or anyone, once an on-chain `season-end-block` is set and reached).
+3. **Rarity thresholds + fees are permanent per game.** Set at `register-game`; no update function — only `set-game-active` can toggle a game. Choose carefully before registering.
+4. **Owner detection still heuristic in the frontend.** `isOwnerAddress` uses `addr === stacks.contractAddress`. The contract now exposes `get-contract-owner`, so this *could* be made authoritative — but the frontend doesn't call it yet. Breaks if `transfer-ownership` is ever used.
+5. **base-uri is a single string ≤ 80 chars.** `get-token-uri` = `base-uri + token-id`. If the production domain changes, re-call `set-base-uri` with `<domain>/api/metadata/score/`.
+6. **No path with spaces.** Vitest's worker pool fails on URL-encoded paths — keep the repo at `Desktop/xp-snake/`.
+7. **MCP `aibtc` wallet is not the owner.** It's `SP3BM...`, not the deployer `SP2CMK...`, so it cannot run owner-only calls (`register-game`, `set-base-uri`, `end-season` before deadline). Use the deployer wallet via a Clarinet plan (`-p <plan> -d --no-dashboard`, never `-c` on mainnet — it recomputes the fee).
 
 ---
 
@@ -106,22 +93,23 @@ After Vercel is live, walk through every flow with the **owner wallet** and a **
 
 | Where | What |
 |---|---|
-| `contract/contracts/snake-score.clar` | All on-chain logic |
-| `contract/contracts/nft-trait.clar` | SIP-009 trait |
-| `contract/tests/*.test.ts` | 34 Vitest tests |
-| `contract/deployments/default.mainnet-plan.yaml` | Mainnet plan (cost ~0.098 STX) |
-| `frontend/lib/contract-calls.ts` | All read/write contract helpers + `computePayoutUstx` + `transferStx` |
-| `frontend/lib/cv-unwrap.ts` | Client-neutral helper for `@stacks/transactions` v7 `cvToValue` |
-| `frontend/lib/season-countdown.ts` | `useSeasonCountdown` hook + `formatCountdown` |
-| `frontend/components/windows/SeasonAdminWindow.tsx` | Owner-only window (exports `isOwnerAddress`) |
-| `frontend/components/windows/LeaderboardWindow.tsx` | Top-10 + claim-prize discovery + countdown |
-| `frontend/.env.local` | Local mainnet config (gitignored) |
+| `contract/contracts/xp-arcade-v3.clar` | All active on-chain logic (single registry) |
+| `contract/contracts/nft-trait.clar` | SIP-009 trait (used by frozen legacy contracts) |
+| `contract/tests/xp-arcade-v3.test.ts` | v3 Vitest suite (83 tests total across both suites) |
+| `contract/deployments/xp-arcade-v3*.mainnet-plan.yaml` | Deploy / register-games / set-base-uri plans |
+| `frontend/lib/game-registry.ts` | gameId ↔ onchainId, shared contract, mint fee, nftAssetName |
+| `frontend/lib/contract-calls.ts` | Read/write helpers; `*ForGame` prepend game-id; `claimPrizeV3` |
+| `frontend/lib/metadata-route.ts` | `scoreMetadataResponseV3` (on-chain lookup → SIP-016 JSON + SVG) |
+| `frontend/lib/payout-schedule.ts` | Rank → prize-split fractions |
+| `frontend/components/windows/HighScoreWindow.tsx` | Per-game leaderboards + Claim button |
+| `frontend/components/windows/SeasonAdminWindow.tsx` | Owner-only End Season + read-only views (exports `isOwnerAddress`) |
+| `frontend/.env.local` | Local mainnet config (gitignored; already points at v3) |
 
 ---
 
 ## Pointers
 
-- README at the repo root has full project overview + commands
-- Design spec: `docs/superpowers/specs/2026-05-14-snake-score-nft-v2-design.md`
-- Implementation plan: `docs/superpowers/plans/2026-05-14-snake-score-nft-v2.md`
+- README at the repo root has the full project overview + commands
+- v3 design spec: `docs/superpowers/specs/2026-05-22-v3-trustless-claim-design.md`
+- v3 plans: `docs/superpowers/plans/2026-05-28-xp-arcade-v3-contract.md`, `docs/superpowers/plans/2026-05-28-frontend-v3-cutover.md`
 - Repo conventions (for AI assistants): `CLAUDE.md`
