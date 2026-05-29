@@ -1,25 +1,25 @@
 # XP Arcade on Stacks
 
-A **multi-game arcade platform** with on-chain scores and prize pools, wrapped in a Windows 95 desktop UI.
-Four arcade games — Snake, Tetris, Pac-Man, and XP Bricks — with SIP-009 score NFT contracts.
+A **multi-game arcade platform** with on-chain scores and trustless prize pools, wrapped in a Windows 95 desktop UI.
+Four arcade games — Snake, Tetris, Pac-Man, and XP Bricks — backed by a single SIP-009 score-NFT registry contract.
 
-> Play a game → mint your score as an NFT → land in the top-10 → earn a share of the season's prize pool.
+> Play a game → mint your score as an NFT → land in the top-10 → claim your share of the season's prize pool, paid directly from the contract.
 
 ---
 
-## Live contracts (mainnet)
+## Live contract (mainnet)
 
-Active score contracts with mint cap and historical leaderboard support:
+All four games share **one** registry contract. Games are added on-chain via `register-game`, not by deploying a new contract per game.
 
 | Contract | Address |
 |---|---|
-| `nft-trait` (SIP-009 trait) | [`SP2CMK...nft-trait`](https://explorer.hiro.so/txid/SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.nft-trait?chain=mainnet) |
-| `snake-score-v2` | [`SP2CMK...snake-score-v2`](https://explorer.hiro.so/txid/SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.snake-score-v2?chain=mainnet) |
-| `tetris-score-v2` | [`SP2CMK...tetris-score-v2`](https://explorer.hiro.so/txid/SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.tetris-score-v2?chain=mainnet) |
-| `pacman-score-v2` | [`SP2CMK...pacman-score-v2`](https://explorer.hiro.so/txid/SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.pacman-score-v2?chain=mainnet) |
-| `breakout-score-v1` | [`0x9b150d...a1bae0`](https://explorer.hiro.so/txid/0x9b150d7fc8f2ca47a8b2b6f1fae8228232226c7b523e574784feba4eeca1bae0?chain=mainnet) |
+| `xp-arcade-v3` | [`SP2CMK...xp-arcade-v3`](https://explorer.hiro.so/txid/SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v3?chain=mainnet) |
+
+Deployed 2026-05-28 (block 8114387, Clarity 3). Registered games (on-chain id): Snake (1), Tetris (2), Pac-Man (3), XP Bricks (4).
 
 Deployer / `contract-owner`: `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV`
+
+> **Legacy:** the earlier per-game v1/v2 contracts (`snake-score-v2`, `tetris-score-v2`, …) remain on mainnet but are frozen and no longer wired to the frontend. Their `.clar` sources stay in `contract/contracts/` for reference only.
 
 ---
 
@@ -27,11 +27,13 @@ Deployer / `contract-owner`: `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV`
 
 | Layer | Tech |
 |---|---|
-| Smart contracts | Clarity 4 · Clarinet 3.14 · Vitest 3 (`@hirosystems/clarinet-sdk` v3.9) |
+| Smart contract | Clarity 3 · Clarinet 3.14 · Vitest 3 (`@hirosystems/clarinet-sdk` v3.9) |
 | Frontend | Next.js 16 (App Router) · TypeScript 5 · Tailwind v4 · `xp.css` |
 | State | Zustand 5 (wallet / window-manager / toasts) |
 | Stacks SDK | `@stacks/connect` v8 · `@stacks/transactions` v7 · `@stacks/network` v7 |
-| Hosting | Vercel (frontend) · Stacks mainnet (contracts) |
+| Hosting | Vercel (frontend) · Stacks mainnet (contract) |
+
+> The `xp-arcade-v3` contract is pinned to `clarity_version = 3`: its trustless pool uses `as-contract`, which fails `clarinet check` under Clarity 4 in the installed Clarinet 3.14.1 toolchain.
 
 ---
 
@@ -41,12 +43,12 @@ Deployer / `contract-owner`: `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV`
 - 🧱 **Tetris** — 7 tetrominoes, wall kicks, ghost piece, level speed scaling, next-piece preview.
 - 👾 **Pac-Man** — 21×21 maze, 4 ghosts with scatter/chase/frightened AI, power pellets, 3 lives.
 - 🏓 **XP Bricks** — Breakout-style paddle/brick arcade game with lives, combos, level clear bonuses, and touch controls.
-- 💾 **Score NFTs (SIP-009)** — mint any score post-game. Snake: 0.01 STX · other games: 0.02 STX. **Capped at 10 mints per player per season.** Metadata served from `/api/metadata/{game}/[id]`.
-- 🏆 **Unified High Score window** — single window with one tab per game, rank-change indicators, live polling.
-- 🎨 **NFT rarity** — Common / Rare / Epic / Legendary based on score. Scoring is calibrated across games so rarity tiers carry equal weight regardless of game.
+- 💾 **Score NFTs (SIP-009)** — mint any score post-game. Snake: 0.01 STX · other games: 0.02 STX. **Capped at 10 mints per player per game per season.** Metadata served from a single route `/api/metadata/score/[id]` (the game is resolved from the on-chain game-id).
+- 🏆 **Unified High Score window** — single window with one tab per game, rank-change indicators, live polling, and a **Claim** button for last season's winners.
+- 🎨 **NFT rarity** — Common / Rare / Epic / Legendary, with **per-game thresholds stored on-chain** (Snake: Rare ≥ 50 · Epic ≥ 150 · Legendary ≥ 300; other games: Rare ≥ 100 · Epic ≥ 300 · Legendary ≥ 700).
 - 🖼️ **My NFTs window** — shows all score NFTs across all registered games with color-coded game badges, sorted by score.
-- 💰 **Prize pool** — every mint fee accumulates into the current season's pool. Owner closes seasons manually; payouts are sent via Season Admin.
-- 🛠️ **Season Admin (owner-only)** — see accumulated pool, end season, send STX payouts to top-10 players.
+- 💰 **Trustless prize pool** — every mint fee accrues into the contract itself (via `as-contract`) for the current season. Winners claim their share directly on-chain; no owner-custodied payouts.
+- 🛠️ **Season Admin (owner-only)** — pre-flight summary + **End Season**, plus read-only pool/leaderboard views. Payouts are no longer manual — they are self-claimed.
 - ⏳ **Soft season countdown** — display-only deadline from `NEXT_PUBLIC_SEASON_END_ISO`.
 - 🪟 **Windows 95 desktop UX** — boot screen, taskbar, Start menu → Games submenu, draggable windows, balloon notifications, pause overlays.
 - 👤 **Public player profiles** — `/player/<stx-address>` shows score NFTs, best scores, total mints, seasons played.
@@ -71,22 +73,22 @@ npm run ci         # lint + unit tests + type-check + production build
 # contract (optional)
 cd ../contract
 npm install
-npm test           # 42 Clarinet tests
+npm test           # 83 Clarinet tests
 clarinet check     # syntax-check all .clar files
 ```
 
 ### Environment variables (`frontend/.env.local`)
 
 ```env
-NEXT_PUBLIC_CONTRACT_ADDRESS=SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.snake-score-v2
+NEXT_PUBLIC_CONTRACT_ADDRESS=SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v3
 NEXT_PUBLIC_NETWORK=mainnet
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_SEASON_END_ISO=2026-06-01T00:00:00Z
 ```
 
 Set the same vars in Vercel Project Settings for deployment.
-`NEXT_PUBLIC_CONTRACT_ADDRESS` is a guardrail for the primary Snake contract and must match `frontend/lib/game-registry.ts`; the app fails fast if it points at an unexpected contract.
-If `NEXT_PUBLIC_NETWORK` is omitted, the frontend defaults to `mainnet` to match the checked-in v2 contract registry.
+`NEXT_PUBLIC_CONTRACT_ADDRESS` is a guardrail for the shared registry and must match `frontend/lib/game-registry.ts`; the app fails fast if it points at an unexpected contract.
+If `NEXT_PUBLIC_NETWORK` is omitted, the frontend defaults to `mainnet`.
 
 ---
 
@@ -95,35 +97,40 @@ If `NEXT_PUBLIC_NETWORK` is omitted, the frontend defaults to `mainnet` to match
 ```
 contract/
   contracts/
-    nft-trait.clar          SIP-009 trait
-    snake-score.clar        Snake: Score NFT + leaderboard + prize pool + mint cap (0.01 STX)
-    tetris-score.clar       Tetris: Score NFT + leaderboard + prize pool + mint cap (0.02 STX)
-    pacman-score.clar       Pac-Man: Score NFT + leaderboard + prize pool + mint cap (0.02 STX)
+    nft-trait.clar          SIP-009 trait (used by the frozen legacy contracts)
+    xp-arcade-v3.clar       ACTIVE: single multi-game registry — NFT + leaderboard
+                            + trustless pool + atomic claim + mint cap
+    snake-score.clar        Legacy v2 source (frozen, reference only)
+    tetris-score.clar       Legacy v2 source (frozen)
+    pacman-score.clar       Legacy v2 source (frozen)
+    breakout-score.clar     Legacy v1 source (frozen)
   deployments/
-    snake-score-v2.mainnet-plan.yaml
-    tetris-score-v2.mainnet-plan.yaml
-    pacman-score-v2.mainnet-plan.yaml
-    breakout-score-v1.mainnet-plan.yaml
+    xp-arcade-v3.mainnet-plan.yaml              contract deploy
+    xp-arcade-v3-register-games.mainnet-plan.yaml   register all 4 games
+    xp-arcade-v3-set-base-uri.mainnet-plan.yaml     set production metadata base-uri
 
 frontend/
   app/
     page.tsx                Desktop with all game windows
-    api/metadata/score/     Snake NFT metadata (on-chain lookup → SIP-016 JSON + SVG)
-    api/metadata/tetris/    Tetris NFT metadata
-    api/metadata/pacman/    Pac-Man NFT metadata
+    api/metadata/score/     Single NFT metadata route (resolves game by on-chain game-id)
+    player/[address]/       Public player profile pages
   components/
     desktop/                BootScreen, Desktop, Taskbar, StartMenu, SystemTray
     game/
       snake/                SnakeWindow, GameCanvas
       tetris/               TetrisWindow, TetrisCanvas, TetrisEngine
       pacman/               PacManWindow, PacManCanvas, PacManEngine, maze
+      breakout/             BreakoutWindow, BreakoutEngine
     shared/                 GameShellWindow, SharedMintDialog
-    windows/                HighScoreWindow, MyNftsWindow, SeasonAdminWindow, PlayerProfileWindow
+    windows/                HighScoreWindow (+ Claim), MyNftsWindow, SeasonAdminWindow, PlayerProfileWindow
     dialogs/                AboutDialog, BalloonNotification
   lib/
-    game-registry.ts        Central registry: gameId → contract address, mint fee, nftAssetName
-    contract-calls.ts       Read/write helpers (mint, leaderboard, season, mints-remaining)
+    game-registry.ts        Central registry: gameId ↔ onchainId, shared contract, mint fee, nftAssetName
+    contract-calls.ts       Read/write helpers (*ForGame prepend the on-chain game-id; claimPrizeV3)
     cv-unwrap.ts            Strips @stacks/transactions v7 {type, value} wrappers
+    metadata-route.ts       scoreMetadataResponseV3 — on-chain lookup → SIP-016 JSON + SVG
+    payout-schedule.ts      Rank → prize-split fractions (display + claim estimate)
+    tx-tracker.ts           Polls a txid to confirmation for toasts
     holdings.ts             Fetch score NFT holdings across all registered games
     snake-engine.ts         Pure Snake game logic
   state/
@@ -139,18 +146,16 @@ HANDOFF.md                  Live operational notes
 
 ## Architecture notes
 
-- **One contract per game, same structure.** Each clones `snake-score` with a different NFT token name, mint fee, and base-uri. All share the same prize-pool, leaderboard, and mint-cap logic.
-- **Mint cap: 10 per player per season.** Tracked on-chain via `player-season-mints {player, season} → uint`. Resets automatically when `end-season` increments the season counter. The MintDialog queries `get-mints-remaining` on open and disables the button at 0.
-- **Historical leaderboards via `get-top-ten-by-season`.** `end-season` snapshots the top-10 into `season-prize`. `get-top-ten-by-season(season)` returns the live list for the current season or the stored snapshot for past seasons.
-- **Shared frontend layer.** `GameShellWindow`, `SharedMintDialog`, `HighScoreWindow`, `MyNftsWindow`, and `useGameSession` are parameterized by `gameId` — adding a new game only requires a new engine + canvas + window component and a registry entry.
-- **`nftAssetName` decouples deploy name from NFT type name.** `snake-score.clar` deployed as `snake-score-v2` still defines `(define-non-fungible-token snake-score ...)`. The asset identifier is `…snake-score-v2::snake-score`. `game-registry.ts` carries both `contractName` and `nftAssetName` so `holdings.ts` builds the correct identifier.
-- **Top-10 unsorted on-chain.** Min-eviction at insertion time. UI sorts on read.
-- **Score is client-trusted.** No on-chain proof of gameplay. Cap (`u9999`) and mint cap (10/season) reduce worst-case abuse.
-- **Frontend score-risk review.** The mint dialog and Season Admin flag unusually high or too-fast scores for review, but this is advisory only and does not change contract behavior.
-- **Scoring calibrated across games.** Snake +1/food · Tetris `[0,1,3,5,8]×level` · Pac-Man dot=1, pellet=5, ghost=20 · XP Bricks brick/combo/level-clear bonuses. All games target comparable practical ranges so rarity tiers (Common < 167, Rare 167–499, Epic 500–999, Legendary ≥ 1000) are meaningful.
-- **Mint fee goes to `contract-owner` directly.** Contract only increments an accounting counter. Prize payouts are sent manually by the owner via Season Admin.
-- **`claim-prize` is record-only.** Returns `(ok payout)` and marks as claimed but does not transfer STX. Owner sends manually. Season Admin requires a typed confirmation and shows recipient, amount, memo, and ledger state before each payout.
-- **Season end is fully manual.** No on-chain deadline; the countdown in the UI is a soft display-only deadline from env config.
+- **Single registry contract.** `xp-arcade-v3` holds all games in a `games` map keyed by a numeric game-id. New games are added with `register-game` (owner-only) — no new deploy. `game-registry.ts` maps each frontend `gameId` to its `onchainId`, and every `*ForGame` call prepends `(uintCV onchainId)`.
+- **Trustless prize pool via `as-contract`.** Mint fees are transferred into the contract principal, not the owner wallet. `claim-prize` performs an **atomic on-chain STX transfer** of the winner's share (capped to the remaining pool), is idempotent per `{player, game-id, season}`, and is initiated by the player — there is no owner-custodied payout step.
+- **Per-game rarity, data-driven.** `register-game` stores `rare-min / epic-min / legend-min` per game; `compute-rarity` reads them at mint time. Thresholds are **permanent** (no update function) — only `set-game-active` can toggle a game.
+- **Mint cap: 10 per player, per game, per season.** Tracked via `player-season-mints {player, game-id, season} → uint`; resets when `end-season` increments that game's season. SharedMintDialog reads `get-mints-remaining` and disables the button at 0.
+- **`get-token-uri` concatenates the token-id.** Returns `base-uri + int-to-ascii(token-id)`, fixing the v2 bug where the id was dropped and marketplace metadata 404'd. Base-uri is set on mainnet to `https://xp-snake.vercel.app/api/metadata/score/` via `set-base-uri` (re-callable, owner-only).
+- **Historical leaderboards.** `end-season` snapshots `{total, top-ten}` into `season-prize`; `get-top-ten-by-season` returns the live list for the current season or the stored snapshot for past seasons.
+- **Top-10 unsorted on-chain.** Min-eviction at insertion time; the UI sorts on read.
+- **Score is client-trusted.** No on-chain proof of gameplay. A score cap (`u9999`) and the mint cap reduce worst-case abuse. The mint dialog flags unusually high/fast scores, but this is advisory UI only.
+- **`nftAssetName` decouples deploy name from NFT type.** The contract deploys as `xp-arcade-v3` but defines `(define-non-fungible-token xp-score uint)`, so the asset identifier is `…xp-arcade-v3::xp-score`. `holdings.ts` builds it from both fields in the registry.
+- **Season end is owner-or-deadline.** The owner can `end-season` anytime; anyone can call it once the optional on-chain `season-end-block` is reached. The UI countdown is a soft, display-only deadline from env config.
 
 ---
 
@@ -158,11 +163,11 @@ HANDOFF.md                  Live operational notes
 
 ```bash
 # contract (Clarinet / Vitest)
-cd contract && npm test          # 42 tests
+cd contract && npm test          # 83 tests
 cd contract && clarinet check    # syntax/type/lint checks for .clar files
 
 # frontend (Vitest)
-cd frontend && npm test          # 125 tests
+cd frontend && npm test          # 117 tests
 cd frontend && npm run typecheck # type-check
 cd frontend && npm run build     # production build
 cd frontend && npm run ci        # full local frontend CI
@@ -175,19 +180,21 @@ GitHub Actions runs two jobs on pushes to `main` and pull requests:
 
 ---
 
-## Deploying a new contract version
+## Adding a new game
 
-Stacks contracts are immutable — changes require deploying under a new name and updating `game-registry.ts`:
+The registry design means **no contract redeploy** is needed — only an on-chain `register-game` call plus a frontend entry.
+
+**On-chain (owner-only):** pick the next unused game-id and choose its **permanent** params (`name`, `fee`, `rare-min`, `epic-min`, `legend-min`), then apply a Clarinet contract-call plan with the deployer wallet:
 
 ```bash
 cd contract
-clarinet deployments apply -p deployments/snake-score-v2.mainnet-plan.yaml --no-dashboard
-clarinet deployments apply -p deployments/tetris-score-v2.mainnet-plan.yaml --no-dashboard
-clarinet deployments apply -p deployments/pacman-score-v2.mainnet-plan.yaml --no-dashboard
-clarinet deployments apply -p deployments/breakout-score-v1.mainnet-plan.yaml --no-dashboard
+clarinet deployments apply -p deployments/<your-register-game-plan>.yaml -d --no-dashboard
+# never use -c on mainnet plans — it recomputes the fee and can exceed the wallet balance
 ```
 
-After deployment, update `contractName` and `nftAssetName` in `frontend/lib/game-registry.ts` and redeploy the frontend.
+`register-game` sets the game active and initializes its season to 1.
+
+**Frontend:** add the game to `GameId`, `GAME_METADATA` (with matching `onchainId`/fee + `nftAssetName: "xp-score"`), `GAME_CONTRACTS`, `GAME_IDS`, and `buildGameRegistry()` in `lib/game-registry.ts`; add a background color in `lib/metadata-svg.ts`; add the engine/canvas/window components and a desktop launcher. The metadata route needs no change. Then redeploy the frontend.
 
 ### Frontend (Vercel)
 
@@ -197,10 +204,10 @@ After deployment, update `contractName` and `nftAssetName` in `frontend/lib/game
 
 ## Operating the contract (for the owner)
 
-1. Players mint scores → STX flows to the owner wallet; pool counter grows in each contract.
-2. Top-10 updates live per game; players watch the unified **High Score** window with the season countdown.
-3. Around the deadline, owner connects deployer wallet → **Start → Season Admin** → **End Season** → confirm in wallet.
-4. New season starts automatically (`current-season` increments, leaderboard resets, mint caps reset for all players).
-5. Past-season snapshot appears in Season Admin. Owner clicks **Send STX** per top-10 row to ship payouts.
+1. Players mint scores → STX flows **into the contract pool** (per game, per season); the top-10 updates live.
+2. Players watch the unified **High Score** window with the season countdown.
+3. Around the deadline, the owner connects the deployer wallet → **Start → Season Admin** → **End Season** → confirm in wallet. (Anyone may also end it once an on-chain `season-end-block`, if set, is reached.)
+4. A new season starts automatically (`current-season` increments; leaderboard and mint caps reset for that game).
+5. **Winners self-claim.** Each top-ranked player opens the High Score window and clicks **Claim** to receive their share, transferred atomically from the contract. No owner action is required for payouts.
 
-Payout split per closed season: top 1–3 = 20% each · top 4–10 ≈ 5.71% each. Leftover from fewer than 10 entries stays in the owner wallet.
+Payout split per closed season: top 1–3 = 20% each · top 4–10 ≈ 5.71% each, each claim capped to the remaining pool.
