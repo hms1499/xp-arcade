@@ -1,0 +1,17 @@
+id: 0
+name: XP Arcade v3 registry mainnet deployment
+network: mainnet
+stacks-node: https://api.hiro.so
+bitcoin-node: http://blockstack:blockstacksystem@bitcoin.blockstack.com:8332
+plan:
+  batches:
+  - id: 0
+    transactions:
+    - transaction-type: contract-publish
+      contract-name: xp-arcade-v3
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      cost: 500000
+      path: contracts/xp-arcade-v3.clar
+      anchor-block-only: true
+      clarity-version: 3
+    epoch: '3.3'
