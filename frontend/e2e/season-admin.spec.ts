@@ -46,10 +46,13 @@ function topEntry(player: string, score: number) {
   });
 }
 
+// v3 is a single registry contract. Owner detection is now authoritative via
+// the `get-contract-owner` read-only (lib/owner.ts), so the mock must answer it.
 async function mockSeasonAdminReads(page: Page) {
   await page.route("**/v2/contracts/call-read/**", async (route: Route) => {
     const functionName = decodeURIComponent(route.request().url().split("/").pop() ?? "");
     const responseByFunction: Record<string, ClarityValue> = {
+      "get-contract-owner": standardPrincipalCV(OWNER),
       "get-current-season": uintCV(2),
       "get-prize-pool-balance": uintCV(3_000_000),
       "get-top-ten": listCV([topEntry(PLAYER_A, 1500), topEntry(PLAYER_B, 420)]),
@@ -79,8 +82,9 @@ async function openStartMenu(page: Page) {
   await page.getByRole("button", { name: /^Start$/i }).click();
 }
 
-test("season admin is hidden from non-owner start menu", async ({ page }) => {
+test("season admin is hidden from a non-owner start menu", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
+  await mockSeasonAdminReads(page);
   await bootFast(page, PLAYER_A);
 
   await openStartMenu(page);
@@ -88,7 +92,7 @@ test("season admin is hidden from non-owner start menu", async ({ page }) => {
   await expect(page.getByRole("menuitem", { name: /Season Admin/i })).toHaveCount(0);
 });
 
-test("owner can open season admin and review payout safety signals", async ({ page }) => {
+test("owner opens season admin and sees the current-season preflight and End Season", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await mockSeasonAdminReads(page);
   await bootFast(page, OWNER);
@@ -101,35 +105,17 @@ test("owner can open season admin and review payout safety signals", async ({ pa
   });
   await expect(admin).toBeVisible();
   await expect(admin.getByRole("tab", { name: "Snake" })).toHaveAttribute("aria-selected", "true");
-  await expect(admin.getByText("Owner balance:")).toBeVisible();
-  await expect(admin.getByText(/Score review: 2 rows/)).toBeVisible();
-  await expect(admin.getByRole("columnheader", { name: "Risk" })).toBeVisible();
-  await expect(admin.getByText("High risk")).toBeVisible();
-  await expect(admin.getByRole("button", { name: "Pay all unsent" })).toBeVisible();
-  await expect(admin.getByRole("button", { name: "Export CSV" })).toBeVisible();
-});
 
-test("single payout requires typed SEND confirmation with recipient and memo", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await mockSeasonAdminReads(page);
-  await bootFast(page, OWNER);
+  // Current-season read-only summary + the owner action.
+  await expect(admin.getByText("Current Season")).toBeVisible();
+  await expect(admin.getByText(/Pool:/)).toBeVisible();
+  await expect(admin.getByText(/Preflight: top-10/)).toBeVisible();
+  await expect(admin.getByRole("button", { name: "End Season" })).toBeVisible();
 
-  await openStartMenu(page);
-  await page.getByRole("menuitem", { name: /Season Admin/i }).click();
-
-  let dialogType = "";
-  let dialogMessage = "";
-  page.once("dialog", async (dialog) => {
-    dialogType = dialog.type();
-    dialogMessage = dialog.message();
-    await dialog.dismiss();
-  });
-
-  await page.getByRole("button", { name: "Send STX" }).first().click({ force: true });
-
-  expect(dialogType).toBe("prompt");
-  expect(dialogMessage).toContain("Confirm owner payout");
-  expect(dialogMessage).toContain(`Recipient: ${PLAYER_A}`);
-  expect(dialogMessage).toContain("Amount: 0.600000 STX");
-  expect(dialogMessage).toContain("Memo: xpa-snake-s1-r1");
+  // v3 dropped the owner-payout UI — players self-claim on-chain. Past seasons
+  // are read-only snapshots, never a "Send STX"/CSV/payout console.
+  await expect(admin.getByText(/Players claim their prizes directly on-chain/)).toBeVisible();
+  await expect(admin.getByRole("button", { name: "Send STX" })).toHaveCount(0);
+  await expect(admin.getByRole("button", { name: "Export CSV" })).toHaveCount(0);
+  await expect(admin.getByRole("button", { name: "Pay all unsent" })).toHaveCount(0);
 });
