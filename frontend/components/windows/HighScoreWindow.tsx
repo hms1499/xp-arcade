@@ -10,7 +10,8 @@ import {
   claimPrizeV3,
   type TopEntry,
 } from "@/lib/contract-calls";
-import { findClaimablePrizes, type Claim } from "@/lib/claimable-prizes";
+import { findClaimablePrizes, classifyClaimTx, type Claim } from "@/lib/claimable-prizes";
+import { watchTx } from "@/lib/tx-tracker";
 import { useToasts } from "@/state/toasts";
 import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
@@ -126,6 +127,7 @@ function LeaderboardTab({
 
   const [claims, setClaims] = useState<Claim[]>([]);
   const [claimingSeason, setClaimingSeason] = useState<number | null>(null);
+  const claimWatchRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -136,6 +138,9 @@ function LeaderboardTab({
     })().catch(() => { if (!cancelled) setClaims([]); });
     return () => { cancelled = true; };
   }, [address, season, gameId]);
+
+  // Stop any in-flight claim watcher if the window unmounts.
+  useEffect(() => () => claimWatchRef.current?.(), []);
 
   const myRank =
     address && rows ? rows.findIndex((r) => r.player === address) + 1 : 0;
@@ -184,14 +189,9 @@ function LeaderboardTab({
               onClick={async (e) => {
                 e.stopPropagation();
                 setClaimingSeason(c.season);
+                let txId: string;
                 try {
-                  await claimPrizeV3(gameId, c.season, c.amountUstx);
-                  setClaims((prev) => prev.filter((x) => x.season !== c.season));
-                  useToasts.getState().push({
-                    title: "Claim submitted",
-                    body: `Prize for season ${c.season} is on its way.`,
-                    type: "success",
-                  });
+                  txId = await claimPrizeV3(gameId, c.season, c.amountUstx);
                 } catch (err) {
                   const msg = err instanceof Error ? err.message : String(err);
                   if (msg !== "cancelled") {
@@ -201,9 +201,34 @@ function LeaderboardTab({
                       type: "error",
                     });
                   }
-                } finally {
                   setClaimingSeason(null);
+                  return;
                 }
+                // Keep the button in "Confirming..." until the tx settles. The
+                // season is removed only on confirmed success; an on-chain abort
+                // (e.g. post-condition) restores the button so the player retries.
+                claimWatchRef.current?.();
+                claimWatchRef.current = watchTx(txId, (status) => {
+                  const outcome = classifyClaimTx(status);
+                  if (outcome === "pending") return;
+                  claimWatchRef.current?.();
+                  claimWatchRef.current = null;
+                  setClaimingSeason(null);
+                  if (outcome === "confirmed") {
+                    setClaims((prev) => prev.filter((x) => x.season !== c.season));
+                    useToasts.getState().push({
+                      title: "Prize received",
+                      body: `Season ${c.season} payout has arrived in your wallet.`,
+                      type: "success",
+                    });
+                  } else {
+                    useToasts.getState().push({
+                      title: "Claim failed",
+                      body: `Season ${c.season} claim was rejected on-chain. You can try again.`,
+                      type: "error",
+                    });
+                  }
+                });
               }}
               style={{
                 marginTop: 3,
@@ -214,7 +239,7 @@ function LeaderboardTab({
               }}
             >
               {claimingSeason === c.season
-                ? "Claiming..."
+                ? "Confirming..."
                 : `Claim ${(c.amountUstx / 1_000_000).toFixed(2)} STX · Season ${c.season}`}
             </button>
           ))}
