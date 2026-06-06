@@ -15,7 +15,7 @@
 | Base-uri | `https://xp-snake.vercel.app/api/metadata/score/` (set via `set-base-uri`; re-callable) |
 | Deployer / `contract-owner` | `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV` |
 | Deploy fee | ~0.5 STX |
-| Tests | contract: 83 ✓ · frontend: 117 ✓ · `typecheck`: clean · `build`: clean |
+| Tests | contract: 86 ✓ · frontend: 137 ✓ · `typecheck`: clean · `build`: clean |
 | GitHub | `https://github.com/hms1499/xp-snake` (default branch: `main`) |
 
 > Legacy v1/v2 per-game contracts remain on mainnet but are frozen and no longer wired to the frontend. Their `.clar` sources stay in `contract/contracts/` for reference.
@@ -72,7 +72,7 @@ Walk through with the **owner wallet** and a **second non-owner wallet** on main
 ### 3. Optional
 
 - [ ] `set-season-end-block` per game for an on-chain deadline (countdown is off-chain build-time otherwise — not required).
-- [ ] Switch `isOwnerAddress` to call the new `get-contract-owner` read-only instead of the `addr === contractAddress` heuristic (see Known limitations #4).
+- [x] ~~Switch `isOwnerAddress` to `get-contract-owner`~~ — done: `lib/owner.ts` (`useIsOwner`/`resolveIsOwner`) compares against the on-chain owner (session-cached, fails safe). Heuristic removed.
 - [ ] Playwright smoke coverage (desktop boot, game launch, mint, High Score, My NFTs empty/error, mobile controls).
 
 ---
@@ -86,6 +86,7 @@ Walk through with the **owner wallet** and a **second non-owner wallet** on main
 5. **base-uri is a single string ≤ 80 chars.** `get-token-uri` = `base-uri + token-id`. If the production domain changes, re-call `set-base-uri` with `<domain>/api/metadata/score/`.
 6. **No path with spaces.** Vitest's worker pool fails on URL-encoded paths — keep the repo at `Desktop/xp-snake/`.
 7. **MCP `aibtc` wallet is not the owner.** It's `SP3BM...`, not the deployer `SP2CMK...`, so it cannot run owner-only calls (`register-game`, `set-base-uri`, `end-season` before deadline). Use the deployer wallet via a Clarinet plan (`-p <plan> -d --no-dashboard`, never `-c` on mainnet — it recomputes the fee).
+8. **Tie-rank claim is order-dependent (fairness, not a drain).** Rank = `1 + count(strictly higher scores)`, so tied scores share a rank and each compute the same %. The pool is safe — `min(payout, remaining)` + `season-paid` guarantee total paid never exceeds `total` (proved by `payout invariants` tests in `xp-arcade-v3.test.ts`). But under ties the pool can be exhausted by early claimers, leaving genuine top-ten members with a reduced share or `ERR-EMPTY-POOL`. Also: integer-division dust and unclaimed shares stay locked (no sweep). Fixing fairness needs a contract change + redeploy — deferred.
 
 ---
 
