@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useWindows } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
 import { AboutDialog } from "@/components/dialogs/AboutDialog";
-import { isOwnerAddress } from "@/components/windows/SeasonAdminWindow";
+import { useIsOwner } from "@/lib/owner";
 import { GAMES } from "@/lib/game-registry";
 import { DESKTOP_THEMES, useDesktopTheme } from "@/state/desktop-theme";
 
@@ -61,7 +61,7 @@ export function StartMenu({
   const openWin = useWindows((s) => s.open);
   const disconnect = useWallet((s) => s.disconnect);
   const address = useWallet((s) => s.address);
-  const isOwner = isOwnerAddress(address);
+  const isOwner = useIsOwner(address);
   const [showAbout, setShowAbout] = useState(false);
   const theme = useDesktopTheme((s) => s.theme);
   const setTheme = useDesktopTheme((s) => s.setTheme);

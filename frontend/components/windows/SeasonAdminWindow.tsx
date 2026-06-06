@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useWindows } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
-import { stacks } from "@/lib/stacks";
+import { useIsOwner } from "@/lib/owner";
 import { Window } from "./Window";
 import {
   getCurrentSeasonForGame,
@@ -32,13 +32,10 @@ type SeasonView = {
   hasTies: boolean;
 };
 
-export function isOwnerAddress(addr: string | null): boolean {
-  return !!addr && addr === stacks.contractAddress;
-}
-
 export function SeasonAdminWindow() {
   const w = useWindows((s) => s.windows.find((win) => win.type === "season-admin"));
   const address = useWallet((s) => s.address);
+  const isOwner = useIsOwner(address);
   const [currentSeason, setCurrentSeason] = useState<number | null>(null);
   const [accumulated, setAccumulated] = useState<number | null>(null);
   const [currentTopTen, setCurrentTopTen] = useState<TopEntry[] | null>(null);
@@ -86,7 +83,7 @@ export function SeasonAdminWindow() {
 
   if (!w) return null;
 
-  if (!isOwnerAddress(address)) {
+  if (!isOwner) {
     return (
       <Window id={w.id} title="Season Admin" width={420}>
         <div className="p-3 text-xs">
