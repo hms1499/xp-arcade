@@ -5,6 +5,21 @@ import {
   type SeasonPrize,
 } from "./contract-calls";
 import type { GameId } from "./game-registry";
+import type { TxStatus } from "./tx-tracker";
+
+export type ClaimOutcome = "confirmed" | "failed" | "pending";
+
+/**
+ * Map a claim transaction's on-chain status to a UI outcome. A claim moves real
+ * STX via as-contract, so a post-condition abort (the deny-mode risk) must be
+ * treated as a terminal failure — the caller restores the Claim button so the
+ * player can retry instead of silently losing the prize.
+ */
+export function classifyClaimTx(status: TxStatus): ClaimOutcome {
+  if (status === "success") return "confirmed";
+  if (status === "pending") return "pending";
+  return "failed";
+}
 
 export type Claim = { season: number; amountUstx: number };
 

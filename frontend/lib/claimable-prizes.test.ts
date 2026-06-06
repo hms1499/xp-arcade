@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { findClaimablePrizes, type FindClaimableDeps } from "./claimable-prizes";
+import {
+  findClaimablePrizes,
+  classifyClaimTx,
+  type FindClaimableDeps,
+} from "./claimable-prizes";
 import type { SeasonPrize } from "./contract-calls";
 
 const ME = "SP_ME";
@@ -109,5 +113,27 @@ describe("findClaimablePrizes", () => {
     });
     await findClaimablePrizes("snake", ME, 2, deps);
     expect(deps.hasClaimed).not.toHaveBeenCalled();
+  });
+});
+
+describe("classifyClaimTx", () => {
+  it("treats a successful tx as confirmed", () => {
+    expect(classifyClaimTx("success")).toBe("confirmed");
+  });
+
+  it("treats a still-pending tx as pending", () => {
+    expect(classifyClaimTx("pending")).toBe("pending");
+  });
+
+  it("treats a post-condition abort as failed so the button can be restored", () => {
+    expect(classifyClaimTx("abort_by_post_condition")).toBe("failed");
+  });
+
+  it("treats a response abort as failed", () => {
+    expect(classifyClaimTx("abort_by_response")).toBe("failed");
+  });
+
+  it("treats a dropped/unknown failure as failed", () => {
+    expect(classifyClaimTx("failed")).toBe("failed");
   });
 });
