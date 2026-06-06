@@ -23,5 +23,6 @@ contract/deployments/*.local-plan.yaml
 !frontend/app/apple-icon.png
 !frontend/public/logo-game.png
 
-# Agent memory
-.claude/
+# Agent memory (keep local) — but track the docs CLAUDE.md routes to
+.claude/*
+!.claude/docs/
