@@ -181,6 +181,16 @@ export async function getLastTokenId(): Promise<number> {
   return Number(unwrap(cvToValue(res)));
 }
 
+export async function getContractOwner(): Promise<string> {
+  const res = await fetchCallReadOnlyFunction({
+    ...base,
+    functionName: "get-contract-owner",
+    functionArgs: [],
+    senderAddress: stacks.contractAddress,
+  });
+  return String(unwrap(cvToValue(res)));
+}
+
 export type SeasonPrize = {
   total: number;
   topTen: Array<{ player: string; score: number }>;
