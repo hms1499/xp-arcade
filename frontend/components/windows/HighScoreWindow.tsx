@@ -130,10 +130,10 @@ function LeaderboardTab({
   const [claiming, setClaiming] = useState(false);
 
   useEffect(() => {
-    if (!address || !season || season <= 1) { setClaim(null); return; }
-    const closed = season - 1;
     let cancelled = false;
     (async () => {
+      if (!address || !season || season <= 1) { setClaim(null); return; }
+      const closed = season - 1;
       const [prize, already] = await Promise.all([
         getSeasonPrizeForGame(gameId, closed),
         hasClaimedPrizeForGame(gameId, address, closed),

@@ -1,18 +1,30 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { uintCV, principalCV } from "@stacks/transactions";
 
-const calls: any[] = [];
+type ContractCallOpts = {
+  functionName: string;
+  functionArgs: unknown[];
+  contractName: string;
+  postConditions: unknown[];
+  onFinish?: (data: { txId: string }) => void;
+};
+const calls: ContractCallOpts[] = [];
 vi.mock("@stacks/connect", () => ({
-  openContractCall: (opts: any) => { calls.push(opts); opts.onFinish?.({ txId: "mock-txid" }); },
+  openContractCall: (opts: ContractCallOpts) => { calls.push(opts); opts.onFinish?.({ txId: "mock-txid" }); },
   request: vi.fn(),
 }));
 
-const readCalls: any[] = [];
+type ReadOnlyOpts = {
+  functionName: string;
+  functionArgs: unknown[];
+  contractName: string;
+};
+const readCalls: ReadOnlyOpts[] = [];
 vi.mock("@stacks/transactions", async (orig) => {
-  const actual = await (orig as any)();
+  const actual = (await orig()) as typeof import("@stacks/transactions");
   return {
     ...actual,
-    fetchCallReadOnlyFunction: (opts: any) => {
+    fetchCallReadOnlyFunction: (opts: ReadOnlyOpts) => {
       readCalls.push(opts);
       return Promise.resolve(actual.noneCV());
     },
