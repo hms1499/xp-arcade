@@ -451,3 +451,82 @@ describe("multi-game isolation (integration)", () => {
       .toBeErr(Cl.uint(105)); // Snake season 1 not closed
   });
 });
+
+// Invariant / characterization tests for the prize accounting. These guard the
+// money-moving paths against over-distribution and pin down the known
+// claim-fairness limitations under tied scores (see
+// .claude/docs/prize-logic.md "Known edge cases").
+describe("payout invariants (review hardening)", () => {
+  const FEE = 10000n;
+  const okUint = (r: any): bigint => r.value.value as bigint;
+
+  function closeSeasonWith(scores: number[]) {
+    registerSnake();
+    scores.forEach((s, i) =>
+      simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(s), Cl.stringAscii(`p${i}`)], w(i + 1)));
+    simnet.callPublicFn(C, "end-season", [Cl.uint(1)], deployer);
+  }
+
+  it("never distributes more than the pool with distinct ranks; dust stays locked", () => {
+    // 8 distinct scores: ranks 1-3 get 20% each, ranks 4-8 get 4/70 each.
+    const scores = [80, 70, 60, 50, 40, 30, 20, 10];
+    const total = BigInt(scores.length) * FEE; // 80000
+    closeSeasonWith(scores);
+
+    let paid = 0n;
+    scores.forEach((_, i) => {
+      const r = simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(i + 1)).result;
+      paid += okUint(r); // every top-ten member claims successfully
+    });
+
+    // Safety invariant: the contract never pays out more than it collected.
+    expect(paid <= total).toBe(true);
+    expect(simnet.callReadOnlyFn(C, "get-season-paid", [Cl.uint(1), Cl.uint(1)], w(1)).result)
+      .toBeUint(Number(paid));
+
+    // Whatever the rank schedule + integer division leaves undistributed is
+    // permanently retained by the contract — there is no sweep function.
+    const contractId = `${deployer}.${C}`;
+    const held = simnet.getAssetsMap().get("STX")?.get(contractId) ?? 0n;
+    expect(held).toBe(total - paid);
+    expect(held > 0n).toBe(true);
+  });
+
+  it("tied top scores can drain the pool and starve a genuine lower-ranked claimant", () => {
+    // Five players tie at 80 (all rank 1 -> 20% each = 100%), plus two real lower ranks.
+    const scores = [80, 80, 80, 80, 80, 70, 60];
+    const total = BigInt(scores.length) * FEE; // 70000
+    closeSeasonWith(scores);
+
+    let paid = 0n;
+    for (let i = 1; i <= 5; i++) {
+      paid += okUint(simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(i)).result);
+    }
+    expect(paid).toBe(total); // tie block consumes the entire pool
+
+    // A legitimate rank-6 top-ten member is now left with nothing.
+    const r = simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(6)).result;
+    expect(r).toBeErr(Cl.uint(106)); // ERR-EMPTY-POOL
+  });
+
+  it("individual payout depends on claim order under ties (fairness limitation)", () => {
+    const scores = [80, 80, 80, 80, 80, 70, 60];
+    closeSeasonWith(scores);
+
+    // Rank-6 player claims first and receives a full schedule share.
+    const early = okUint(simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(6)).result);
+    expect(early).toBe(4000n); // 70000 * 4 / 70
+
+    // The five tied leaders then claim; the pool can no longer cover 5 * 14000.
+    let paid = early;
+    const amounts: bigint[] = [];
+    for (let i = 1; i <= 5; i++) {
+      const v = okUint(simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(i)).result);
+      amounts.push(v);
+      paid += v;
+    }
+
+    expect(paid <= 70000n).toBe(true);             // pool never over-drained
+    expect(amounts.some((a) => a < 14000n)).toBe(true); // a tied player is short-changed by order
+  });
+});
