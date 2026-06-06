@@ -7,12 +7,10 @@ import {
   getBestScoreForGame,
   getCurrentSeasonForGame,
   getTopTenForGame,
-  getSeasonPrizeForGame,
-  hasClaimedPrizeForGame,
   claimPrizeV3,
-  computePayoutUstx,
   type TopEntry,
 } from "@/lib/contract-calls";
+import { findClaimablePrizes, type Claim } from "@/lib/claimable-prizes";
 import { useToasts } from "@/state/toasts";
 import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
@@ -126,25 +124,16 @@ function LeaderboardTab({
   const season = activeState?.season ?? null;
   const playerBest = activeState?.playerBest ?? null;
 
-  const [claim, setClaim] = useState<null | { season: number; amountUstx: number }>(null);
-  const [claiming, setClaiming] = useState(false);
+  const [claims, setClaims] = useState<Claim[]>([]);
+  const [claimingSeason, setClaimingSeason] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (!address || !season || season <= 1) { setClaim(null); return; }
-      const closed = season - 1;
-      const [prize, already] = await Promise.all([
-        getSeasonPrizeForGame(gameId, closed),
-        hasClaimedPrizeForGame(gameId, address, closed),
-      ]);
-      if (cancelled || !prize || already) { setClaim(null); return; }
-      const mine = prize.topTen.find((e) => e.player === address);
-      if (!mine) { setClaim(null); return; }
-      const higher = prize.topTen.filter((e) => e.score > mine.score).length;
-      const rank = higher + 1;
-      setClaim({ season: closed, amountUstx: computePayoutUstx(prize.total, rank) });
-    })().catch(() => { if (!cancelled) setClaim(null); });
+      if (!address || !season) { setClaims([]); return; }
+      const found = await findClaimablePrizes(gameId, address, season);
+      if (!cancelled) setClaims(found);
+    })().catch(() => { if (!cancelled) setClaims([]); });
     return () => { cancelled = true; };
   }, [address, season, gameId]);
 
@@ -187,19 +176,20 @@ function LeaderboardTab({
               : "Loading live scores"}
             {myRank > 0 && <> · Your rank: #{myRank}</>}
           </span>
-          {claim && (
+          {claims.map((c) => (
             <button
-              disabled={claiming}
+              key={c.season}
+              disabled={claimingSeason !== null}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={async (e) => {
                 e.stopPropagation();
-                setClaiming(true);
+                setClaimingSeason(c.season);
                 try {
-                  await claimPrizeV3(gameId, claim.season, claim.amountUstx);
-                  setClaim(null);
+                  await claimPrizeV3(gameId, c.season, c.amountUstx);
+                  setClaims((prev) => prev.filter((x) => x.season !== c.season));
                   useToasts.getState().push({
                     title: "Claim submitted",
-                    body: `Prize for season ${claim.season} is on its way.`,
+                    body: `Prize for season ${c.season} is on its way.`,
                     type: "success",
                   });
                 } catch (err) {
@@ -212,7 +202,7 @@ function LeaderboardTab({
                     });
                   }
                 } finally {
-                  setClaiming(false);
+                  setClaimingSeason(null);
                 }
               }}
               style={{
@@ -220,14 +210,14 @@ function LeaderboardTab({
                 justifySelf: "start",
                 fontSize: 10,
                 fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
-                cursor: claiming ? "wait" : "default",
+                cursor: claimingSeason === c.season ? "wait" : "default",
               }}
             >
-              {claiming
+              {claimingSeason === c.season
                 ? "Claiming..."
-                : `Claim ${(claim.amountUstx / 1_000_000).toFixed(2)} STX`}
+                : `Claim ${(c.amountUstx / 1_000_000).toFixed(2)} STX · Season ${c.season}`}
             </button>
-          )}
+          ))}
         </div>
         <div style={{ display: "grid", gap: 2, textAlign: "right" }}>
           <span>
