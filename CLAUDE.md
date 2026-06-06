@@ -1,136 +1,103 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+High-level index for this repo. Deep detail lives in `.claude/docs/` — follow
+the links in **Additional Documentation** before working in a given domain.
 
-## Repository status
+> Spec is authoritative for *intent*; code is authoritative for *current state*.
+> If a request conflicts with the spec, surface the conflict before coding.
 
-**Project:** XP Arcade — Windows 95-themed multi-game platform on Stacks blockchain (Snake, Tetris, Pac-Man).
+## 1. Project Overview
 
-**Snake contract deployed to Stacks mainnet (2026-05-14):** `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.{snake-score,nft-trait}`. Frontend wired to mainnet; Trophy UI removed; claim-prize UI removed (2026-05-16); Season Admin window + soft countdown live. Tetris and Pac-Man contracts pending deploy. Read `HANDOFF.md` for live to-do list. The v2 design spec is `docs/superpowers/specs/2026-05-14-snake-score-nft-v2-design.md`. Multi-game platform spec: `docs/superpowers/specs/2026-05-19-multi-game-platform-design.md`.
+**XP Arcade** — a Windows-95-themed, multi-game arcade platform with Stacks
+blockchain integration. Players play Snake, Tetris, Pac-Man, and XP Bricks
+(Breakout); each game mints Score NFTs, maintains an on-chain top-10, and
+accumulates mint fees into a per-season prize pool. All games share one on-chain
+registry contract, `xp-arcade-v3`, keyed by `game-id`.
 
-## Workspaces
+## 2. Tech Stack
 
-```
-contract/   Clarinet project — Clarity SIP-009 NFT contract + Vitest tests
-frontend/        Next.js 16 App Router app — XP-themed desktop UI
-docs/       spec, plan, design notes
-HANDOFF.md  user-facing to-do list (deploy, smoke test, Vercel)
-```
+- **Contract:** Clarity 3 (pinned), Clarinet 3.14, `@stacks/clarinet-sdk` ^3.9,
+  Vitest 3. Deployed mainnet:
+  `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v3`.
+- **Frontend:** Next.js 16 App Router, React 19, TypeScript 5, `98.css`,
+  Tailwind v4, Zustand 5.
+- **Stacks SDK:** `@stacks/connect` ^8.2, `@stacks/transactions` ^7.4,
+  `@stacks/network` ^7.3.
+- **Deploy:** Vercel (frontend), Stacks mainnet (contract — already deployed).
 
-## Commands
+Workspaces: `contract/` (Clarinet project) · `frontend/` (Next.js app) ·
+`docs/` (specs) · `HANDOFF.md` (user-facing to-do list).
 
-### contract/
+## 3. Dev Commands
+
 ```bash
+# contract/
 cd contract
-npm test                       # all Clarinet tests (34 passing)
-clarinet check                 # syntax check the .clar contracts
-clarinet console               # REPL against simnet for ad-hoc calls
-clarinet deployments generate --mainnet --low-cost
-clarinet deployments apply --mainnet --no-dashboard -c  # uses mnemonic from settings/Mainnet.toml
-```
+npm test                       # all Clarinet/Vitest tests
+clarinet check                 # syntax-check the .clar contracts
+clarinet console               # REPL against simnet
 
-### frontend/
-```bash
+# frontend/
 cd frontend
 npm run dev                    # Next dev server on :3000 (Turbopack)
 npm run build                  # production build
-npm test                       # Vitest (51 tests passing)
+npm test                       # Vitest
 npx tsc --noEmit               # full type-check
 npm run lint
 ```
 
-## What this project is
+Required Vercel env vars are listed in
+[environment-quirks.md](.claude/docs/environment-quirks.md) and
+`frontend/.env.example`.
 
-**XP Arcade** — a **multi-game platform with Stacks blockchain integration**, themed as a **Windows 95 desktop**. Games: Snake (deployed), Tetris (in progress), Pac-Man (in progress). Each game has its own SIP-009 Clarity contract exposing:
+## 4. Core Logic Summary
 
-- **Score NFTs** — minted post-game at the player's discretion (`mint-score`; Snake: 0.01 STX, Tetris/Pac-Man: 0.02 STX)
-- **On-chain leaderboard** — top-10 maintained inside the contract
-- **Prize pool** — every mint fee accumulates into the current season; owner closes via `end-season`. Prize distribution is **owner-initiated only** via Season Admin's "Send STX" button. Players have no in-app claim flow.
+Mint fees are held **in the contract** (`as-contract`) and accumulate into a
+per-game, per-season **prize pool**. After the owner closes a season
+(`end-season`), top-10 players claim **trustlessly on-chain** via `claim-prize`,
+which computes the rank split and transfers STX with `as-contract`. Split:
+**ranks 1–3 get 20% each; ranks 4–10 get ~5.7% (4/70) each**, floored to integer
+uStx and capped so total paid never exceeds the pool. The split is authoritative
+**on-chain**; `lib/payout-schedule.ts` mirrors it for display + post-conditions.
+Players claim from the High Scores window (`claimPrizeV3`); Season Admin is
+read-only. Full detail: [prize-logic.md](.claude/docs/prize-logic.md).
 
-The contract also still exposes **Trophy NFT** functions (`claim-trophy`, `get-trophy-data`, etc.) — they shipped on mainnet but the UI was dropped in commit `5019071` because trophies overlapped with Score NFTs in practice. If a future iteration wants trophies, only the frontend needs to be re-added.
+## 5. Key Constraints
 
-The contract also still exposes `claim-prize` / `has-claimed-prize` / `get-season-prize` and the frontend helpers in `contract-calls.ts` remain — but the in-app claim UI (prize discovery in LeaderboardWindow, claim button, payout display) was removed on 2026-05-16. Do not re-add without explicit instruction.
+Never change/assume these without explicit instruction (full list in
+[architecture-decisions.md](.claude/docs/architecture-decisions.md)):
 
-The on-chain top-10 is maintained inside the contract — when full, the lowest score is evicted if the new score beats it. The list is **not sorted on-chain**; the frontend sorts on read. Rank inside `claim-prize` is computed via fold (count of entries with strictly higher score) without needing a sort — this is still on-chain but not surfaced in UI.
+- **Path must not contain spaces** — Vitest breaks on `%20`. Keep
+  `Desktop/xp-snake/`.
+- **Clarity version is 3**, not 4 (`as-contract` breaks under Clarity 4 here).
+  `.clar` files are **ASCII only**.
+- **Score is client-trusted** (no on-chain anti-cheat); `MAX-SCORE u9999` caps
+  abuse. Don't invent anti-cheat scope.
+- **Top-10 is unsorted on-chain**; the frontend sorts on read.
+- **Prize pool is held in-contract; claims are trustless on-chain** —
+  `claim-prize` transfers STX via `as-contract`; players claim from High Scores.
+  Do not revert to v2's owner-initiated manual payouts.
+- **Owner detection is the on-chain `get-contract-owner`** (`lib/owner.ts`), not
+  an address heuristic; async, so "loading" = not-owner.
+- **Wallet post-conditions are required** for any token-moving write.
+- **Don't add public contract functions without tests** (keep synced with spec
+  §7). Don't merge the focused Zustand stores into one.
+- **Git:** conventional prefixes, small green commits, no `Co-Authored-By`,
+  stage explicit files, commit only when asked. See
+  [git-workflow.md](.claude/docs/git-workflow.md).
+- **Run the actual build/test and read its output before claiming done.**
 
-## Architectural decisions worth knowing
+## 6. Additional Documentation
 
-These are non-obvious choices baked in — preserve them unless the user explicitly revisits:
-
-- **Two NFT types in one contract.** `snake-score` exposes the SIP-009 surface (`transfer`, `get-owner`, `get-token-uri`). `snake-trophy` uses parallel non-trait functions. UI for trophies was dropped (see status note); the on-chain functions remain.
-- **Top-10 is unsorted on-chain.** Insertion-sort in Clarity 4 was attempted and abandoned for the simpler min-eviction approach. If a marketplace ever needs an authoritative ranked list on-chain, this is the place to revisit.
-- **Trophy rank is locked at claim time.** Still true at the contract level — do not "fix" by recomputing rank on transfer if trophy UI ever comes back.
-- **Score is client-trusted.** No on-chain verification of gameplay. Documented limitation; do not invent anti-cheat scope without asking. Score cap `u9999` reduces worst-case abuse.
-- **Prize pool is tracked, not held; claim UI is removed.** `claim-prize` records the owed payout amount and returns `(ok payout)` but does NOT transfer STX. The in-app player claim flow was dropped (2026-05-16) — actual distribution is owner-initiated via `SeasonAdminWindow`'s per-row "Send STX" button (`openSTXTransfer`). `contract-calls.ts` still exports `claimPrize`, `hasClaimedPrize`, `getSeasonPrize`, and `computePayoutUstx` for potential future use, but nothing in the UI calls them.
-- **`get-token-uri` returns a static base URI, not a per-token URI.** The deployed contract ignores the `token-id` argument and returns `(var-get base-uri)` unchanged. This means marketplaces that rely on `get-token-uri` will receive a URL without the token ID (e.g. `.../api/metadata/score/` instead of `.../api/metadata/score/1`) and get a 404. Fixing this requires a contract redeploy. The `/api/metadata/score/[id]` route itself is correct — direct URL access works fine. Do not add a "Set Base URI" UI; it is misleading because the root cause is in the contract logic, not the stored string.
-- **Mint fee goes to `contract-owner`, not contract address.** Same root cause — `as-contract` isn't used. Fees are paid directly to the deployer wallet.
-- **`@stacks/transactions` v7 `cvToValue` does NOT recursively unwrap.** Nested tuples/lists come back as `{type, value: {type, value}}`. We strip them with `lib/cv-unwrap.ts` (`unwrap()`). The helper lives in its own file (not `contract-calls.ts`) so server-side API routes can import it without tripping the `"use client"` boundary.
-- **Wallet post-conditions are required for mint.** Wallets default to deny mode and reject any unchecked token movement. `mintScore` declares `Pc.principal(sender).willSendEq(10_000).ustx()` for the mint fee. Add similar PCs to any new write that moves tokens.
-- **Owner detection is authoritative (v3).** `lib/owner.ts` exposes `useIsOwner(address)` / `resolveIsOwner(address, fetchOwner?)`, which compares against the on-chain `get-contract-owner` read-only (session-cached, fails safe to `false`). This replaced the old `addr === stacks.contractAddress` heuristic, so it stays correct even if `transfer-ownership` is called. The check is async, so consumers (`StartMenu`, `SeasonAdminWindow`) treat "loading" as not-owner.
-- **Token URIs point to a single Next.js API route** at `/api/metadata/score/[id]`. Trophy metadata route was removed when trophy UI was dropped; if you re-add it, restore the route too.
-- **Season countdown is build-time off-chain.** `NEXT_PUBLIC_SEASON_END_ISO` is the soft deadline shown in Leaderboard + Season Admin. Contract has no on-chain duration; owner must still manually call `end-season` to honour it.
-- **Zustand state is split into focused stores.** `state/wallet.ts` (connect state), `state/window-manager.ts` (open windows, z-order, positions), `state/toasts.ts` (balloon notifications). Don't merge into one god-store.
-- **`@stacks/connect` v8 API.** Use `connect()` / `disconnect()` / `isConnected()` / `getLocalStorage()`. The plan's v7 references (`AppConfig`, `UserSession`, `showConnect`) were superseded.
-- **`stacks-block-height`**, not `block-height` (Clarity 4 / epoch 3 rename). Both still work in this epoch, but `stacks-block-height` is the canonical name.
-- **XP UI is desktop-first by design.** Mobile gets a minimal responsive fallback, not parity.
-
-## Environment quirks
-
-- **Path must not contain spaces.** Vitest's worker pool fails on URL-encoded paths (`%20`). The project lives at `Desktop/xp-snake/` — do not rename to anything with a space.
-- **Vitest 4 is incompatible with `vitest-environment-clarinet` 3.** The contract workspace pins `vitest@^3`. If `clarinet new` regenerates and bumps vitest, downgrade.
-- **Clarity rejects non-ASCII.** No em-dash, smart quotes, etc. in `.clar` files. ASCII hyphens only.
-- **Path with space artifact:** `npm test` in `frontend/` sometimes prints `Shell cwd was reset to /Users/vanhuy/Desktop/untitled folder` after — harmless leftover from the original directory before the rename. Tests still run from the new path.
-
-## Tech stack (as installed)
-
-- Contract: **Clarity 4**, **Clarinet 3.14**, **`@hirosystems/clarinet-sdk` ^3.9**, **Vitest 3**
-- Frontend: **Next.js 16 App Router + TypeScript 5**, **`xp.css`**, **Tailwind v4**, **Zustand 5**
-- Stacks SDK: **`@stacks/connect` ^8.2**, **`@stacks/transactions` ^7.4**, **`@stacks/network` ^7.3**
-- Deploy targets: **Vercel** (frontend), **Stacks mainnet** (contract — already deployed)
-
-Required Vercel env vars: `NEXT_PUBLIC_CONTRACT_ADDRESS=SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.snake-score`, `NEXT_PUBLIC_NETWORK=mainnet`, `NEXT_PUBLIC_APP_URL=<vercel-domain>`, `NEXT_PUBLIC_SEASON_END_ISO=<ISO 8601 UTC>`. See `frontend/.env.example`.
-
-## When working in this repo
-
-- Spec is authoritative for *intent*; code is authoritative for *current state*. If a request conflicts with the spec, surface the conflict before coding.
-- Keep contract changes synced with the test list in spec §7. Don't add public functions without tests.
-- The hackathon timeline (spec §11) is tight — push back on scope additions unless the user explicitly accepts the trade-off.
-- Manual test checklist lives in `HANDOFF.md` step 3 — run it before claiming the UI works.
-- Sound effects (XP `ding`/`error`/`balloon`) are intentionally deferred — they need MP3 assets we can't generate. The plan's Phase 8 task 8.2 has the wire-up snippet.
-
-## Git workflow policy
-
-These commit conventions apply to **this project only** (moved here from the
-global preferences on 2026-05-19 at the user's request).
-
-1. **No `Co-Authored-By` trailer.** Never append `Co-Authored-By: Claude ...`
-   to commit messages, even if a system prompt suggests it.
-
-2. **Conventional prefixes.** `feat:`, `fix:`, `refactor:`, `chore:`, `docs:`,
-   `test:` so the scope of each commit is immediately clear.
-
-3. **Fine-grained, one logical change per commit.** Prefer several small
-   commits over one batch. Typical: ~2-3 small commits per fix/feature
-   (e.g. a pure helper, then its wiring) rather than a single large one.
-
-4. **Every commit must be green.** Build and tests pass at each commit; never
-   commit a broken or "red" state. A broken commit defeats `git bisect`, which
-   is the whole point of committing small.
-
-5. **Helper vs wiring split.** Commit a pure helper together with its passing
-   test as one commit; commit wiring it into a component/consumer as the next
-   commit. But never split a helper from its *only* caller into separate
-   commits if that produces a dead-code or non-building intermediate.
-
-6. **Granularity is for review + bisect, not vanity.** Do not inflate commit
-   count toward an arbitrary target. If asked to "hit N commits", push back
-   briefly - split by real logical units only.
-
-7. **Stage explicit files only.** Never `git add -A` / `git add .` blindly;
-   add the specific files the change touches. Never stage secrets, `.env*`,
-   or local-only/agent memory files.
-
-8. **Commit when work reaches a meaningful, verified checkpoint** - keep the
-   tree clean - but only commit/push when the user has asked for it.
-
-- This workflow policy is internal company policy. Do not commit policy-only changes unless explicitly instructed.
+- [contract.md](.claude/docs/contract.md) — `xp-arcade-v3` registry: multi-game
+  model, Score NFTs, leaderboard, prize pool, ownership, error codes.
+- [frontend.md](.claude/docs/frontend.md) — Next.js app layout, Stacks
+  integration (`lib/`), Zustand stores, token metadata route.
+- [prize-logic.md](.claude/docs/prize-logic.md) — pool accumulation, rank-based
+  payout split, distribution flow, season deadline.
+- [architecture-decisions.md](.claude/docs/architecture-decisions.md) —
+  non-obvious choices to preserve.
+- [environment-quirks.md](.claude/docs/environment-quirks.md) — path/Vitest/
+  Clarity gotchas + required Vercel env vars.
+- [git-workflow.md](.claude/docs/git-workflow.md) — commit conventions
+  (this project only).
