@@ -39,6 +39,26 @@ To check live on-chain state, query the contract via Hiro Explorer or `clarinet 
 
 ## To-do for next session
 
+### 0. Deploy `xp-arcade-v4` (tie-rank fairness) — NEW, supersedes v3
+
+Branch `feat/tie-rank-fairness-v4` adds `xp-arcade-v4.clar`: a faithful copy of v3
+whose prize path is **tie-fair** (split-occupied payout — tied players split the
+band value of the positions they occupy, order-independent), gated by a
+**burn-block claim window** (`CLAIM-WINDOW = u4320` ≈ 30 days), with a
+permissionless **`finalize-season`** that rolls `total − paid` (incl. dust +
+unclaimed) into the game's open-season pool. New read-onlys:
+`get-claimable-amount`, `is-claim-open`, `get-season-finalized`. Frontend now
+reads the payout + window state on-chain. Contract suite 139 ✓; frontend 142 ✓ ·
+tsc clean (2 pre-existing `.next/types` artifact errors only) · build ✓.
+
+Deploy (deployer wallet `SP2C…3SV`, mainnet):
+- [ ] Deploy `xp-arcade-v4` via a Clarinet plan (`-p <plan> -d --no-dashboard`, **never** `-c` on mainnet).
+- [ ] `register-game` ×4 — Snake (1) · Tetris (2) · Pac-Man (3) · XP Bricks (4), **same fees + rarity thresholds as v3** (fees/rarity are permanent per game — copy v3's exactly).
+- [ ] `set-base-uri` → `https://xp-snake.vercel.app/api/metadata/score/`; verify `get-token-uri(u1)` → `…/score/1`.
+- [ ] Set Vercel `NEXT_PUBLIC_CONTRACT_ADDRESS=SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4` + redeploy. (Local `frontend/.env.local` already updated to v4.)
+- [ ] Live-wallet smoke (see §2) **plus v4-specific**: claim **before** window closes works; claim **after** window → "Claim window closed" label (no button) / `ERR-CLAIM-CLOSED`; after window, anyone calls `finalize-season` → unclaimed rolls into the current pool (`get-prize-pool-balance` increases, `get-season-finalized` → true).
+- [ ] v3 seasons: close out / let players claim **on v3** independently — no migration of v3 state or funds.
+
 ### 1. Set Vercel env + redeploy
 
 - [ ] In Vercel Project Settings, set:
@@ -86,7 +106,15 @@ Walk through with the **owner wallet** and a **second non-owner wallet** on main
 5. **base-uri is a single string ≤ 80 chars.** `get-token-uri` = `base-uri + token-id`. If the production domain changes, re-call `set-base-uri` with `<domain>/api/metadata/score/`.
 6. **No path with spaces.** Vitest's worker pool fails on URL-encoded paths — keep the repo at `Desktop/xp-snake/`.
 7. **MCP `aibtc` wallet is not the owner.** It's `SP3BM...`, not the deployer `SP2CMK...`, so it cannot run owner-only calls (`register-game`, `set-base-uri`, `end-season` before deadline). Use the deployer wallet via a Clarinet plan (`-p <plan> -d --no-dashboard`, never `-c` on mainnet — it recomputes the fee).
-8. **Tie-rank claim is order-dependent (fairness, not a drain).** Rank = `1 + count(strictly higher scores)`, so tied scores share a rank and each compute the same %. The pool is safe — `min(payout, remaining)` + `season-paid` guarantee total paid never exceeds `total` (proved by `payout invariants` tests in `xp-arcade-v3.test.ts`). But under ties the pool can be exhausted by early claimers, leaving genuine top-ten members with a reduced share or `ERR-EMPTY-POOL`. Also: integer-division dust and unclaimed shares stay locked (no sweep). Fixing fairness needs a contract change + redeploy — deferred.
+8. **Tie-rank claim is order-dependent in v3 — FIXED in v4 (pending deploy).** In
+   v3, rank = `1 + count(strictly higher scores)`, so tied scores share a rank and
+   under ties the pool can be exhausted by early claimers (genuine top-ten members
+   get a reduced share or `ERR-EMPTY-POOL`); dust + unclaimed shares stay locked.
+   The pool is always safe (`min(payout, remaining)` + `season-paid`), just unfair.
+   **`xp-arcade-v4`** (branch `feat/tie-rank-fairness-v4`) fixes this: split-occupied
+   payout is order-independent, and `finalize-season` rolls dust + unclaimed into
+   the next pool (nothing locked forever). See §0 for deploy. Until v4 is live on
+   mainnet + the frontend repointed, the live app still runs v3 with this quirk.
 
 ---
 
