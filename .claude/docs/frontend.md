@@ -19,7 +19,7 @@ state/                Zustand stores (focused, not a god-store)
 ## Stacks integration (`lib/`)
 
 - `game-registry.ts` — single source of truth for game ids, labels, fees,
-  contract address/name. All games point at shared `xp-arcade-v3`. Mirror any
+  contract address/name. All games point at shared `xp-arcade-v4`. Mirror any
   on-chain id change here.
 - `contract-calls.ts` — read-only + write calls, incl. the active claim path:
   `claimPrizeV3`, `getSeasonPrizeForGame`, `hasClaimedPrizeForGame` (used by the
@@ -37,7 +37,7 @@ state/                Zustand stores (focused, not a god-store)
 ## Token metadata
 
 Token URIs point at one Next.js route: `app/api/metadata/score/[id]/route.ts`.
-The v3 contract's `get-token-uri` correctly appends the `token-id` to the base
+The v4 contract's `get-token-uri` correctly appends the `token-id` to the base
 URI (the v2 static-URI 404 bug is fixed).
 
 ## State (`state/`)

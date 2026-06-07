@@ -13,13 +13,13 @@ All four games share **one** registry contract. Games are added on-chain via `re
 
 | Contract | Address |
 |---|---|
-| `xp-arcade-v3` | [`SP2CMK...xp-arcade-v3`](https://explorer.hiro.so/txid/SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v3?chain=mainnet) |
+| `xp-arcade-v4` | [`SP2CMK...xp-arcade-v4`](https://explorer.hiro.so/txid/SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4?chain=mainnet) |
 
-Deployed 2026-05-28 (block 8114387, Clarity 3). Registered games (on-chain id): Snake (1), Tetris (2), Pac-Man (3), XP Bricks (4).
+Deployed 2026-06-07 (block 8209345, Clarity 3). Registered games (on-chain id): Snake (1), Tetris (2), Pac-Man (3), XP Bricks (4).
 
 Deployer / `contract-owner`: `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV`
 
-> **Legacy:** the earlier per-game v1/v2 contracts (`snake-score-v2`, `tetris-score-v2`, …) remain on mainnet but are frozen and no longer wired to the frontend. Their `.clar` sources stay in `contract/contracts/` for reference only.
+> **Legacy:** the earlier per-game v1/v2 contracts (`snake-score-v2`, `tetris-score-v2`, …) and `xp-arcade-v3` remain on mainnet but are frozen and no longer wired to the frontend. Their `.clar` sources stay in `contract/contracts/` for reference only.
 
 ---
 
@@ -33,7 +33,7 @@ Deployer / `contract-owner`: `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV`
 | Stacks SDK | `@stacks/connect` v8 · `@stacks/transactions` v7 · `@stacks/network` v7 |
 | Hosting | Vercel (frontend) · Stacks mainnet (contract) |
 
-> The `xp-arcade-v3` contract is pinned to `clarity_version = 3`: its trustless pool uses `as-contract`, which fails `clarinet check` under Clarity 4 in the installed Clarinet 3.14.1 toolchain.
+> The `xp-arcade-v4` contract is pinned to `clarity_version = 3`: its trustless pool uses `as-contract`, which fails `clarinet check` under Clarity 4 in the installed Clarinet 3.14.1 toolchain.
 
 ---
 
@@ -73,14 +73,14 @@ npm run ci         # lint + unit tests + type-check + production build
 # contract (optional)
 cd ../contract
 npm install
-npm test           # 83 Clarinet tests
+npm test           # 139 Clarinet tests
 clarinet check     # syntax-check all .clar files
 ```
 
 ### Environment variables (`frontend/.env.local`)
 
 ```env
-NEXT_PUBLIC_CONTRACT_ADDRESS=SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v3
+NEXT_PUBLIC_CONTRACT_ADDRESS=SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
 NEXT_PUBLIC_NETWORK=mainnet
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_SEASON_END_ISO=2026-06-01T00:00:00Z
@@ -98,16 +98,18 @@ If `NEXT_PUBLIC_NETWORK` is omitted, the frontend defaults to `mainnet`.
 contract/
   contracts/
     nft-trait.clar          SIP-009 trait (used by the frozen legacy contracts)
-    xp-arcade-v3.clar       ACTIVE: single multi-game registry — NFT + leaderboard
-                            + trustless pool + atomic claim + mint cap
+    xp-arcade-v4.clar       ACTIVE: single multi-game registry — NFT + leaderboard
+                            + trustless pool + tie-fair claim + claim window
+                            + permissionless finalize-season + mint cap
+    xp-arcade-v3.clar       Frozen reference (superseded by v4)
     snake-score.clar        Legacy v2 source (frozen, reference only)
     tetris-score.clar       Legacy v2 source (frozen)
     pacman-score.clar       Legacy v2 source (frozen)
     breakout-score.clar     Legacy v1 source (frozen)
   deployments/
-    xp-arcade-v3.mainnet-plan.yaml              contract deploy
-    xp-arcade-v3-register-games.mainnet-plan.yaml   register all 4 games
-    xp-arcade-v3-set-base-uri.mainnet-plan.yaml     set production metadata base-uri
+    xp-arcade-v4.mainnet-plan.yaml              contract deploy
+    xp-arcade-v4-register-games.mainnet-plan.yaml   register all 4 games
+    xp-arcade-v4-set-base-uri.mainnet-plan.yaml     set production metadata base-uri
 
 frontend/
   app/
@@ -146,7 +148,7 @@ HANDOFF.md                  Live operational notes
 
 ## Architecture notes
 
-- **Single registry contract.** `xp-arcade-v3` holds all games in a `games` map keyed by a numeric game-id. New games are added with `register-game` (owner-only) — no new deploy. `game-registry.ts` maps each frontend `gameId` to its `onchainId`, and every `*ForGame` call prepends `(uintCV onchainId)`.
+- **Single registry contract.** `xp-arcade-v4` holds all games in a `games` map keyed by a numeric game-id. New games are added with `register-game` (owner-only) — no new deploy. `game-registry.ts` maps each frontend `gameId` to its `onchainId`, and every `*ForGame` call prepends `(uintCV onchainId)`.
 - **Trustless prize pool via `as-contract`.** Mint fees are transferred into the contract principal, not the owner wallet. `claim-prize` performs an **atomic on-chain STX transfer** of the winner's share (capped to the remaining pool), is idempotent per `{player, game-id, season}`, and is initiated by the player — there is no owner-custodied payout step.
 - **Per-game rarity, data-driven.** `register-game` stores `rare-min / epic-min / legend-min` per game; `compute-rarity` reads them at mint time. Thresholds are **permanent** (no update function) — only `set-game-active` can toggle a game.
 - **Mint cap: 10 per player, per game, per season.** Tracked via `player-season-mints {player, game-id, season} → uint`; resets when `end-season` increments that game's season. SharedMintDialog reads `get-mints-remaining` and disables the button at 0.
@@ -154,7 +156,7 @@ HANDOFF.md                  Live operational notes
 - **Historical leaderboards.** `end-season` snapshots `{total, top-ten}` into `season-prize`; `get-top-ten-by-season` returns the live list for the current season or the stored snapshot for past seasons.
 - **Top-10 unsorted on-chain.** Min-eviction at insertion time; the UI sorts on read.
 - **Score is client-trusted.** No on-chain proof of gameplay. A score cap (`u9999`) and the mint cap reduce worst-case abuse. The mint dialog flags unusually high/fast scores, but this is advisory UI only.
-- **`nftAssetName` decouples deploy name from NFT type.** The contract deploys as `xp-arcade-v3` but defines `(define-non-fungible-token xp-score uint)`, so the asset identifier is `…xp-arcade-v3::xp-score`. `holdings.ts` builds it from both fields in the registry.
+- **`nftAssetName` decouples deploy name from NFT type.** The contract deploys as `xp-arcade-v4` and defines `(define-non-fungible-token xp-score uint)`, so the asset identifier is `…xp-arcade-v4::xp-score`. `holdings.ts` builds it from both fields in the registry.
 - **Season end is owner-or-deadline.** The owner can `end-season` anytime; anyone can call it once the optional on-chain `season-end-block` is reached. The UI countdown is a soft, display-only deadline from env config.
 
 ---
@@ -163,11 +165,11 @@ HANDOFF.md                  Live operational notes
 
 ```bash
 # contract (Clarinet / Vitest)
-cd contract && npm test          # 83 tests
+cd contract && npm test          # 139 tests
 cd contract && clarinet check    # syntax/type/lint checks for .clar files
 
 # frontend (Vitest)
-cd frontend && npm test          # 117 tests
+cd frontend && npm test          # 142 tests
 cd frontend && npm run typecheck # type-check
 cd frontend && npm run build     # production build
 cd frontend && npm run ci        # full local frontend CI
@@ -210,4 +212,4 @@ clarinet deployments apply -p deployments/<your-register-game-plan>.yaml -d --no
 4. A new season starts automatically (`current-season` increments; leaderboard and mint caps reset for that game).
 5. **Winners self-claim.** Each top-ranked player opens the High Score window and clicks **Claim** to receive their share, transferred atomically from the contract. No owner action is required for payouts.
 
-Payout split per closed season: top 1–3 = 20% each · top 4–10 ≈ 5.71% each, each claim capped to the remaining pool.
+Payout split per closed season: positions 1–3 = 20% each · positions 4–10 ≈ 5.71% (4/70) each. **Tied scores split the combined value of the positions they occupy equally** (order-independent). Claims stay open for ~30 days (CLAIM-WINDOW = 4320 burn blocks); afterward anyone can call `finalize-season` to roll unclaimed shares + dust into the next season's pool.

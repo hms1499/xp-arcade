@@ -17,13 +17,13 @@ Hard-won gotchas. Violating these breaks the build or tests.
   `Shell cwd was reset to /Users/vanhuy/Desktop/untitled folder` afterward —
   harmless leftover from the pre-rename directory. Tests still run.
 
-- **Clarity version is pinned to 3** for `xp-arcade-v3` (`as-contract` breaks
+- **Clarity version is pinned to 3** for `xp-arcade-v4` (`as-contract` breaks
   under Clarity 4 in Clarinet 3.14.1). Don't bump.
 
 ## Required Vercel env vars
 
 ```
-NEXT_PUBLIC_CONTRACT_ADDRESS=SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v3
+NEXT_PUBLIC_CONTRACT_ADDRESS=SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
 NEXT_PUBLIC_NETWORK=mainnet
 NEXT_PUBLIC_APP_URL=<vercel-domain>
 NEXT_PUBLIC_SEASON_END_ISO=<ISO 8601 UTC>

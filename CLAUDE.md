@@ -12,13 +12,13 @@ the links in **Additional Documentation** before working in a given domain.
 blockchain integration. Players play Snake, Tetris, Pac-Man, and XP Bricks
 (Breakout); each game mints Score NFTs, maintains an on-chain top-10, and
 accumulates mint fees into a per-season prize pool. All games share one on-chain
-registry contract, `xp-arcade-v3`, keyed by `game-id`.
+registry contract, `xp-arcade-v4`, keyed by `game-id`.
 
 ## 2. Tech Stack
 
 - **Contract:** Clarity 3 (pinned), Clarinet 3.14, `@stacks/clarinet-sdk` ^3.9,
   Vitest 3. Deployed mainnet:
-  `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v3`.
+  `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4`.
 - **Frontend:** Next.js 16 App Router, React 19, TypeScript 5, `98.css`,
   Tailwind v4, Zustand 5.
 - **Stacks SDK:** `@stacks/connect` ^8.2, `@stacks/transactions` ^7.4,
@@ -54,13 +54,17 @@ Required Vercel env vars are listed in
 
 Mint fees are held **in the contract** (`as-contract`) and accumulate into a
 per-game, per-season **prize pool**. After the owner closes a season
-(`end-season`), top-10 players claim **trustlessly on-chain** via `claim-prize`,
-which computes the rank split and transfers STX with `as-contract`. Split:
-**ranks 1–3 get 20% each; ranks 4–10 get ~5.7% (4/70) each**, floored to integer
-uStx and capped so total paid never exceeds the pool. The split is authoritative
-**on-chain**; `lib/payout-schedule.ts` mirrors it for display + post-conditions.
-Players claim from the High Scores window (`claimPrizeV3`); Season Admin is
-read-only. Full detail: [prize-logic.md](.claude/docs/prize-logic.md).
+(`end-season`), top-10 players claim **trustlessly on-chain** via `claim-prize`.
+Split bands: **positions 1–3 = 20% each; positions 4–10 = 4/70 (~5.71%) each**.
+**Tied scores split the combined value of the positions they occupy equally**
+(order-independent — the v4 fix). Amounts are floored to integer uStx; total
+paid is capped to the pool. Claims are open for ~30 days (`CLAIM-WINDOW = u4320`
+burn blocks). After the window closes, anyone can call `finalize-season` to roll
+unclaimed shares + integer-division dust into the next season's pool (nothing
+locked forever). The split is authoritative **on-chain**; `lib/payout-schedule.ts`
+mirrors the band schedule for display + post-conditions. Players claim from the
+High Scores window (`claimPrizeV3`); Season Admin is read-only. Full detail:
+[prize-logic.md](.claude/docs/prize-logic.md).
 
 ## 5. Key Constraints
 
@@ -89,7 +93,7 @@ Never change/assume these without explicit instruction (full list in
 
 ## 6. Additional Documentation
 
-- [contract.md](.claude/docs/contract.md) — `xp-arcade-v3` registry: multi-game
+- [contract.md](.claude/docs/contract.md) — `xp-arcade-v4` registry: multi-game
   model, Score NFTs, leaderboard, prize pool, ownership, error codes.
 - [frontend.md](.claude/docs/frontend.md) — Next.js app layout, Stacks
   integration (`lib/`), Zustand stores, token metadata route.
