@@ -23,6 +23,7 @@
 (define-map season-prize { game-id: uint, season: uint }
   { total: uint, top-ten: (list 10 { player: principal, score: uint }) })
 (define-map season-paid    { game-id: uint, season: uint } uint)
+(define-map season-finalized { game-id: uint, season: uint } bool)
 (define-map prize-claimed  { player: principal, game-id: uint, season: uint } bool)
 (define-map score-data uint {
   game-id: uint, player: principal, score: uint, player-name: (string-ascii 24),
@@ -31,6 +32,7 @@
 ;; --- Constants ---
 (define-constant MAX-MINTS-PER-SEASON u10)
 (define-constant MAX-SCORE u9999)
+(define-constant CLAIM-WINDOW u4320) ;; ~30 days in burn blocks
 (define-constant ERR-NOT-OWNER (err u100))
 (define-constant ERR-NOT-IN-TOP-TEN (err u101))
 (define-constant ERR-ALREADY-CLAIMED (err u102))
@@ -44,6 +46,9 @@
 (define-constant ERR-BAD-FEE (err u111))
 (define-constant ERR-GAME-INACTIVE (err u112))
 (define-constant ERR-SEASON-STILL-OPEN (err u113))
+(define-constant ERR-CLAIM-CLOSED (err u114))
+(define-constant ERR-ALREADY-FINALIZED (err u115))
+(define-constant ERR-NOT-FINALIZABLE (err u116))
 
 ;; --- Read-onlys ---
 (define-read-only (get-contract-owner)
