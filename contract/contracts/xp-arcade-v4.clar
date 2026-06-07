@@ -1,5 +1,6 @@
-;; xp-arcade-v3 -- single multi-game registry
-;; Task 0: scaffold with state, constants, and owner read-onlys.
+;; xp-arcade-v4 -- single multi-game registry (tie-fair prize payout)
+;; Copy of xp-arcade-v3 with order-independent split-occupied claims, a
+;; burn-block claim window, and permissionless finalize-season roll-over.
 
 ;; --- NFT ---
 (define-non-fungible-token xp-score uint)
