@@ -83,7 +83,7 @@ clarinet check     # syntax-check all .clar files
 NEXT_PUBLIC_CONTRACT_ADDRESS=SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
 NEXT_PUBLIC_NETWORK=mainnet
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_SEASON_END_ISO=2026-06-01T00:00:00Z
+NEXT_PUBLIC_SEASON_END_ISO=2026-06-30T23:59:59Z
 ```
 
 Set the same vars in Vercel Project Settings for deployment.
