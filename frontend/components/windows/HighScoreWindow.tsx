@@ -181,7 +181,8 @@ function LeaderboardTab({
               : "Loading live scores"}
             {myRank > 0 && <> · Your rank: #{myRank}</>}
           </span>
-          {claims.map((c) => (
+          {claims.map((c) =>
+            c.claimOpen ? (
             <button
               key={c.season}
               disabled={claimingSeason !== null}
@@ -242,7 +243,21 @@ function LeaderboardTab({
                 ? "Confirming..."
                 : `Claim ${(c.amountUstx / 1_000_000).toFixed(2)} STX · Season ${c.season}`}
             </button>
-          ))}
+            ) : (
+              <span
+                key={c.season}
+                style={{
+                  marginTop: 3,
+                  justifySelf: "start",
+                  fontSize: 10,
+                  fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
+                  opacity: 0.7,
+                }}
+              >
+                Claim window closed · Season {c.season}
+              </span>
+            ),
+          )}
         </div>
         <div style={{ display: "grid", gap: 2, textAlign: "right" }}>
           <span>

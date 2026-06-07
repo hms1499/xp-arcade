@@ -1,7 +1,8 @@
 import {
   getSeasonPrizeForGame,
   hasClaimedPrizeForGame,
-  computePayoutUstx,
+  getClaimableAmount,
+  isClaimOpen,
   type SeasonPrize,
 } from "./contract-calls";
 import type { GameId } from "./game-registry";
@@ -21,24 +22,31 @@ export function classifyClaimTx(status: TxStatus): ClaimOutcome {
   return "failed";
 }
 
-export type Claim = { season: number; amountUstx: number };
+export type Claim = { season: number; amountUstx: number; claimOpen: boolean };
 
 export type FindClaimableDeps = {
   getSeasonPrize: (gameId: GameId, season: number) => Promise<SeasonPrize>;
   hasClaimed: (gameId: GameId, address: string, season: number) => Promise<boolean>;
-  computePayout: (total: number, rank: number) => number;
+  getClaimableAmount: (gameId: GameId, season: number, address: string) => Promise<number>;
+  isClaimOpen: (gameId: GameId, season: number) => Promise<boolean>;
 };
 
 const defaultDeps: FindClaimableDeps = {
   getSeasonPrize: getSeasonPrizeForGame,
   hasClaimed: hasClaimedPrizeForGame,
-  computePayout: computePayoutUstx,
+  getClaimableAmount,
+  isClaimOpen,
 };
 
 /**
  * Find every closed season (1 .. currentSeason-1) whose prize the player can
  * still claim. The contract allows claiming any past season forever, so the UI
  * must surface all of them, not just the immediately-previous one.
+ *
+ * The payable amount is read straight from the chain (`get-claimable-amount`),
+ * which already accounts for tie-aware rank splits and the remaining pool —
+ * the frontend no longer recomputes it off-chain. Each claim also carries the
+ * on-chain claim-window state (`is-claim-open`) so the UI can gate the button.
  *
  * Returns claims sorted ascending by season (oldest first) — matching the
  * contract's capped-pool payout, where earlier claimers draw from the pool
@@ -67,8 +75,15 @@ export async function findClaimablePrizes(
         .catch(() => true);
       if (already) return null;
 
-      const rank = prize.topTen.filter((e) => e.score > mine.score).length + 1;
-      return { season, amountUstx: deps.computePayout(prize.total, rank) };
+      const amountUstx = await deps
+        .getClaimableAmount(gameId, season, address)
+        .catch(() => 0);
+      if (amountUstx <= 0) return null;
+
+      const claimOpen = await deps
+        .isClaimOpen(gameId, season)
+        .catch(() => false);
+      return { season, amountUstx, claimOpen };
     }),
   );
 

@@ -37,6 +37,8 @@ import {
   getTopTenForGame,
   claimPrizeV3,
   mintScoreForGame,
+  getClaimableAmount,
+  isClaimOpen,
 } from "./contract-calls";
 
 const ADDR = "SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV";
@@ -73,5 +75,17 @@ describe("contract-calls v3 arg shaping", () => {
     expect(calls[0].functionName).toBe("claim-prize");
     expect(calls[0].functionArgs).toEqual([uintCV(4), uintCV(1)]);
     expect(calls[0].postConditions).toHaveLength(1);
+  });
+
+  it("get-claimable-amount sends [game-id, season, player]", async () => {
+    await getClaimableAmount("snake", 1, ADDR).catch(() => {});
+    expect(readCalls[0].functionName).toBe("get-claimable-amount");
+    expect(readCalls[0].functionArgs).toEqual([uintCV(1), uintCV(1), principalCV(ADDR)]);
+  });
+
+  it("is-claim-open sends [game-id, season]", async () => {
+    await isClaimOpen("tetris", 2).catch(() => {});
+    expect(readCalls[0].functionName).toBe("is-claim-open");
+    expect(readCalls[0].functionArgs).toEqual([uintCV(2), uintCV(2)]);
   });
 });

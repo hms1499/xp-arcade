@@ -122,6 +122,30 @@ export async function getSeasonPrizeForGame(
   };
 }
 
+export async function getClaimableAmount(
+  gameId: GameId,
+  season: number,
+  address: string,
+): Promise<number> {
+  const res = await fetchCallReadOnlyFunction({
+    ...gameBase(gameId),
+    functionName: "get-claimable-amount",
+    functionArgs: [uintCV(onchainIdFor(gameId)), uintCV(season), principalCV(address)],
+    senderAddress: GAMES[gameId].contractAddress,
+  });
+  return Number(unwrap(cvToValue(res)));
+}
+
+export async function isClaimOpen(gameId: GameId, season: number): Promise<boolean> {
+  const res = await fetchCallReadOnlyFunction({
+    ...gameBase(gameId),
+    functionName: "is-claim-open",
+    functionArgs: [uintCV(onchainIdFor(gameId)), uintCV(season)],
+    senderAddress: GAMES[gameId].contractAddress,
+  });
+  return Boolean(cvToValue(res));
+}
+
 export async function hasClaimedPrizeForGame(
   gameId: GameId,
   player: string,

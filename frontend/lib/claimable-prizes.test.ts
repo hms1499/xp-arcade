@@ -10,16 +10,21 @@ const ME = "SP_ME";
 const OTHER = "SP_OTHER";
 
 // Build deps from a season->prize map plus a set of already-claimed seasons.
-// computePayout returns the rank so tests can assert which rank was computed.
+// getClaimableAmount returns the on-chain payable amount; the contract owns the
+// rank/tie split now, so the fake just echoes a per-season amount derived from
+// the prize total (proving the value flows from the chain helper, not a formula).
+// closedSeasons marks seasons whose claim window is closed.
 function makeDeps(
   prizes: Record<number, SeasonPrize>,
   claimed: Set<number> = new Set(),
   overrides: Partial<FindClaimableDeps> = {},
+  closedSeasons: Set<number> = new Set(),
 ): FindClaimableDeps {
   return {
     getSeasonPrize: vi.fn(async (_g, season: number) => prizes[season] ?? null),
     hasClaimed: vi.fn(async (_g, _addr, season: number) => claimed.has(season)),
-    computePayout: (_total, rank) => rank,
+    getClaimableAmount: vi.fn(async (_g, season: number) => (prizes[season]?.total ?? 0) / 1000),
+    isClaimOpen: vi.fn(async (_g, season: number) => !closedSeasons.has(season)),
     ...overrides,
   };
 }
@@ -45,8 +50,44 @@ describe("findClaimablePrizes", () => {
       1: { total: 1_000_000, topTen: [{ player: ME, score: 50 }] },
     });
     const result = await findClaimablePrizes("snake", ME, 2, deps);
-    // rank 1 -> computePayout returns the rank (1)
-    expect(result).toEqual([{ season: 1, amountUstx: 1 }]);
+    // amount comes from the on-chain getClaimableAmount (total/1000), not a formula
+    expect(result).toEqual([{ season: 1, amountUstx: 1000, claimOpen: true }]);
+  });
+
+  it("surfaces a season whose claim window is closed, marked claimOpen: false", async () => {
+    const deps = makeDeps(
+      { 1: { total: 1_000_000, topTen: [{ player: ME, score: 50 }] } },
+      new Set(),
+      {},
+      new Set([1]),
+    );
+    const result = await findClaimablePrizes("snake", ME, 2, deps);
+    expect(result).toEqual([{ season: 1, amountUstx: 1000, claimOpen: false }]);
+  });
+
+  it("uses the on-chain getClaimableAmount value, ignoring rank ordering", async () => {
+    const deps = makeDeps({
+      1: {
+        total: 5_000_000,
+        topTen: [
+          { player: OTHER, score: 90 },
+          { player: ME, score: 70 },
+        ],
+      },
+    });
+    // ME is rank 2, but the amount is whatever the chain returns (total/1000 = 5000)
+    const result = await findClaimablePrizes("snake", ME, 2, deps);
+    expect(result).toEqual([{ season: 1, amountUstx: 5000, claimOpen: true }]);
+  });
+
+  it("skips a season the chain reports as not claimable (amount 0)", async () => {
+    const deps = makeDeps(
+      { 1: { total: 1_000_000, topTen: [{ player: ME, score: 50 }] } },
+      new Set(),
+      { getClaimableAmount: vi.fn(async () => 0) },
+    );
+    const result = await findClaimablePrizes("snake", ME, 2, deps);
+    expect(result).toEqual([]);
   });
 
   it("returns every unclaimed season sorted ascending by season", async () => {
@@ -79,7 +120,7 @@ describe("findClaimablePrizes", () => {
     expect(result).toEqual([]);
   });
 
-  it("computes rank as one plus the count of strictly-higher scores", async () => {
+  it("only claims for seasons whose snapshot includes the player", async () => {
     const deps = makeDeps({
       1: {
         total: 1_000_000,
@@ -91,8 +132,8 @@ describe("findClaimablePrizes", () => {
       },
     });
     const result = await findClaimablePrizes("snake", ME, 2, deps);
-    // two strictly-higher scores -> rank 3 -> computePayout returns 3
-    expect(result).toEqual([{ season: 1, amountUstx: 3 }]);
+    // present in the snapshot -> claim returned with the on-chain amount (total/1000)
+    expect(result).toEqual([{ season: 1, amountUstx: 1000, claimOpen: true }]);
   });
 
   it("skips a season whose prize read fails without dropping the others", async () => {
