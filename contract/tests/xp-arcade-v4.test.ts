@@ -318,6 +318,8 @@ describe("end-season", () => {
     const prize = simnet.callReadOnlyFn(C, "get-season-prize", [Cl.uint(1), Cl.uint(1)], w(1)).result;
     expect((prize as any).value.value.total.value).toBe(20000n);
     expect((prize as any).value.value["top-ten"].value.length).toBe(2);
+    // v4: claim-deadline = burn-block-height at close + CLAIM-WINDOW (4320)
+    expect((prize as any).value.value["claim-deadline"].value).toBe(BigInt(simnet.burnBlockHeight) + 4320n);
 
     expect(simnet.callReadOnlyFn(C, "get-current-season", [Cl.uint(1)], w(1)).result).toBeUint(2);
     expect(simnet.callReadOnlyFn(C, "get-prize-pool-balance", [Cl.uint(1)], w(1)).result).toBeUint(0);

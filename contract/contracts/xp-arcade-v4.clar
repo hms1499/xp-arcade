@@ -21,7 +21,9 @@
 (define-map best-score   { player: principal, game-id: uint } { score: uint, token-id: uint, season: uint })
 (define-map player-season-mints { player: principal, game-id: uint, season: uint } uint)
 (define-map season-prize { game-id: uint, season: uint }
-  { total: uint, top-ten: (list 10 { player: principal, score: uint }) })
+  { total: uint,
+    top-ten: (list 10 { player: principal, score: uint }),
+    claim-deadline: uint })
 (define-map season-paid    { game-id: uint, season: uint } uint)
 (define-map season-finalized { game-id: uint, season: uint } bool)
 (define-map prize-claimed  { player: principal, game-id: uint, season: uint } bool)
@@ -173,7 +175,8 @@
               ERR-SEASON-STILL-OPEN)
     (map-set season-prize { game-id: game-id, season: season }
       { total: (default-to u0 (map-get? season-accumulated game-id)),
-        top-ten: (default-to (list) (map-get? top-ten game-id)) })
+        top-ten: (default-to (list) (map-get? top-ten game-id)),
+        claim-deadline: (+ burn-block-height CLAIM-WINDOW) })
     (map-set season-accumulated game-id u0)
     (map-set top-ten game-id (list))
     (map-set current-season game-id (+ season u1))
