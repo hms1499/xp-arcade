@@ -48,7 +48,7 @@ describe("contract-calls v3 arg shaping", () => {
     await getTopTenForGame("tetris").catch(() => {});
     expect(readCalls[0].functionName).toBe("get-top-ten");
     expect(readCalls[0].functionArgs).toEqual([uintCV(2)]);
-    expect(readCalls[0].contractName).toBe("xp-arcade-v3");
+    expect(readCalls[0].contractName).toBe("xp-arcade-v4");
   });
 
   it("get-best-score sends [game-id, player]", async () => {

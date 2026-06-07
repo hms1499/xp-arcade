@@ -39,9 +39,9 @@ describe("game-registry", () => {
     expect(GAMES.breakout.nftAssetName).toBe("xp-score");
   });
 
-  it("maps every game to the single shared v3 contract", () => {
+  it("maps every game to the single shared v4 contract", () => {
     for (const id of ["snake", "tetris", "pacman", "breakout"] as GameId[]) {
-      expect(GAMES[id].contractName).toBe("xp-arcade-v3");
+      expect(GAMES[id].contractName).toBe("xp-arcade-v4");
       expect(GAMES[id].contractAddress).toBe("SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV");
     }
   });
@@ -77,9 +77,9 @@ describe("game-registry", () => {
     ).toThrow(/key mismatch/);
   });
 
-  it("exposes the shared v3 contract id as primary", () => {
+  it("exposes the shared v4 contract id as primary", () => {
     expect(expectedPrimaryContractId()).toBe(
-      "SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v3",
+      "SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4",
     );
   });
 });

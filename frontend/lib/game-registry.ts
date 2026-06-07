@@ -16,7 +16,7 @@ export interface GameDef {
 type GameConfig = Omit<GameDef, "id" | "label" | "emoji" | "onchainId" | "mintFeeUstx" | "metaSegment" | "nftAssetName">;
 
 const MAINNET_DEPLOYER = "SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV";
-const V3_CONTRACT_NAME = "xp-arcade-v3";
+const V4_CONTRACT_NAME = "xp-arcade-v4";
 
 const GAME_METADATA: Record<
   GameId,
@@ -28,11 +28,11 @@ const GAME_METADATA: Record<
   breakout: { id: "breakout", label: "XP Bricks", emoji: "🏓", onchainId: 4, mintFeeUstx: BigInt(20_000), metaSegment: "breakout", nftAssetName: "xp-score" },
 };
 
-const SHARED_V3: GameConfig = { contractAddress: MAINNET_DEPLOYER, contractName: V3_CONTRACT_NAME };
+const SHARED_V4: GameConfig = { contractAddress: MAINNET_DEPLOYER, contractName: V4_CONTRACT_NAME };
 
 const GAME_CONTRACTS: Record<NetworkName, Record<GameId, GameConfig>> = {
-  mainnet: { snake: SHARED_V3, tetris: SHARED_V3, pacman: SHARED_V3, breakout: SHARED_V3 },
-  testnet: { snake: SHARED_V3, tetris: SHARED_V3, pacman: SHARED_V3, breakout: SHARED_V3 },
+  mainnet: { snake: SHARED_V4, tetris: SHARED_V4, pacman: SHARED_V4, breakout: SHARED_V4 },
+  testnet: { snake: SHARED_V4, tetris: SHARED_V4, pacman: SHARED_V4, breakout: SHARED_V4 },
 };
 
 export const GAME_IDS: GameId[] = ["snake", "tetris", "pacman", "breakout"];
