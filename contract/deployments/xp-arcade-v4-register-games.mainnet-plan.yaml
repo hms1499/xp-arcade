@@ -1,0 +1,58 @@
+id: 0
+name: XP Arcade v4 register games (mainnet)
+network: mainnet
+stacks-node: https://api.hiro.so
+bitcoin-node: http://blockstack:blockstacksystem@bitcoin.blockstack.com:8332
+plan:
+  batches:
+  - id: 0
+    transactions:
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: register-game
+      parameters:
+      - u1
+      - '"Snake"'
+      - u10000
+      - u50
+      - u150
+      - u300
+      cost: 20000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: register-game
+      parameters:
+      - u2
+      - '"Tetris"'
+      - u20000
+      - u100
+      - u300
+      - u700
+      cost: 20000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: register-game
+      parameters:
+      - u3
+      - '"Pac-Man"'
+      - u20000
+      - u100
+      - u300
+      - u700
+      cost: 20000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: register-game
+      parameters:
+      - u4
+      - '"XP Bricks"'
+      - u20000
+      - u100
+      - u300
+      - u700
+      cost: 20000
+    epoch: '3.3'
