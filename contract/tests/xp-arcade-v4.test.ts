@@ -591,3 +591,38 @@ describe("claim-prize v4 fairness + window", () => {
     expect(claim(2)).toBeErr(Cl.uint(114)); // ERR-CLAIM-CLOSED
   });
 });
+
+describe("finalize-season (roll unclaimed)", () => {
+  function closeWith(scores: number[]) {
+    registerSnake();
+    scores.forEach((s, i) =>
+      simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(s), Cl.stringAscii(`p${i}`)], w(i + 1)));
+    simnet.callPublicFn(C, "end-season", [Cl.uint(1)], deployer);
+  }
+
+  it("rejects finalize before the claim window closes", () => {
+    closeWith([80, 40, 20]);
+    expect(simnet.callPublicFn(C, "finalize-season", [Cl.uint(1), Cl.uint(1)], w(1)).result)
+      .toBeErr(Cl.uint(116)); // ERR-NOT-FINALIZABLE
+  });
+
+  it("rolls total-minus-paid into the current open season pool after the window", () => {
+    closeWith([90, 80, 70, 70]); // total 40000; only w1 claims (8000)
+    simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(1));
+    simnet.mineEmptyBurnBlocks(4321);
+    const r = simnet.callPublicFn(C, "finalize-season", [Cl.uint(1), Cl.uint(1)], w(2)).result;
+    expect(r).toBeOk(Cl.uint(32000)); // 40000 - 8000
+    expect(simnet.callReadOnlyFn(C, "get-prize-pool-balance", [Cl.uint(1)], w(1)).result)
+      .toBeUint(32000);
+    expect(simnet.callReadOnlyFn(C, "get-season-finalized", [Cl.uint(1), Cl.uint(1)], w(1)).result)
+      .toBeBool(true);
+  });
+
+  it("rejects a second finalize", () => {
+    closeWith([80, 40, 20]);
+    simnet.mineEmptyBurnBlocks(4321);
+    simnet.callPublicFn(C, "finalize-season", [Cl.uint(1), Cl.uint(1)], w(1));
+    expect(simnet.callPublicFn(C, "finalize-season", [Cl.uint(1), Cl.uint(1)], w(1)).result)
+      .toBeErr(Cl.uint(115)); // ERR-ALREADY-FINALIZED
+  });
+});

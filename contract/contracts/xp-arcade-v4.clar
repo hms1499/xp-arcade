@@ -242,6 +242,31 @@
           (try! (as-contract (stx-transfer? final tx-sender player)))
           (ok final))))))
 
+(define-public (finalize-season (game-id uint) (season uint))
+  (let ((prize-info (map-get? season-prize { game-id: game-id, season: season }))
+        (already (default-to false
+          (map-get? season-finalized { game-id: game-id, season: season }))))
+    (asserts! (is-some prize-info) ERR-PRIZE-NOT-FOUND)
+    (asserts! (not already) ERR-ALREADY-FINALIZED)
+    (let ((prize (unwrap-panic prize-info)))
+      (asserts! (> burn-block-height (get claim-deadline prize)) ERR-NOT-FINALIZABLE)
+      (let ((paid (default-to u0 (map-get? season-paid { game-id: game-id, season: season }))))
+        (let ((unclaimed (- (get total prize) paid)))
+          (map-set season-finalized { game-id: game-id, season: season } true)
+          (map-set season-accumulated game-id
+            (+ (default-to u0 (map-get? season-accumulated game-id)) unclaimed))
+          (ok unclaimed))))))
+
+(define-read-only (get-season-finalized (game-id uint) (season uint))
+  (default-to false (map-get? season-finalized { game-id: game-id, season: season })))
+
+(define-read-only (is-claim-open (game-id uint) (season uint))
+  (match (map-get? season-prize { game-id: game-id, season: season })
+    prize (and (<= burn-block-height (get claim-deadline prize))
+               (not (default-to false
+                 (map-get? season-finalized { game-id: game-id, season: season }))))
+    false))
+
 (define-read-only (get-mints-remaining (game-id uint) (player principal))
   (let ((season (default-to u1 (map-get? current-season game-id)))
         (used (default-to u0
