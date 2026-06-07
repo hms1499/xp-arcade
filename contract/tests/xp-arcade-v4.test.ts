@@ -494,41 +494,100 @@ describe("payout invariants (review hardening)", () => {
     expect(held > 0n).toBe(true);
   });
 
-  it("tied top scores can drain the pool and starve a genuine lower-ranked claimant", () => {
-    // Five players tie at 80 (all rank 1 -> 20% each = 100%), plus two real lower ranks.
+  it("tied top scores split fairly instead of starving lower ranks", () => {
+    // 5 tie at 80 (positions 1-5), then 70, 60 (positions 6,7). total = 70000.
     const scores = [80, 80, 80, 80, 80, 70, 60];
-    const total = BigInt(scores.length) * FEE; // 70000
-    closeSeasonWith(scores);
-
+    registerSnake();
+    scores.forEach((s, i) =>
+      simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(s), Cl.stringAscii(`p${i}`)], w(i + 1)));
+    simnet.callPublicFn(C, "end-season", [Cl.uint(1)], deployer);
     let paid = 0n;
-    for (let i = 1; i <= 5; i++) {
-      paid += okUint(simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(i)).result);
+    for (let i = 1; i <= 7; i++) {
+      const r = simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(i)).result;
+      paid += (r as any).value.value;
     }
-    expect(paid).toBe(total); // tie block consumes the entire pool
+    expect(paid <= 70000n).toBe(true);
+    expect(simnet.callReadOnlyFn(C, "has-claimed-prize",
+      [Cl.principal(w(6)), Cl.uint(1), Cl.uint(1)], w(1)).result).toBeBool(true);
+  });
+});
 
-    // A legitimate rank-6 top-ten member is now left with nothing.
-    const r = simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(6)).result;
-    expect(r).toBeErr(Cl.uint(106)); // ERR-EMPTY-POOL
+
+describe("get-claimable-amount (split-occupied)", () => {
+  function closeWith(scores: number[]) {
+    registerSnake();
+    scores.forEach((s, i) =>
+      simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(s), Cl.stringAscii(`p${i}`)], w(i + 1)));
+    simnet.callPublicFn(C, "end-season", [Cl.uint(1)], deployer);
+  }
+  const amt = (i: number) =>
+    simnet.callReadOnlyFn(C, "get-claimable-amount", [Cl.uint(1), Cl.uint(1), Cl.principal(w(i))], w(1)).result;
+
+  it("distinct scores pay the position band (rank 1-3 = 20%)", () => {
+    closeWith([80, 40, 20]); // total 30000
+    expect(amt(1)).toBeUint(6000); // 30000*20/100
   });
 
-  it("individual payout depends on claim order under ties (fairness limitation)", () => {
-    const scores = [80, 80, 80, 80, 80, 70, 60];
-    closeSeasonWith(scores);
+  it("two tied straddling positions 3-4 split (20%+5.71%)/2", () => {
+    closeWith([90, 80, 70, 70]); // total 40000
+    expect(amt(1)).toBeUint(8000); // pos1 20%
+    expect(amt(2)).toBeUint(8000); // pos2 20%
+    expect(amt(3)).toBeUint(5142); // (8000 + 2285)/2
+    expect(amt(4)).toBeUint(5142);
+  });
 
-    // Rank-6 player claims first and receives a full schedule share.
-    const early = okUint(simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(6)).result);
-    expect(early).toBe(4000n); // 70000 * 4 / 70
+  it("all-ten tie splits the pool equally", () => {
+    // simnet only ships wallet_1..wallet_8; use deployer + faucet as the 9th/10th
+    // distinct minters so the snapshot is a genuine ten-way tie. total 100000.
+    const ten = [w(1), w(2), w(3), w(4), w(5), w(6), w(7), w(8), deployer, accounts.get("faucet")!];
+    registerSnake();
+    ten.forEach((p, i) =>
+      simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(50), Cl.stringAscii(`p${i}`)], p));
+    simnet.callPublicFn(C, "end-season", [Cl.uint(1)], deployer);
+    // (3*twenty + 7*four70)/10 = (3*20000 + 7*5714)/10 = 99998/10 = 9999;
+    // the 4/70 floor loses ~1 uStx per player, dust stays locked in-contract.
+    ten.forEach((p) =>
+      expect(simnet.callReadOnlyFn(C, "get-claimable-amount",
+        [Cl.uint(1), Cl.uint(1), Cl.principal(p)], w(1)).result).toBeUint(9999));
+  });
 
-    // The five tied leaders then claim; the pool can no longer cover 5 * 14000.
-    let paid = early;
-    const amounts: bigint[] = [];
-    for (let i = 1; i <= 5; i++) {
-      const v = okUint(simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(i)).result);
-      amounts.push(v);
-      paid += v;
-    }
+  it("ties inside the 4-10 band each get the 4/70 band", () => {
+    closeWith([90, 80, 70, 60, 60]); // total 50000
+    expect(amt(4)).toBeUint(2857); // 50000*4/70
+    expect(amt(5)).toBeUint(2857);
+  });
 
-    expect(paid <= 70000n).toBe(true);             // pool never over-drained
-    expect(amounts.some((a) => a < 14000n)).toBe(true); // a tied player is short-changed by order
+  it("returns 0 for a player not in the snapshot", () => {
+    closeWith([80, 40, 20]);
+    expect(amt(5)).toBeUint(0);
+  });
+});
+
+describe("claim-prize v4 fairness + window", () => {
+  function closeWith(scores: number[]) {
+    registerSnake();
+    scores.forEach((s, i) =>
+      simnet.callPublicFn(C, "mint-score", [Cl.uint(1), Cl.uint(s), Cl.stringAscii(`p${i}`)], w(i + 1)));
+    simnet.callPublicFn(C, "end-season", [Cl.uint(1)], deployer);
+  }
+  const okUint = (r: any): bigint => r.value.value as bigint;
+  const claim = (i: number) =>
+    simnet.callPublicFn(C, "claim-prize", [Cl.uint(1), Cl.uint(1)], w(i)).result;
+
+  it("ties pay the same regardless of claim order (no race)", () => {
+    closeWith([90, 80, 70, 70]); // expected: 8000, 8000, 5142, 5142
+    expect(okUint(claim(3))).toBe(5142n);
+    expect(okUint(claim(4))).toBe(5142n);
+    expect(okUint(claim(1))).toBe(8000n);
+    expect(okUint(claim(2))).toBe(8000n);
+    expect(simnet.callReadOnlyFn(C, "get-season-paid", [Cl.uint(1), Cl.uint(1)], w(1)).result)
+      .toBeUint(26284); // 8000+8000+5142+5142
+  });
+
+  it("rejects claims after the burn-block claim window", () => {
+    closeWith([80, 40, 20]);
+    expect(claim(1)).toBeOk(Cl.uint(6000)); // in-window claim works
+    simnet.mineEmptyBurnBlocks(4321);       // cross CLAIM-WINDOW (4320)
+    expect(claim(2)).toBeErr(Cl.uint(114)); // ERR-CLAIM-CLOSED
   });
 });
