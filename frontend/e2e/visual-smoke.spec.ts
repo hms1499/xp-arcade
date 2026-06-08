@@ -56,6 +56,7 @@ test("desktop renders core windows and game canvas", async ({ page }) => {
   await page.getByRole("button", { name: /Snake\.exe/i }).dblclick();
   await expect(page.locator(".title-bar-text", { hasText: "🐍 Snake" })).toBeVisible();
   await expect(windowByTitle(page, "🐍 Snake").locator("canvas")).toBeVisible();
+  await expect(windowByTitle(page, "🐍 Snake").getByRole("button", { name: "Details" })).toBeVisible();
   await expectCanvasHasPixels(windowByTitle(page, "🐍 Snake").locator("canvas"));
 
   await page.getByRole("button", { name: /High Scores/i }).first().dblclick();
@@ -137,6 +138,20 @@ test("start menu opens shared utility windows", async ({ page }) => {
       .locator('div[style*="display: block"]')
       .getByText(/Prize rules & on-chain verification/i),
   ).toBeVisible();
+  await windowByTitle(page, "🏆 High Scores")
+    .locator('div[style*="display: block"]')
+    .getByText(/Prize rules & on-chain verification/i)
+    .click();
+  await expect(
+    windowByTitle(page, "🏆 High Scores")
+      .locator('div[style*="display: block"]')
+      .getByText(/Connect wallet to check claimable prizes/i),
+  ).toBeVisible();
+  await expect(
+    windowByTitle(page, "🏆 High Scores")
+      .locator('div[style*="display: block"]')
+      .getByText(/Scores are client-submitted/i),
+  ).toBeVisible();
 
   await page.getByRole("button", { name: /^Start$/i }).click();
   await page.getByRole("menuitem", { name: /Hall of Fame/i }).click();
@@ -158,7 +173,7 @@ test("snake game over shows mint dialog with downloadable score card", async ({ 
   await expect(snakeWindow.getByText(/Game Over/i)).toBeVisible({ timeout: 8_000 });
   await expect(snakeWindow.getByLabel("Shareable score card preview")).toBeVisible();
   await expect(snakeWindow.getByRole("button", { name: /Download PNG/i })).toBeVisible();
-  await expect(snakeWindow.getByRole("button", { name: /Connect Wallet/i })).toBeVisible();
+  await expect(snakeWindow.getByRole("button", { name: /Connect to Mint/i })).toBeVisible();
 });
 
 test("mobile launcher opens a fullscreen game without horizontal overflow", async ({ page }) => {
