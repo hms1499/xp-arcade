@@ -212,6 +212,14 @@ body {
     justify-content: space-between;
   }
 
+  .game-goal-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .game-goal-row button {
+    justify-self: start;
+  }
+
   .game-shell-stage {
     display: flex;
     flex: 1;
