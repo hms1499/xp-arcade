@@ -95,6 +95,50 @@ writes no Clarity.
 call `set-season-end-block` for it with the same shared `height`, otherwise that
 game's season has no trustless fallback.
 
+### 1a. Rolling to a new season (operational, recurring)
+
+`end-season` does **not** reset `season-end-block`. The map is keyed only by
+`game-id` (not by season), so the old height **persists** into the next season:
+
+```clarity
+;; end-season touches these — NOT season-end-block:
+(map-set season-prize { game-id, season } { ... })
+(map-set season-accumulated game-id u0)
+(map-set top-ten game-id (list))
+(map-set current-season game-id (+ season u1))
+```
+
+**Consequence — "stillborn season".** Suppose season N closes at block
+`H`. Season N+1 opens with `season-end-block` still `= H`, which is now a *past*
+block. The permissionless check
+`(and (> deadline u0) (>= stacks-block-height deadline))` is therefore true
+immediately, so **anyone can close the freshly-opened season N+1 at once**.
+
+**Required runbook for every new season — set the new deadline *before* ending,
+to avoid a premature-close gap:**
+
+| Order | Step | Why |
+|---|---|---|
+| 1 | While season N is still open, owner calls `set-season-end-block(game-id, H_next)` with the **new future** block for all games (×N games) | Overwrites the stale `H` with a future value, so no one can close prematurely |
+| 2 | Owner calls `end-season` for season N (the `is-owner` branch — works regardless of deadline) | Closes N on the owner's schedule |
+| → | Season N+1 opens already carrying the correct future deadline | No gap |
+
+Doing it in the reverse order (end first, set later) leaves a window where the
+new season has a past deadline and is closable by anyone. **Always set the next
+deadline first, then end.**
+
+The only case where the next deadline is *not* re-set is when the owner has
+abandoned the contract and a season is closed permissionlessly — at that point
+the contest is effectively over and there is no further season to schedule.
+
+**Frontend edge (handled operationally, not in code):** immediately after a
+season rolls but before the owner re-sets the block, `get-season-end-block`
+returns a past block, so the countdown shows `reached` ("anyone can close") for
+the just-opened season. The frontend **cannot** distinguish "deadline set for
+this season" from "leftover from the previous season" because the map is not
+season-keyed. The mitigation is the set-before-end ordering above; no frontend
+logic is added for this.
+
 ### 2. Block-math + chain reads (frontend lib)
 
 New `lib/season-blocks.ts` — pure, unit-tested:
