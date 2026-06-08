@@ -18,6 +18,10 @@ import {
   type ScoreRiskReport,
 } from "@/lib/score-risk";
 import { ShareScoreCard } from "@/components/shared/ShareScoreCard";
+import {
+  leaderboardGoal,
+  type LeaderboardGoal,
+} from "@/lib/leaderboard-showcase";
 
 const STATUS_LABEL: Record<TxStatus, string> = {
   pending: "Submitted · confirming on-chain",
@@ -56,11 +60,6 @@ const TERTIARY_ACTION: CSSProperties = {
   color: "#555",
 };
 
-type LeaderboardHint = {
-  tone: "success" | "info" | "warning";
-  text: string;
-};
-
 export function SharedMintDialog({
   gameId,
   score,
@@ -88,7 +87,7 @@ export function SharedMintDialog({
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [mintsRemaining, setMintsRemaining] = useState<number | null>(null);
-  const [leaderboardHint, setLeaderboardHint] = useState<LeaderboardHint | null>(null);
+  const [goal, setGoal] = useState<LeaderboardGoal | null>(null);
 
   useEffect(() => {
     if (!address) return;
@@ -102,43 +101,15 @@ export function SharedMintDialog({
     getTopTenForGame(gameId)
       .then((rows) => {
         if (cancelled) return;
-        const sorted = [...rows].sort((a, b) => b.score - a.score);
-        if (sorted.length === 0) {
-          setLeaderboardHint({
-            tone: "success",
-            text: "This leaderboard is empty. Minting will put your score on the board.",
-          });
-          return;
-        }
-        const rank = sorted.filter((entry) => entry.score >= score).length + 1;
-        if (rank === 1) {
-          setLeaderboardHint({
-            tone: "success",
-            text: "This would be the current #1 minted score.",
-          });
-          return;
-        }
-        if (rank <= 10 || sorted.length < 10) {
-          setLeaderboardHint({
-            tone: "success",
-            text: `This can enter the current leaderboard around rank #${rank}.`,
-          });
-          return;
-        }
-        const cutoff = sorted[9]?.score;
-        if (typeof cutoff === "number") {
-          const needed = Math.max(1, cutoff - score + 1);
-          setLeaderboardHint({
-            tone: "warning",
-            text: `Needs ${needed} more point${needed === 1 ? "" : "s"} to beat the current #10 cutoff (${cutoff}).`,
-          });
-        }
+        setGoal(leaderboardGoal({ rows, score }));
       })
       .catch(() => {
         if (!cancelled) {
-          setLeaderboardHint({
+          setGoal({
             tone: "info",
-            text: "Leaderboard cutoff could not be checked right now.",
+            primary: "Mint as a collectible score NFT.",
+            secondary: "Leaderboard cutoff could not be checked right now.",
+            topTenReady: false,
           });
         }
       });
@@ -156,7 +127,7 @@ export function SharedMintDialog({
   const feeStx = (Number(game.mintFeeUstx) / 1_000_000).toFixed(2);
   const chain = stacks.networkName;
   const isMintDisabled = busy || mintsRemaining === 0;
-  const canEnterLeaderboard = leaderboardHint?.tone === "success";
+  const canEnterLeaderboard = goal?.topTenReady === true;
   const mintButtonLabel = busy
     ? "Opening wallet..."
     : mintsRemaining === 0
@@ -239,8 +210,8 @@ export function SharedMintDialog({
           lineHeight: 1.35,
         }}
       >
-        <b>Play again is free.</b> Mint only if you want this exact score saved
-        as an NFT.
+        <b>Play again is free.</b>{" "}
+        {goal ? goal.primary : "Mint only if you want this exact score saved as an NFT."}
         <span className="block text-gray-500 mt-1">
           Mint cost: <b>{feeStx} STX</b>. Scores are public on-chain.
         </span>
@@ -254,20 +225,20 @@ export function SharedMintDialog({
               : `${mintsRemaining} mint${mintsRemaining === 1 ? "" : "s"} remaining this season`}
           </span>
         )}
-        {leaderboardHint && (
+        {goal && (
           <span
             className="block mt-2"
             style={{
               color:
-                leaderboardHint.tone === "success"
+                goal.tone === "success"
                   ? "#007700"
-                  : leaderboardHint.tone === "warning"
+                  : goal.tone === "warning"
                   ? "#8a5a00"
                   : "#555",
-              fontWeight: leaderboardHint.tone === "success" ? "bold" : "normal",
+              fontWeight: goal.tone === "success" ? "bold" : "normal",
             }}
           >
-            {leaderboardHint.text}
+            {goal.secondary}
           </span>
         )}
         {riskReport && riskReport.level !== "low" && (
@@ -298,7 +269,7 @@ export function SharedMintDialog({
               Play Again
             </button>
             <button onClick={connect} style={SECONDARY_ACTION}>
-              Connect Wallet
+              Connect to Mint
             </button>
             <button onClick={onClose} style={TERTIARY_ACTION}>
               Close
@@ -393,6 +364,14 @@ export function SharedMintDialog({
                 View {game.label} NFT
               </button>
             )}
+            {mintStatus === "success" && canEnterLeaderboard && (
+              <button
+                onClick={() => openWindow("highscore", { initialTab: gameId })}
+                style={SECONDARY_ACTION}
+              >
+                Open High Scores
+              </button>
+            )}
             <button onClick={onClose} style={TERTIARY_ACTION}>
               Close
             </button>
@@ -414,7 +393,7 @@ export function SharedMintDialog({
           gameId={gameId}
           score={score}
           player={address}
-          rankHint={leaderboardHint?.text}
+          rankHint={goal?.secondary}
           txId={txId}
         />
       </div>
