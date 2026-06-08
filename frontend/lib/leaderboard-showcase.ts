@@ -14,6 +14,15 @@ export type LeaderboardSummary = {
   cutoff: RankedEntry | null;
 };
 
+export type LeaderboardGoal = {
+  tone: "success" | "info" | "warning";
+  primary: string;
+  secondary: string;
+  rank?: number;
+  pointsNeeded?: number;
+  topTenReady: boolean;
+};
+
 export type LeaderboardChange =
   | {
       kind: "new-leader";
@@ -63,6 +72,87 @@ export function summarizeLeaderboard(
     leader: ranked[0] ?? null,
     topThree: ranked.slice(0, 3),
     cutoff: ranked.length >= 10 ? ranked[9] : null,
+  };
+}
+
+export function leaderboardGoal({
+  rows,
+  playerBest,
+  score,
+}: {
+  rows: TopEntry[];
+  playerBest?: number | null;
+  score?: number | null;
+}): LeaderboardGoal {
+  const ranked = rankRows(rows);
+  const cutoff = ranked.length >= 10 ? ranked[9] : null;
+
+  if (typeof score === "number") {
+    if (ranked.length === 0) {
+      return {
+        tone: "success",
+        primary: "Mint to become the first ranked score.",
+        secondary: "Top-10 is open.",
+        rank: 1,
+        topTenReady: true,
+      };
+    }
+
+    const rank = ranked.filter((entry) => entry.score >= score).length + 1;
+    if (rank <= 10 || ranked.length < 10) {
+      return {
+        tone: "success",
+        primary: `Mint to publish this score around rank #${rank}.`,
+        secondary: "This score is leaderboard-ready.",
+        rank,
+        topTenReady: true,
+      };
+    }
+
+    const needed = cutoff ? Math.max(1, cutoff.score - score + 1) : 1;
+    return {
+      tone: "warning",
+      primary: `Mint as a collectible score NFT.`,
+      secondary: `Needs ${needed} more point${needed === 1 ? "" : "s"} to beat #10 (${cutoff?.score ?? "?"}).`,
+      pointsNeeded: needed,
+      topTenReady: false,
+    };
+  }
+
+  if (!cutoff) {
+    return {
+      tone: "success",
+      primary: "Top-10 is open.",
+      secondary: "Any minted score can enter this board.",
+      topTenReady: true,
+    };
+  }
+
+  if (typeof playerBest !== "number") {
+    return {
+      tone: "info",
+      primary: `Beat #10: ${cutoff.score}`,
+      secondary: "Connect wallet to compare your best score.",
+      topTenReady: false,
+    };
+  }
+
+  const needed = cutoff.score - playerBest + 1;
+  if (needed <= 0) {
+    return {
+      tone: "success",
+      primary: "Your best is top-10 ready.",
+      secondary: `Mint a run over ${cutoff.score} to update the board.`,
+      topTenReady: true,
+    };
+  }
+
+  return {
+    tone: "warning",
+    primary: `Need ${needed} more point${needed === 1 ? "" : "s"}.`,
+    secondary: `Your best ${playerBest} · #10 is ${cutoff.score}.`,
+    pointsNeeded: needed,
+    topTenReady: false,
   };
 }
 

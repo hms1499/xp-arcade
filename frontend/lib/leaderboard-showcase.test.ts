@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   findTopTenChange,
+  leaderboardGoal,
   rankRows,
   scoreRarity,
   shortPlayer,
@@ -74,5 +75,22 @@ describe("leaderboard showcase helpers", () => {
     expect(scoreRarity(167)).toBe("Rare");
     expect(scoreRarity(500)).toBe("Epic");
     expect(scoreRarity(1000)).toBe("Legendary");
+  });
+
+  it("builds player goal copy for open, cutoff, and ready states", () => {
+    expect(leaderboardGoal({ rows: [] }).primary).toBe("Top-10 is open.");
+
+    const rows = Array.from({ length: 10 }, (_, index) => ({
+      player: `SP_${index}`,
+      score: 100 - index,
+    }));
+
+    expect(leaderboardGoal({ rows, playerBest: null }).primary).toBe("Beat #10: 91");
+    expect(leaderboardGoal({ rows, playerBest: 88 }).primary).toBe("Need 4 more points.");
+    expect(leaderboardGoal({ rows, playerBest: 95 }).primary).toBe("Your best is top-10 ready.");
+    expect(leaderboardGoal({ rows, score: 92 }).topTenReady).toBe(true);
+    expect(leaderboardGoal({ rows, score: 10 }).secondary).toBe(
+      "Needs 82 more points to beat #10 (91).",
+    );
   });
 });
