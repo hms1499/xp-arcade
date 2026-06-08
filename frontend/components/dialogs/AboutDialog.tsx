@@ -11,7 +11,7 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
   const explorerBase = "https://explorer.hiro.so";
   const chain = stacks.networkName;
   const explorerUrl = stacks.contractAddress
-    ? `${explorerBase}/txid/${stacks.contractAddress}.${stacks.contractName}?chain=${chain}`
+    ? `${explorerBase}/address/${stacks.contractAddress}.${stacks.contractName}?chain=${chain}`
     : null;
 
   useEffect(() => {
@@ -43,8 +43,8 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
           <span style={{ fontSize: 48 }}>🕹️</span>
           <div>
             <div style={{ fontWeight: "bold", fontSize: 14 }}>XP Arcade</div>
-            <div style={{ fontSize: 11, color: "#444" }}>Version 2.0 — Multi-Game Platform</div>
-            <div style={{ fontSize: 11, color: "#444" }}>Arcade games on Stacks blockchain</div>
+            <div style={{ fontSize: 11, color: "#444" }}>Version 2.0 - Multi-Game Platform</div>
+            <div style={{ fontSize: 11, color: "#444" }}>Arcade games on Stacks {stacks.networkName}</div>
           </div>
         </div>
 
@@ -95,8 +95,9 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
         )}
 
         <p style={{ fontSize: 10, color: "#666", marginBottom: 12 }}>
-          Scores are client-trusted. No STX prizes — NFTs only.
-          Top-10 leaderboard is on-chain; trophies claimable once per season.
+          Scores are client-submitted. Mint fees fund per-game season pools held
+          by the contract; top-10 winners claim STX prizes directly on-chain
+          after a season closes.
         </p>
 
         <div style={{ textAlign: "center" }}>

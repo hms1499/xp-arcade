@@ -16,6 +16,7 @@ import { watchTx } from "@/lib/tx-tracker";
 import { useToasts } from "@/state/toasts";
 import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
+import { stacks } from "@/lib/stacks";
 
 const BADGE_BG: Record<number, string> = { 1: "#ffd700", 2: "#c0c0c0", 3: "#cd7f32" };
 
@@ -29,6 +30,11 @@ type LeaderboardLoadState = {
   snapshot: RankSnapshot;
   error: string | null;
   lastUpdated: Date | null;
+};
+type ClaimLoadState = {
+  key: string;
+  claims: Claim[];
+  checked: boolean;
 };
 
 function loadSnapshot(gameId: GameId): RankSnapshot {
@@ -131,19 +137,34 @@ function LeaderboardTab({
   const playerBest = activeState?.playerBest ?? null;
   const poolUstx = activeState?.poolUstx ?? null;
 
-  const [claims, setClaims] = useState<Claim[]>([]);
+  const claimKey = `${gameId}:${address ?? "guest"}:${season ?? "loading"}`;
+  const [claimState, setClaimState] = useState<ClaimLoadState>({
+    key: "",
+    claims: [],
+    checked: false,
+  });
   const [claimingSeason, setClaimingSeason] = useState<number | null>(null);
   const claimWatchRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (!address || !season) { setClaims([]); return; }
+      await Promise.resolve();
+      if (!address || !season) {
+        if (!cancelled) setClaimState({ key: claimKey, claims: [], checked: true });
+        return;
+      }
       const found = await findClaimablePrizes(gameId, address, season);
-      if (!cancelled) setClaims(found);
-    })().catch(() => { if (!cancelled) setClaims([]); });
+      if (!cancelled) {
+        setClaimState({ key: claimKey, claims: found, checked: true });
+      }
+    })().catch(() => {
+      if (!cancelled) {
+        setClaimState({ key: claimKey, claims: [], checked: true });
+      }
+    });
     return () => { cancelled = true; };
-  }, [address, season, gameId]);
+  }, [address, season, gameId, claimKey]);
 
   // Stop any in-flight claim watcher if the window unmounts.
   useEffect(() => () => claimWatchRef.current?.(), []);
@@ -155,6 +176,9 @@ function LeaderboardTab({
     address && rows && myRank === 0 && cutoff !== null && playerBest !== null
       ? Math.max(0, cutoff - playerBest + 1)
       : null;
+  const claims =
+    claimState.key === claimKey && claimState.checked ? claimState.claims : [];
+  const claimsChecked = claimState.key === claimKey && claimState.checked;
 
   return (
     <div>
@@ -222,7 +246,10 @@ function LeaderboardTab({
                   claimWatchRef.current = null;
                   setClaimingSeason(null);
                   if (outcome === "confirmed") {
-                    setClaims((prev) => prev.filter((x) => x.season !== c.season));
+                    setClaimState((prev) => ({
+                      ...prev,
+                      claims: prev.claims.filter((x) => x.season !== c.season),
+                    }));
                     useToasts.getState().push({
                       title: "Prize received",
                       body: `Season ${c.season} payout has arrived in your wallet.`,
@@ -264,6 +291,24 @@ function LeaderboardTab({
               </span>
             ),
           )}
+          {claims.length === 0 && (
+            <span
+              style={{
+                marginTop: 3,
+                justifySelf: "start",
+                fontSize: 10,
+                opacity: 0.8,
+              }}
+            >
+              {!address
+                ? "Connect wallet to check claimable prizes."
+                : !claimsChecked
+                ? "Checking claimable prizes..."
+                : season === 1
+                ? "Claiming opens after this season ends."
+                : "No claimable prizes for this game."}
+            </span>
+          )}
         </div>
         <div style={{ display: "grid", gap: 2, textAlign: "right" }}>
           <span style={{ color: "#006400" }}>
@@ -304,8 +349,9 @@ function LeaderboardTab({
           Prize rules & on-chain verification
         </summary>
         <div style={{ padding: "5px 3px 2px" }}>
-          Mint fees fund this game&apos;s season pool. Positions 1-3 receive 20%
-          each; positions 4-10 receive about 5.71% each. Tied scores split the
+          Scores are client-submitted. Mint fees fund this game&apos;s season pool
+          on Stacks {stacks.networkName}. Positions 1-3 receive 20% each;
+          positions 4-10 receive about 5.71% each. Tied scores split the
           combined value of their occupied positions.
           <span className="block mt-1">
             Winners claim directly from the contract during the claim window.{" "}
