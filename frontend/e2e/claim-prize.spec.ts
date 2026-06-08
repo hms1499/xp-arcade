@@ -49,6 +49,7 @@ async function mockClaimReads(page: Page) {
     const byFn: Record<string, ClarityValue> = {
       "get-contract-owner": standardPrincipalCV(OWNER),
       "get-current-season": uintCV(2),
+      "get-prize-pool-balance": uintCV(0),
       "get-top-ten": listCV([topEntry(PLAYER_A, 1500), topEntry(PLAYER_B, 420)]),
       "get-best-score": noneCV(),
       "get-season-prize": someCV(
@@ -57,7 +58,9 @@ async function mockClaimReads(page: Page) {
           "top-ten": listCV([topEntry(PLAYER_A, 1500), topEntry(PLAYER_B, 420)]),
         }),
       ),
+      "get-claimable-amount": uintCV(600_000),
       "has-claimed-prize": boolCV(false),
+      "is-claim-open": boolCV(true),
     };
     await route.fulfill({
       contentType: "application/json",
@@ -92,6 +95,7 @@ test("no claim button is shown once the player has claimed the season", async ({
     const byFn: Record<string, ClarityValue> = {
       "get-contract-owner": standardPrincipalCV(OWNER),
       "get-current-season": uintCV(2),
+      "get-prize-pool-balance": uintCV(0),
       "get-top-ten": listCV([topEntry(PLAYER_A, 1500), topEntry(PLAYER_B, 420)]),
       "get-best-score": noneCV(),
       "get-season-prize": someCV(
@@ -100,7 +104,9 @@ test("no claim button is shown once the player has claimed the season", async ({
           "top-ten": listCV([topEntry(PLAYER_A, 1500), topEntry(PLAYER_B, 420)]),
         }),
       ),
+      "get-claimable-amount": uintCV(600_000),
       "has-claimed-prize": boolCV(true),
+      "is-claim-open": boolCV(true),
     };
     await route.fulfill({
       contentType: "application/json",

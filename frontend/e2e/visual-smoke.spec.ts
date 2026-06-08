@@ -128,8 +128,15 @@ test("start menu opens shared utility windows", async ({ page }) => {
   await bootFast(page);
 
   await page.getByRole("button", { name: /^Start$/i }).click();
+  await expect(page.getByRole("menuitem", { name: /Connect Wallet/i })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: /^Disconnect Wallet$/i })).toHaveCount(0);
   await page.getByRole("menuitem", { name: /Leaderboard/i }).click();
   await expect(page.locator(".title-bar-text", { hasText: "🏆 High Scores" })).toBeVisible();
+  await expect(
+    windowByTitle(page, "🏆 High Scores")
+      .locator('div[style*="display: block"]')
+      .getByText(/Prize rules & on-chain verification/i),
+  ).toBeVisible();
 
   await page.getByRole("button", { name: /^Start$/i }).click();
   await page.getByRole("menuitem", { name: /Hall of Fame/i }).click();
