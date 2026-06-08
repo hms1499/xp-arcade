@@ -6,6 +6,7 @@ import { Window } from "@/components/windows/Window";
 import {
   getBestScoreForGame,
   getCurrentSeasonForGame,
+  getPrizePoolBalanceForGame,
   getTopTenForGame,
   claimPrizeV3,
   type TopEntry,
@@ -24,6 +25,7 @@ type LeaderboardLoadState = {
   rows: TopEntry[] | null;
   season: number | null;
   playerBest: number | null;
+  poolUstx: number | null;
   snapshot: RankSnapshot;
   error: string | null;
   lastUpdated: Date | null;
@@ -82,8 +84,9 @@ function LeaderboardTab({
               .then((best) => best?.score ?? 0)
               .catch(() => null)
           : Promise.resolve(null),
+        getPrizePoolBalanceForGame(gameId).catch(() => null),
       ])
-        .then(([data, season, playerBest]) => {
+        .then(([data, season, playerBest, poolUstx]) => {
           const sorted = [...data].sort((a, b) => b.score - a.score);
           const previousSnapshot = loadSnapshot(gameId);
           saveSnapshot(gameId, sorted);
@@ -92,6 +95,7 @@ function LeaderboardTab({
             rows: sorted,
             season,
             playerBest,
+            poolUstx,
             snapshot: previousSnapshot,
             error: null,
             lastUpdated: new Date(),
@@ -103,6 +107,7 @@ function LeaderboardTab({
             rows: null,
             season: null,
             playerBest: null,
+            poolUstx: null,
             snapshot: typeof window !== "undefined" ? loadSnapshot(gameId) : {},
             error: e instanceof Error ? e.message : "Load failed",
             lastUpdated: null,
@@ -124,6 +129,7 @@ function LeaderboardTab({
   const lastUpdated = activeState?.lastUpdated ?? null;
   const season = activeState?.season ?? null;
   const playerBest = activeState?.playerBest ?? null;
+  const poolUstx = activeState?.poolUstx ?? null;
 
   const [claims, setClaims] = useState<Claim[]>([]);
   const [claimingSeason, setClaimingSeason] = useState<number | null>(null);
@@ -260,6 +266,14 @@ function LeaderboardTab({
           )}
         </div>
         <div style={{ display: "grid", gap: 2, textAlign: "right" }}>
+          <span style={{ color: "#006400" }}>
+            Pool{" "}
+            <b>
+              {poolUstx === null
+                ? "..."
+                : `${(poolUstx / 1_000_000).toFixed(2)} STX`}
+            </b>
+          </span>
           <span>
             {cutoff !== null ? <>Cutoff <b>{cutoff}</b></> : "Open top-10"}
           </span>
@@ -277,6 +291,34 @@ function LeaderboardTab({
           )}
         </div>
       </div>
+      <details
+        className="text-[10px] mb-2 px-1 py-1"
+        style={{
+          background: "#eef6ff",
+          border: "1px solid #8aa7c7",
+          color: "#34495e",
+          lineHeight: 1.4,
+        }}
+      >
+        <summary style={{ cursor: "pointer", fontWeight: "bold", color: "#000080" }}>
+          Prize rules & on-chain verification
+        </summary>
+        <div style={{ padding: "5px 3px 2px" }}>
+          Mint fees fund this game&apos;s season pool. Positions 1-3 receive 20%
+          each; positions 4-10 receive about 5.71% each. Tied scores split the
+          combined value of their occupied positions.
+          <span className="block mt-1">
+            Winners claim directly from the contract during the claim window.{" "}
+            <a
+              href={`https://explorer.hiro.so/address/${GAMES[gameId].contractAddress}.${GAMES[gameId].contractName}?chain=mainnet`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Verify contract
+            </a>
+          </span>
+        </div>
+      </details>
       {address && rows && myRank === 0 && (
         <p
           className="text-[9px] text-gray-600 mb-2 px-1 py-1"

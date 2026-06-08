@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DesktopIcon } from "./DesktopIcon";
 import { Taskbar } from "./Taskbar";
 import { DesktopWallpaper } from "./DesktopWallpaper";
@@ -33,6 +33,20 @@ export function Desktop({ children }: { children: React.ReactNode }) {
   const open = useWindows((s) => s.open);
   const leaderboard = useLeaderboardShowcase();
   const previousRowsRef = useRef<Record<GameId, TopEntry[]> | null>(null);
+  const [lastGame, setLastGame] = useState<GameId | null>(() => {
+    if (typeof window === "undefined") return null;
+    const stored = localStorage.getItem("xp-arcade:last-game");
+    return stored && stored in GAMES ? (stored as GameId) : null;
+  });
+
+  useEffect(() => {
+    const onChange = (event: Event) => {
+      const gameId = (event as CustomEvent<string>).detail;
+      if (gameId in GAMES) setLastGame(gameId as GameId);
+    };
+    window.addEventListener("xp-arcade:last-game-change", onChange);
+    return () => window.removeEventListener("xp-arcade:last-game-change", onChange);
+  }, []);
 
   useEffect(() => {
     if (!leaderboard.lastUpdated) return;
@@ -76,6 +90,13 @@ export function Desktop({ children }: { children: React.ReactNode }) {
             key={game.id}
             label={`${game.label}.exe`}
             emoji={game.emoji}
+            badge={
+              game.id === (lastGame ?? "snake")
+                ? lastGame
+                  ? "RESUME"
+                  : "START"
+                : undefined
+            }
             onOpen={() => open(`game-${game.id}`)}
           />
         ))}
@@ -95,14 +116,91 @@ export function Desktop({ children }: { children: React.ReactNode }) {
           onOpen={() => open("mynfts")}
         />
       </div>
+      <QuickPlay
+        gameId={lastGame ?? "snake"}
+        hasHistory={lastGame !== null}
+        cutoff={leaderboard.summaries[lastGame ?? "snake"].cutoff?.score ?? null}
+        onOpen={() => open(`game-${lastGame ?? "snake"}`)}
+      />
       <DesktopLeaderboardShowcase
         summaries={leaderboard.summaries}
         seasonsByGame={leaderboard.seasonsByGame}
+        poolsByGame={leaderboard.poolsByGame}
         lastUpdated={leaderboard.lastUpdated}
         error={leaderboard.error}
       />
       {children}
       <Taskbar leaderboardSummaries={leaderboard.summaries} />
     </div>
+  );
+}
+
+function QuickPlay({
+  gameId,
+  hasHistory,
+  cutoff,
+  onOpen,
+}: {
+  gameId: GameId;
+  hasHistory: boolean;
+  cutoff: number | null;
+  onOpen: () => void;
+}) {
+  const game = GAMES[gameId];
+
+  return (
+    <section
+      className="desktop-quick-play"
+      style={{
+        position: "absolute",
+        top: 16,
+        left: 112,
+        zIndex: 1,
+        width: 250,
+        background: "#c0c0c0",
+        border: "2px solid",
+        borderColor: "#ffffff #808080 #808080 #ffffff",
+        boxShadow: "2px 2px 0 #000000",
+        fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
+      }}
+    >
+      <div
+        style={{
+          background: "linear-gradient(90deg, #000080, #1084d0)",
+          color: "#ffffff",
+          fontWeight: "bold",
+          padding: "3px 6px",
+        }}
+      >
+        {hasHistory ? "Continue Playing" : "Quick Start"}
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "44px 1fr",
+          gap: 8,
+          alignItems: "center",
+          padding: 8,
+        }}
+      >
+        <span style={{ fontSize: 34, textAlign: "center" }}>{game.emoji}</span>
+        <span style={{ display: "grid", gap: 5 }}>
+          <b style={{ fontSize: 12 }}>{game.label}</b>
+          <span style={{ color: "#555", lineHeight: 1.3 }}>
+            {cutoff === null
+              ? "Top-10 is open. Any minted score can enter."
+              : `Beat ${cutoff} points to pass the current #10.`}
+          </span>
+          <button
+            type="button"
+            className="default"
+            onClick={onOpen}
+            style={{ justifySelf: "start", fontWeight: "bold" }}
+          >
+            {hasHistory ? `Play ${game.label}` : "Play Now"}
+          </button>
+        </span>
+      </div>
+    </section>
   );
 }

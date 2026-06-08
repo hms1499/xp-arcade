@@ -51,11 +51,13 @@ function PanelTitle({ children }: { children: React.ReactNode }) {
 export function DesktopLeaderboardShowcase({
   summaries,
   seasonsByGame,
+  poolsByGame,
   lastUpdated,
   error,
 }: {
   summaries: Record<GameId, LeaderboardSummary>;
   seasonsByGame: Record<GameId, number | null>;
+  poolsByGame: Record<GameId, number | null>;
   lastUpdated: Date | null;
   error: string | null;
 }) {
@@ -169,12 +171,13 @@ export function DesktopLeaderboardShowcase({
             const game = GAMES[gameId];
             const cutoff = summaries[gameId].cutoff;
             const season = seasonsByGame[gameId];
+            const pool = poolsByGame[gameId];
             return (
               <div
                 key={gameId}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "82px 48px 1fr",
+                  gridTemplateColumns: "82px 38px 62px 1fr",
                   gap: 6,
                   alignItems: "center",
                 }}
@@ -182,6 +185,9 @@ export function DesktopLeaderboardShowcase({
                 <span>{game.emoji} {game.label}</span>
                 <span style={{ fontFamily: "monospace", color: "#000080" }}>
                   S{season ?? "…"}
+                </span>
+                <span style={{ fontFamily: "monospace", color: "#006400" }}>
+                  {pool === null ? "…" : `${(pool / 1_000_000).toFixed(2)} STX`}
                 </span>
                 <span style={{ color: "#555" }}>
                   {cutoff ? `#10 cutoff ${cutoff.score}` : "Top-10 still open"}

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getCurrentSeasonForGame,
+  getPrizePoolBalanceForGame,
   getTopTenForGame,
   type TopEntry,
 } from "@/lib/contract-calls";
@@ -11,6 +12,7 @@ import { summarizeLeaderboard, type LeaderboardSummary } from "@/lib/leaderboard
 
 type RowsByGame = Record<GameId, TopEntry[]>;
 type SeasonsByGame = Record<GameId, number | null>;
+type PoolsByGame = Record<GameId, number | null>;
 
 const EMPTY_ROWS = GAME_IDS.reduce((acc, gameId) => {
   acc[gameId] = [];
@@ -22,26 +24,39 @@ const EMPTY_SEASONS = GAME_IDS.reduce((acc, gameId) => {
   return acc;
 }, {} as SeasonsByGame);
 
+const EMPTY_POOLS = GAME_IDS.reduce((acc, gameId) => {
+  acc[gameId] = null;
+  return acc;
+}, {} as PoolsByGame);
+
 export function useLeaderboardShowcase() {
   const [rowsByGame, setRowsByGame] = useState<RowsByGame>(EMPTY_ROWS);
   const [seasonsByGame, setSeasonsByGame] = useState<SeasonsByGame>(EMPTY_SEASONS);
+  const [poolsByGame, setPoolsByGame] = useState<PoolsByGame>(EMPTY_POOLS);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
-      const [rowEntries, seasonEntries] = await Promise.all([
+      const [rowEntries, seasonEntries, poolEntries] = await Promise.all([
         Promise.all(
           GAME_IDS.map(async (gameId) => [gameId, await getTopTenForGame(gameId)] as const),
         ),
         Promise.all(
           GAME_IDS.map(async (gameId) => [gameId, await getCurrentSeasonForGame(gameId)] as const),
         ),
+        Promise.all(
+          GAME_IDS.map(async (gameId) => [
+            gameId,
+            await getPrizePoolBalanceForGame(gameId).catch(() => null),
+          ] as const),
+        ),
       ] as const);
       setRowsByGame(Object.fromEntries(rowEntries) as RowsByGame);
       setSeasonsByGame(
         Object.fromEntries(seasonEntries) as SeasonsByGame,
       );
+      setPoolsByGame(Object.fromEntries(poolEntries) as PoolsByGame);
       setLastUpdated(new Date());
       setError(null);
     } catch (e) {
@@ -77,6 +92,7 @@ export function useLeaderboardShowcase() {
   return {
     rowsByGame,
     seasonsByGame,
+    poolsByGame,
     summaries,
     lastUpdated,
     error,

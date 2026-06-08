@@ -1,4 +1,5 @@
 "use client";
+import { useEffect } from "react";
 import { type GameId, GAMES } from "@/lib/game-registry";
 import { useWindows } from "@/state/window-manager";
 import { useSessionStats } from "@/state/session-stats";
@@ -20,12 +21,23 @@ export function GameShellWindow({
   const openWindow = useWindows((s) => s.open);
   const sessionStats = useSessionStats((s) => s.byGame[gameId]);
 
+  useEffect(() => {
+    localStorage.setItem("xp-arcade:last-game", gameId);
+    window.dispatchEvent(
+      new CustomEvent("xp-arcade:last-game-change", { detail: gameId }),
+    );
+  }, [gameId]);
+
   if (!w) return null;
 
   return (
     <Window id={w.id} title={`${game.emoji} ${game.label}`}>
-      <div style={{ display: "flex", flexDirection: "column" }}>
+      <div
+        className="game-shell-content"
+        style={{ display: "flex", flexDirection: "column" }}
+      >
         <div
+          className="game-shell-toolbar"
           style={{
             display: "flex",
             justifyContent: "space-between",
@@ -68,7 +80,7 @@ export function GameShellWindow({
             </span>
           </span>
         </div>
-        <div className="p-2">{children}</div>
+        <div className="game-shell-stage p-2">{children}</div>
       </div>
     </Window>
   );

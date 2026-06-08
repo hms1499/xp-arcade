@@ -5,10 +5,12 @@ export function DesktopIcon({
   label,
   emoji,
   onOpen,
+  badge,
 }: {
   label: string;
   emoji: string;
   onOpen: () => void;
+  badge?: string;
 }) {
   const [selected, setSelected] = useState(false);
   const [singleTapOpen, setSingleTapOpen] = useState(false);
@@ -41,6 +43,7 @@ export function DesktopIcon({
       }}
       onDoubleClick={onOpen}
       style={{
+        position: "relative",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -54,6 +57,26 @@ export function DesktopIcon({
         fontSize: 11,
       }}
     >
+      {badge && (
+        <span
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            background: "#ffd700",
+            color: "#5b4300",
+            border: "1px solid #ffffff",
+            boxShadow: "1px 1px 0 #000000",
+            padding: "1px 3px",
+            fontSize: 8,
+            fontWeight: "bold",
+            textShadow: "none",
+          }}
+        >
+          {badge}
+        </span>
+      )}
       <span
         style={{
           fontSize: 36,
