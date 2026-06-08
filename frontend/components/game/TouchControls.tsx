@@ -2,8 +2,8 @@
 import type { Direction } from "@/lib/snake-engine";
 
 const BTN: React.CSSProperties = {
-  width: 48,
-  height: 48,
+  width: 52,
+  height: 52,
   fontSize: 20,
   display: "flex",
   alignItems: "center",
@@ -23,10 +23,11 @@ export function TouchControls({ onDir }: { onDir: (d: Direction) => void }) {
 
   return (
     <div
+      className="touch-controls"
       style={{
         display: "grid",
-        gridTemplateColumns: "48px 48px 48px",
-        gridTemplateRows: "48px 48px",
+        gridTemplateColumns: "52px 52px 52px",
+        gridTemplateRows: "52px 52px",
         gap: 2,
         marginTop: 6,
         justifyContent: "center",

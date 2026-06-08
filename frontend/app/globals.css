@@ -117,7 +117,8 @@ body {
 }
 
 @media (max-width: 900px), (max-height: 620px) {
-  .desktop-showcase {
+  .desktop-showcase,
+  .desktop-quick-play {
     display: none !important;
   }
 }
@@ -159,10 +160,19 @@ body {
   }
 
   .tray-wallet-button {
-    max-width: 88px !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
+    width: 24px !important;
+    min-width: 24px !important;
+    height: 18px !important;
+    padding: 0 !important;
+    justify-content: center !important;
+  }
+
+  .tray-wallet-label {
+    display: none !important;
+  }
+
+  .tray-wallet-icon {
+    font-size: 12px;
   }
 
   .tray-tx-chip {
@@ -175,6 +185,55 @@ body {
     right: 6px !important;
     bottom: 40px !important;
     max-width: calc(100vw - 12px) !important;
+  }
+
+  .window-body {
+    margin: 4px !important;
+  }
+
+  .game-shell-content,
+  .game-shell-stage,
+  .snake-game-layout {
+    min-height: 0;
+  }
+
+  .game-shell-content {
+    height: 100%;
+  }
+
+  .game-shell-toolbar {
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 3px 4px !important;
+  }
+
+  .game-shell-toolbar > span {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .game-shell-stage {
+    display: flex;
+    flex: 1;
+    padding: 4px !important;
+  }
+
+  .snake-game-layout {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .snake-canvas-frame {
+    width: min(100%, calc(100dvh - 294px)) !important;
+    max-height: none !important;
+  }
+
+  .touch-controls {
+    margin-top: auto !important;
+    padding-top: 8px;
+    padding-bottom: 6px;
   }
 }
 

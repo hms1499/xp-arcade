@@ -119,11 +119,12 @@ export function Window({
         <div className="title-bar-text">{title}</div>
         <div className="title-bar-controls">
           <button aria-label="Minimize" onClick={() => minimize(id)} />
-          <button
-            aria-label={win.maximized ? "Restore" : "Maximize"}
-            disabled={compactViewport}
-            onClick={() => toggleMaximize(id)}
-          />
+          {!compactViewport && (
+            <button
+              aria-label={win.maximized ? "Restore" : "Maximize"}
+              onClick={() => toggleMaximize(id)}
+            />
+          )}
           <button aria-label="Close" onClick={() => setClosing(true)} />
         </div>
       </div>

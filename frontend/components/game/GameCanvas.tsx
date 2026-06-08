@@ -339,8 +339,8 @@ export function GameCanvas({
   }, [onGameOver, onScoreChange, setPausedBoth, isTopScore]);
 
   return (
-    <div>
-      <div className="text-xs mb-1 font-bold flex justify-between">
+    <div className="snake-game-layout">
+      <div className="snake-game-status text-xs mb-1 font-bold flex justify-between">
         <span>Score: {score} · Best: {Math.max(best, score)}</span>
         <div
           style={{
@@ -368,6 +368,7 @@ export function GameCanvas({
         </div>
       </div>
       <div
+        className="snake-canvas-frame"
         style={{
           position: "relative",
           width: `min(${GRID * CELL}px, calc(100vw - 32px))`,
@@ -415,7 +416,7 @@ export function GameCanvas({
       {isTouch ? (
         <TouchControls onDir={handleDir} />
       ) : (
-        <div className="text-[10px] mt-1 text-gray-600">
+        <div className="snake-keyboard-help text-[10px] mt-1 text-gray-600">
           Arrows / WASD to move · Esc to pause
         </div>
       )}
