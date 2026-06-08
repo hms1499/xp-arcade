@@ -219,11 +219,32 @@ export function StartMenu({
             }}
           />
 
-          <MenuItem
-            icon="🔌"
-            label="Disconnect Wallet"
-            onClick={() => { disconnect(); onClose(); }}
-          />
+          {address ? (
+            <>
+              <MenuItem
+                icon="👤"
+                label="View Wallet Profile"
+                onClick={() => {
+                  openWin("player-profile", { address });
+                  onClose();
+                }}
+              />
+              <MenuItem
+                icon="🔌"
+                label="Disconnect Wallet"
+                onClick={() => { disconnect(); onClose(); }}
+              />
+            </>
+          ) : (
+            <MenuItem
+              icon="🔌"
+              label="Connect Wallet"
+              onClick={() => {
+                void useWallet.getState().connect();
+                onClose();
+              }}
+            />
+          )}
           <MenuItem
             icon="⏻"
             label="Shut Down"

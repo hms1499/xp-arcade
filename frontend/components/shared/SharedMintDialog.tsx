@@ -156,11 +156,14 @@ export function SharedMintDialog({
   const feeStx = (Number(game.mintFeeUstx) / 1_000_000).toFixed(2);
   const chain = stacks.networkName;
   const isMintDisabled = busy || mintsRemaining === 0;
+  const canEnterLeaderboard = leaderboardHint?.tone === "success";
   const mintButtonLabel = busy
     ? "Opening wallet..."
     : mintsRemaining === 0
     ? "Limit reached"
-    : `Mint for ${feeStx} STX`;
+    : canEnterLeaderboard
+    ? `Mint & enter board · ${feeStx} STX`
+    : `Mint score NFT · ${feeStx} STX`;
 
   async function handleMint() {
     if (!address) return;
@@ -285,14 +288,6 @@ export function SharedMintDialog({
         )}
       </div>
 
-      <ShareScoreCard
-        gameId={gameId}
-        score={score}
-        player={address}
-        rankHint={leaderboardHint?.text}
-        txId={txId}
-      />
-
       {!address ? (
         <div>
           <p className="text-xs mb-2 text-gray-500">
@@ -404,6 +399,25 @@ export function SharedMintDialog({
           </div>
         </div>
       )}
+
+      <div
+        style={{
+          borderTop: "1px solid #d0d0c8",
+          marginTop: 10,
+          paddingTop: 8,
+        }}
+      >
+        <div className="text-xs mb-2" style={{ color: "#555" }}>
+          Share or download this run
+        </div>
+        <ShareScoreCard
+          gameId={gameId}
+          score={score}
+          player={address}
+          rankHint={leaderboardHint?.text}
+          txId={txId}
+        />
+      </div>
     </div>
   );
 }

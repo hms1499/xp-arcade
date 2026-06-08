@@ -4,6 +4,7 @@ import { useWallet } from "@/state/wallet";
 import { useMintTx } from "@/state/mint-tx";
 import { WalletBalloon } from "./WalletBalloon";
 import { stacks } from "@/lib/stacks";
+import { useWindows } from "@/state/window-manager";
 
 const sunken: CSSProperties = {
   border: "1px solid",
@@ -41,13 +42,13 @@ function shortTx(txId: string) {
 export function SystemTray() {
   const address = useWallet((s) => s.address);
   const connect = useWallet((s) => s.connect);
-  const disconnect = useWallet((s) => s.disconnect);
   const hydrate = useWallet((s) => s.hydrate);
   const mintPending = useWallet((s) => s.mintPending);
   const txId = useMintTx((s) => s.txId);
   const txStatus = useMintTx((s) => s.status);
   const [now, setNow] = useState(() => new Date());
   const chain = stacks.networkName;
+  const openWindow = useWindows((s) => s.open);
 
   useEffect(() => {
     hydrate();
@@ -108,13 +109,15 @@ export function SystemTray() {
           <button
             type="button"
             className="tray-wallet-button"
-            onClick={disconnect}
-            aria-label="Disconnect wallet"
-            title={address}
+            onClick={() => openWindow("player-profile", { address })}
+            aria-label="Open wallet profile"
+            title={`${address} - open profile`}
             style={{ background: "none", border: "none", cursor: "default", fontSize: 11, display: "flex", gap: 4, alignItems: "center", fontFamily: "inherit" }}
           >
-            <span style={{ color: "#00aa00" }}>●</span>
-            {address.slice(0, 5)}…{address.slice(-4)}
+            <span className="tray-wallet-icon" style={{ color: "#00aa00" }}>●</span>
+            <span className="tray-wallet-label">
+              {address.slice(0, 5)}…{address.slice(-4)}
+            </span>
           </button>
         ) : (
           <button
@@ -124,7 +127,8 @@ export function SystemTray() {
             aria-label="Connect wallet"
             style={{ background: "none", border: "none", cursor: "default", fontSize: 11, fontFamily: "inherit" }}
           >
-            Connect Wallet
+            <span className="tray-wallet-icon">▣</span>
+            <span className="tray-wallet-label">Connect Wallet</span>
           </button>
         )}
       </div>
