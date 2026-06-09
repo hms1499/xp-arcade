@@ -29,6 +29,19 @@ const EMPTY_POOLS = GAME_IDS.reduce((acc, gameId) => {
   return acc;
 }, {} as PoolsByGame);
 
+/** Merge fresh per-game values over the previous map; a null entry means that
+ * game's read failed, so its previous value is kept (no blanking). */
+export function mergeWithFallback<T>(
+  prev: Record<GameId, T>,
+  entries: ReadonlyArray<readonly [GameId, T | null]>,
+): Record<GameId, T> {
+  const next = { ...prev };
+  for (const [gameId, value] of entries) {
+    if (value !== null) next[gameId] = value;
+  }
+  return next;
+}
+
 export function useLeaderboardShowcase() {
   const [rowsByGame, setRowsByGame] = useState<RowsByGame>(EMPTY_ROWS);
   const [seasonsByGame, setSeasonsByGame] = useState<SeasonsByGame>(EMPTY_SEASONS);
@@ -37,31 +50,38 @@ export function useLeaderboardShowcase() {
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    try {
-      const [rowEntries, seasonEntries, poolEntries] = await Promise.all([
-        Promise.all(
-          GAME_IDS.map(async (gameId) => [gameId, await getTopTenForGame(gameId)] as const),
+    const [rowEntries, seasonEntries, poolEntries] = await Promise.all([
+      Promise.all(
+        GAME_IDS.map(
+          async (gameId) =>
+            [gameId, await getTopTenForGame(gameId).catch(() => null)] as const,
         ),
-        Promise.all(
-          GAME_IDS.map(async (gameId) => [gameId, await getCurrentSeasonForGame(gameId)] as const),
+      ),
+      Promise.all(
+        GAME_IDS.map(
+          async (gameId) =>
+            [
+              gameId,
+              await getCurrentSeasonForGame(gameId).catch(() => null),
+            ] as const,
         ),
-        Promise.all(
-          GAME_IDS.map(async (gameId) => [
-            gameId,
-            await getPrizePoolBalanceForGame(gameId).catch(() => null),
-          ] as const),
+      ),
+      Promise.all(
+        GAME_IDS.map(
+          async (gameId) =>
+            [
+              gameId,
+              await getPrizePoolBalanceForGame(gameId).catch(() => null),
+            ] as const,
         ),
-      ] as const);
-      setRowsByGame(Object.fromEntries(rowEntries) as RowsByGame);
-      setSeasonsByGame(
-        Object.fromEntries(seasonEntries) as SeasonsByGame,
-      );
-      setPoolsByGame(Object.fromEntries(poolEntries) as PoolsByGame);
-      setLastUpdated(new Date());
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Leaderboard refresh failed");
-    }
+      ),
+    ] as const);
+
+    setRowsByGame((prev) => mergeWithFallback(prev, rowEntries));
+    setSeasonsByGame((prev) => mergeWithFallback(prev, seasonEntries));
+    setPoolsByGame(Object.fromEntries(poolEntries) as PoolsByGame);
+    setLastUpdated(new Date());
+    setError(null);
   }, []);
 
   useEffect(() => {
