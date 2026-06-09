@@ -23,4 +23,18 @@ describe("mergeWithFallback", () => {
     ]);
     expect(next).toEqual({ snake: 10, tetris: 2, pacman: 30, breakout: 4 });
   });
+
+  it("preserves initial/empty previous values for failed games", () => {
+    const prev = { snake: [], tetris: [], pacman: [], breakout: [] } as Record<
+      "snake" | "tetris" | "pacman" | "breakout",
+      number[]
+    >;
+    const next = mergeWithFallback(prev, [
+      ["snake", [1, 2]],
+      ["tetris", null],
+      ["pacman", null],
+      ["breakout", [3]],
+    ]);
+    expect(next).toEqual({ snake: [1, 2], tetris: [], pacman: [], breakout: [3] });
+  });
 });

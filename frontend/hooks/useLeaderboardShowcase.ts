@@ -30,7 +30,9 @@ const EMPTY_POOLS = GAME_IDS.reduce((acc, gameId) => {
 }, {} as PoolsByGame);
 
 /** Merge fresh per-game values over the previous map; a null entry means that
- * game's read failed, so its previous value is kept (no blanking). */
+ * game's read failed, so its previous value is kept (no blanking). Relies on
+ * getTopTenForGame/getCurrentSeasonForGame/getPrizePoolBalanceForGame never
+ * resolving to null on success — null unambiguously signals a failed read. */
 export function mergeWithFallback<T>(
   prev: Record<GameId, T>,
   entries: ReadonlyArray<readonly [GameId, T | null]>,
@@ -79,9 +81,10 @@ export function useLeaderboardShowcase() {
 
     setRowsByGame((prev) => mergeWithFallback(prev, rowEntries));
     setSeasonsByGame((prev) => mergeWithFallback(prev, seasonEntries));
-    setPoolsByGame(Object.fromEntries(poolEntries) as PoolsByGame);
+    setPoolsByGame((prev) => mergeWithFallback(prev, poolEntries));
     setLastUpdated(new Date());
-    setError(null);
+    const allFailed = rowEntries.every(([, value]) => value === null);
+    setError(allFailed ? "Leaderboard refresh failed" : null);
   }, []);
 
   useEffect(() => {
