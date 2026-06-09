@@ -322,14 +322,17 @@ function LeaderboardTab({
           <span>
             {cutoff !== null ? <>Cutoff <b>{cutoff}</b></> : "Open top-10"}
           </span>
-          {countdown.state !== "unset" && (
+          {countdown.state !== "unset" && countdown.state !== "loading" && (
             <span
               style={{
                 fontFamily: "monospace",
                 fontSize: 11,
-                color: countdown.state === "expired" ? "#cc0000" : "#000080",
+                color:
+                  countdown.state === "iso-expired" || countdown.state === "reached"
+                    ? "#cc0000"
+                    : "#000080",
               }}
-              title={`Ends ${countdown.endsAt.toLocaleString()}`}
+              title={`~${countdown.endsAt.toLocaleString()}`}
             >
               ⏳ {formatCountdown(countdown)}
             </span>

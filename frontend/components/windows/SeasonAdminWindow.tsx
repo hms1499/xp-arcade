@@ -192,12 +192,23 @@ export function SeasonAdminWindow() {
           <p className="text-[10px] text-gray-500 px-1">
             Ending the season snapshots top-10 and pool total, then starts a fresh season.
           </p>
-          {countdown.state !== "unset" && (
-            <p className="text-[10px] px-1 mt-1" style={{ color: countdown.state === "expired" ? "#cc0000" : "#000080" }}>
-              ⏳ Soft deadline: <b>{formatCountdown(countdown)}</b>
-              {" · ends "}
+          {countdown.state !== "unset" && countdown.state !== "loading" && (
+            <p
+              className="text-[10px] px-1 mt-1"
+              style={{
+                color:
+                  countdown.state === "iso-expired" || countdown.state === "reached"
+                    ? "#cc0000"
+                    : "#000080",
+              }}
+            >
+              ⏳ Deadline: <b>{formatCountdown(countdown)}</b>
+              {" · ~"}
               {countdown.endsAt.toLocaleString()}
-              {countdown.state === "expired" && " — call End Season now to honour it."}
+              {countdown.state === "iso-expired" &&
+                " — call End Season now to honour it."}
+              {countdown.state === "reached" &&
+                " — anyone can call End Season now."}
             </p>
           )}
         </fieldset>

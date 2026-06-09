@@ -159,13 +159,20 @@ export function DesktopLeaderboardShowcase({
               padding: 6,
               fontFamily: "monospace",
               fontSize: 12,
-              color: countdown.state === "expired" ? "#cc0000" : "#000080",
+              color:
+                countdown.state === "iso-expired" || countdown.state === "reached"
+                  ? "#cc0000"
+                  : "#000080",
               textAlign: "center",
             }}
           >
-            {countdown.state === "unset"
-              ? "No display deadline set"
-              : `Soft deadline ${formatCountdown(countdown)}`}
+            {countdown.state === "loading"
+              ? "Loading deadline…"
+              : countdown.state === "unset"
+                ? "No display deadline set"
+                : countdown.state === "reached"
+                  ? formatCountdown(countdown)
+                  : `Soft deadline ${formatCountdown(countdown)}`}
           </div>
           {GAME_IDS.map((gameId) => {
             const game = GAMES[gameId];
