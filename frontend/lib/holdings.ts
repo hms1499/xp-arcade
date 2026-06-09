@@ -56,11 +56,13 @@ export async function fetchScoreHoldings(
     offset += limit;
   }
 
-  return Promise.all(
-    ids.map(async (id) => {
-      const meta = (await fetch(
-        `/api/metadata/${game.metaSegment}/${id}`
-      ).then((x) => x.json())) as MetadataResponse;
+  const META_CONCURRENCY = 5;
+
+  async function fetchMeta(id: number): Promise<ScoreNft | null> {
+    try {
+      const res = await fetch(`/api/metadata/${game.metaSegment}/${id}`);
+      if (!res.ok) return null;
+      const meta = (await res.json()) as MetadataResponse;
       return {
         id,
         gameId,
@@ -70,8 +72,24 @@ export async function fetchScoreHoldings(
         score: attr(meta, "Score") ? Number(attr(meta, "Score")) : undefined,
         season: attr(meta, "Season") ? Number(attr(meta, "Season")) : undefined,
       };
-    })
+    } catch {
+      return null;
+    }
+  }
+
+  const results: Array<ScoreNft | null> = new Array(ids.length).fill(null);
+  let cursor = 0;
+  async function worker() {
+    while (cursor < ids.length) {
+      const index = cursor++;
+      results[index] = await fetchMeta(ids[index]);
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(META_CONCURRENCY, ids.length) }, worker),
   );
+
+  return results.filter((nft): nft is ScoreNft => nft !== null);
 }
 
 export async function fetchAllScoreHoldings(addr: string): Promise<ScoreNft[]> {
