@@ -91,6 +91,16 @@ export async function getCurrentSeasonForGame(gameId: GameId): Promise<number> {
   return Number(unwrap(cvToValue(res)));
 }
 
+export async function getSeasonEndBlockForGame(gameId: GameId): Promise<number> {
+  const res = await fetchCallReadOnlyFunction({
+    ...gameBase(gameId),
+    functionName: "get-season-end-block",
+    functionArgs: [uintCV(onchainIdFor(gameId))],
+    senderAddress: GAMES[gameId].contractAddress,
+  });
+  return Number(unwrap(cvToValue(res)));
+}
+
 export async function getPrizePoolBalanceForGame(gameId: GameId): Promise<number> {
   const res = await fetchCallReadOnlyFunction({
     ...gameBase(gameId),
