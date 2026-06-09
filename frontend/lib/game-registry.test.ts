@@ -7,6 +7,7 @@ import {
   validateGameRegistry,
   onchainIdFor,
   gameIdFromOnchain,
+  gameIdFromOnchainOrNull,
   type GameId,
 } from "./game-registry";
 
@@ -93,6 +94,18 @@ describe("onchain id mapping", () => {
 
   it("throws on an unknown onchain id", () => {
     expect(() => gameIdFromOnchain(99)).toThrow(/onchain id/);
+  });
+});
+
+describe("gameIdFromOnchainOrNull", () => {
+  it("resolves a known on-chain id", () => {
+    expect(gameIdFromOnchainOrNull(1)).toBe("snake");
+  });
+  it("returns null for an unknown on-chain id instead of throwing", () => {
+    expect(gameIdFromOnchainOrNull(99)).toBeNull();
+  });
+  it("the throwing variant still throws for unknown ids", () => {
+    expect(() => gameIdFromOnchain(99)).toThrow();
   });
 });
 

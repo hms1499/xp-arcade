@@ -44,4 +44,21 @@ describe("scoreMetadataResponseV3", () => {
     expect(body.name).toContain("Tetris");
     expect(body.attributes).toContainEqual({ trait_type: "Game", value: "Tetris" });
   });
+
+  it("returns 404 for a token whose game-id is not registered", async () => {
+    fetchReadOnly.mockResolvedValueOnce(readOnlyResult({
+      score: "10",
+      "player-name": "x",
+      rarity: "Common",
+      season: "1",
+      "game-id": "99",
+    }));
+
+    const res = await scoreMetadataResponseV3(
+      new Request("http://x/api/metadata/score/7"),
+      Promise.resolve({ id: "7" }),
+    );
+
+    expect(res.status).toBe(404);
+  });
 });

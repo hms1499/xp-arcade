@@ -4,7 +4,7 @@ import { stacks } from "@/lib/stacks";
 import { unwrap } from "@/lib/cv-unwrap";
 import { scoreSvg } from "@/lib/metadata-svg";
 import { rateLimit } from "@/lib/rate-limit";
-import { GAMES, gameIdFromOnchain } from "@/lib/game-registry";
+import { GAMES, gameIdFromOnchainOrNull } from "@/lib/game-registry";
 
 const RL_LIMIT = 60;
 const RL_WINDOW_MS = 60_000;
@@ -61,7 +61,13 @@ export async function scoreMetadataResponseV3(
       );
     }
 
-    const gameId = gameIdFromOnchain(Number(v["game-id"]));
+    const gameId = gameIdFromOnchainOrNull(Number(v["game-id"]));
+    if (!gameId) {
+      return NextResponse.json(
+        { error: "not found" },
+        { status: 404, headers: { "Cache-Control": "public, max-age=60" } },
+      );
+    }
     const gameName = GAMES[gameId].label;
     const rarity = String(v.rarity ?? "Common");
     const season = Number(v.season ?? 1);

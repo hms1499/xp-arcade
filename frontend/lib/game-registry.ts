@@ -97,8 +97,12 @@ export function onchainIdFor(gameId: GameId): number {
   return GAMES[gameId].onchainId;
 }
 
+export function gameIdFromOnchainOrNull(n: number): GameId | null {
+  return GAME_IDS.find((id) => GAMES[id].onchainId === n) ?? null;
+}
+
 export function gameIdFromOnchain(n: number): GameId {
-  const found = GAME_IDS.find((id) => GAMES[id].onchainId === n);
+  const found = gameIdFromOnchainOrNull(n);
   if (!found) throw new Error(`Unknown onchain id: ${n}`);
   return found;
 }
