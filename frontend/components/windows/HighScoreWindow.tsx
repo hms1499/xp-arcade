@@ -9,6 +9,7 @@ import {
   getPrizePoolBalanceForGame,
   getTopTenForGame,
   claimPrizeV3,
+  endSeasonForGame,
   type TopEntry,
 } from "@/lib/contract-calls";
 import { findClaimablePrizes, classifyClaimTx, type Claim } from "@/lib/claimable-prizes";
@@ -77,6 +78,8 @@ function LeaderboardTab({
   const [loadState, setLoadState] = useState<LeaderboardLoadState | null>(null);
   const countdown = useSeasonCountdown();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [busyEnd, setBusyEnd] = useState(false);
 
   useEffect(() => {
     if (!isActive) return;
@@ -126,7 +129,47 @@ function LeaderboardTab({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isActive, gameId, address]);
+  }, [isActive, gameId, address, reloadKey]);
+
+  async function handlePermissionlessEnd() {
+    if (
+      !confirm(
+        `The on-chain deadline for ${GAMES[gameId].label} has passed.\n\n` +
+          "End this season now? This locks the top-10 snapshot and opens prize claims. " +
+          "Anyone may do this — no owner needed.",
+      )
+    )
+      return;
+    setBusyEnd(true);
+    try {
+      const txId = await endSeasonForGame(gameId);
+      useToasts.getState().push({
+        title: "End-season submitted",
+        body: "Watching for confirmation…",
+      });
+      watchTx(txId, (s) => {
+        if (s === "success") {
+          useToasts.getState().push({
+            title: "Season closed",
+            body: "Snapshot locked. Refreshing…",
+          });
+          setReloadKey((k) => k + 1);
+        } else if (s !== "pending") {
+          useToasts.getState().push({
+            title: "End-season failed",
+            body: "Transaction rejected.",
+          });
+        }
+      });
+    } catch (e) {
+      useToasts.getState().push({
+        title: "End-season failed",
+        body: e instanceof Error ? e.message : "Could not submit.",
+      });
+    } finally {
+      setBusyEnd(false);
+    }
+  }
 
   const activeState = loadState?.gameId === gameId ? loadState : null;
   const rows = activeState?.rows ?? null;
@@ -339,6 +382,26 @@ function LeaderboardTab({
           )}
         </div>
       </div>
+      {countdown.state === "reached" && (
+        <div className="mb-2 px-1">
+          <button
+            type="button"
+            disabled={!address || busyEnd}
+            onClick={handlePermissionlessEnd}
+            title={
+              !address
+                ? "Connect a wallet to end the season"
+                : "The deadline block has passed — anyone can close this season"
+            }
+          >
+            {busyEnd ? "Ending…" : "End Season (deadline reached)"}
+          </button>
+          <p className="text-[10px] text-gray-600 mt-1">
+            The on-chain deadline has passed. Any wallet can close this season to
+            unlock prize claims.
+          </p>
+        </div>
+      )}
       <details
         className="text-[10px] mb-2 px-1 py-1"
         style={{
