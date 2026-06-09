@@ -26,8 +26,13 @@ export const useWallet = create<WalletState>((set) => ({
   address: null,
   mintPending: false,
   connect: async () => {
-    await connectWallet();
-    set({ address: readStoredAddress() });
+    try {
+      await connectWallet();
+      set({ address: readStoredAddress() });
+    } catch {
+      // User cancelled the wallet modal (or the wallet errored). Keep the
+      // current address rather than surfacing an unhandled rejection.
+    }
   },
   disconnect: () => {
     disconnectWallet();
