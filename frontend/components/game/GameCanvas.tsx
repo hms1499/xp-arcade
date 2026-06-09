@@ -52,7 +52,7 @@ export function GameCanvas({
   const foodGlowRef  = useRef(6);
   const popupsRef = useRef<{ x: number; y: number; born: number }[]>([]);
   const [score, setScore] = useState(0);
-  const [best] = useState(() => getBestScore());
+  const [best] = useState(() => getBestScore("snake"));
   const [paused, setPaused] = useState(false);
   const [isTouch] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches,
@@ -310,7 +310,7 @@ export function GameCanvas({
         if (s.gameOver && gameOverPhaseRef.current === null) {
           playDead();
           finalScoreRef.current = s.score;
-          gameOverBestRef.current = getBestScore();
+          gameOverBestRef.current = getBestScore("snake");
           gameOverPhaseRef.current = "flash";
           setTimeout(() => {
             gameOverPhaseRef.current = "overlay";

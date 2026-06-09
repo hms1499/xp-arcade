@@ -118,11 +118,7 @@ export function SharedMintDialog({
     };
   }, [gameId, score]);
 
-  const [hs] = useState(() =>
-    gameId === "snake"
-      ? recordScore(score)
-      : { isNewRecord: false, best: score }
-  );
+  const [hs] = useState(() => recordScore(gameId, score));
 
   const feeStx = (Number(game.mintFeeUstx) / 1_000_000).toFixed(2);
   const chain = stacks.networkName;

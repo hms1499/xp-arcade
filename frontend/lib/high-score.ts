@@ -1,26 +1,36 @@
-const BEST_SCORE_KEY = "xp-arcade:best-score";
+import type { GameId } from "./game-registry";
 
-/** Personal best score persisted in localStorage. 0 if none / SSR / corrupt. */
-export function getBestScore(): number {
+const LEGACY_KEY = "xp-arcade:best-score";
+function keyFor(gameId: GameId): string {
+  return `xp-arcade:best-score:${gameId}`;
+}
+
+function readKey(key: string): number {
   if (typeof window === "undefined") return 0;
-  const raw = window.localStorage.getItem(BEST_SCORE_KEY);
+  const raw = window.localStorage.getItem(key);
   const n = Number(raw);
   return raw !== null && Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
 }
 
-/**
- * Records a finished game's score. Persists it only if it beats the stored
- * best. Returns the (possibly unchanged) best and whether this run set a
- * new record.
- */
-export function recordScore(score: number): {
-  best: number;
-  isNewRecord: boolean;
-} {
-  const prev = getBestScore();
+/** Personal best for a game (localStorage). 0 if none / SSR / corrupt. Snake
+ * falls back to the pre-multigame global key so returning players keep it. */
+export function getBestScore(gameId: GameId): number {
+  const scoped = readKey(keyFor(gameId));
+  if (scoped > 0) return scoped;
+  if (gameId === "snake") return readKey(LEGACY_KEY);
+  return 0;
+}
+
+/** Records a finished game's score, persisting only if it beats the stored
+ * best for that game. */
+export function recordScore(
+  gameId: GameId,
+  score: number,
+): { best: number; isNewRecord: boolean } {
+  const prev = getBestScore(gameId);
   if (score > prev) {
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(BEST_SCORE_KEY, String(score));
+      window.localStorage.setItem(keyFor(gameId), String(score));
     }
     return { best: score, isNewRecord: true };
   }
