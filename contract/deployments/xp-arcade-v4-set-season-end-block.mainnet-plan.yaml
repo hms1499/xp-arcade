@@ -1,0 +1,42 @@
+id: 0
+name: XP Arcade v4 set season-end-block (mainnet)
+network: mainnet
+stacks-node: https://api.hiro.so
+bitcoin-node: http://blockstack:blockstacksystem@bitcoin.blockstack.com:8332
+plan:
+  batches:
+  - id: 0
+    transactions:
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: set-season-end-block
+      parameters:
+      - u1
+      - u8470355
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: set-season-end-block
+      parameters:
+      - u2
+      - u8470355
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: set-season-end-block
+      parameters:
+      - u3
+      - u8470355
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: set-season-end-block
+      parameters:
+      - u4
+      - u8470355
+      cost: 10000
+    epoch: '3.3'

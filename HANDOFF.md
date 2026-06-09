@@ -108,6 +108,20 @@ Walk through with the **owner wallet** and a **second non-owner wallet** on main
    unclaimed into the next pool (nothing locked forever). The contract is live and
    the frontend code already points to v4 — **the production app will serve this
    fix once the Vercel env is updated and redeployed** (§0 / §1).
+9. **Trustless season deadline (operational).** `end-season` is permissionless
+   once `set-season-end-block(game-id, H)` is set and `stacks-block-height >= H`.
+   `set-season-end-block` is owner-only; the deadline block is **shared across all
+   games** (same `H`). `end-season` does NOT reset `season-end-block`, so:
+   - **First time / current season:** owner runs
+     `contract/deployments/xp-arcade-v4-set-season-end-block.mainnet-plan.yaml`
+     with the deployer wallet (`-p <plan> -d --no-dashboard`, never `-c`).
+   - **New game registered:** also call `set-season-end-block` for it with the
+     same `H`, else that game has no trustless fallback.
+   - **Rolling to a new season:** set the NEW future `H` for all games *before*
+     calling `end-season` — otherwise the freshly-opened season inherits the old
+     (now-past) block and anyone can close it immediately ("stillborn season").
+   - Frontend countdown is derived from the on-chain block (`lib/season-countdown.ts`);
+     it falls back to `NEXT_PUBLIC_SEASON_END_ISO` only while `H` is unset.
 
 ---
 
