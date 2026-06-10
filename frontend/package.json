@@ -20,9 +20,9 @@
     "@stacks/network": "^7.3.1",
     "@stacks/transactions": "^7.4.0",
     "98.css": "^0.1.21",
-    "next": "16.2.6",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
+    "next": "16.2.9",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
     "zustand": "^5.0.13"
   },
   "devDependencies": {
@@ -34,7 +34,7 @@
     "@vitejs/plugin-react": "^6.0.1",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.2.9",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4",
     "typescript": "^5",
