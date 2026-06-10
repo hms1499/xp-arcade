@@ -8,7 +8,7 @@ import {
 import type { GameId } from "./game-registry";
 import type { TxStatus } from "./tx-tracker";
 
-export type ClaimOutcome = "confirmed" | "failed" | "pending";
+export type ClaimOutcome = "confirmed" | "failed" | "pending" | "timeout";
 
 /**
  * Map a claim transaction's on-chain status to a UI outcome. A claim moves real
@@ -19,6 +19,7 @@ export type ClaimOutcome = "confirmed" | "failed" | "pending";
 export function classifyClaimTx(status: TxStatus): ClaimOutcome {
   if (status === "success") return "confirmed";
   if (status === "pending") return "pending";
+  if (status === "timeout") return "timeout";
   return "failed";
 }
 

@@ -29,6 +29,7 @@ const STATUS_LABEL: Record<TxStatus, string> = {
   abort_by_response: "Failed · contract rejected",
   abort_by_post_condition: "Failed · post-condition blocked",
   failed: "Failed · transaction rejected",
+  timeout: "Confirmation delayed · check Explorer",
 };
 
 const STATUS_COLOR: Record<TxStatus, string> = {
@@ -37,6 +38,7 @@ const STATUS_COLOR: Record<TxStatus, string> = {
   abort_by_response: "#cc0000",
   abort_by_post_condition: "#cc0000",
   failed: "#cc0000",
+  timeout: "#9a6700",
 };
 
 const ACTION_ROW: CSSProperties = {

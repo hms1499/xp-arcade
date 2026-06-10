@@ -166,6 +166,10 @@ describe("classifyClaimTx", () => {
     expect(classifyClaimTx("pending")).toBe("pending");
   });
 
+  it("keeps a polling timeout distinct from an on-chain failure", () => {
+    expect(classifyClaimTx("timeout")).toBe("timeout");
+  });
+
   it("treats a post-condition abort as failed so the button can be restored", () => {
     expect(classifyClaimTx("abort_by_post_condition")).toBe("failed");
   });

@@ -57,6 +57,18 @@ describe("useMintTx.start", () => {
     ).toBe(true);
   });
 
+  it("on timeout: clears pending and reports delayed confirmation", () => {
+    useMintTx.getState().start("snake", "0xabc", 1);
+    captured!("timeout");
+    expect(useMintTx.getState().status).toBe("timeout");
+    expect(useWallet.getState().mintPending).toBe(false);
+    expect(
+      useToasts.getState().toasts.some(
+        (x) => x.title === "Confirmation delayed",
+      ),
+    ).toBe(true);
+  });
+
   it("watch is independent of React: onUpdate still updates the store later", () => {
     useMintTx.getState().start("snake", "0xabc", 5);
     captured!("abort_by_response");

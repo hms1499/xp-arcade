@@ -47,6 +47,13 @@ export const useMintTx = create<MintTxState>((set) => ({
           type: "success",
           duration: 6000,
         });
+      } else if (s === "timeout") {
+        useToasts.getState().push({
+          title: "Confirmation delayed",
+          body: "The transaction may still confirm. Check it in Explorer.",
+          type: "info",
+          duration: 8000,
+        });
       } else {
         useToasts.getState().push({
           title: "Mint failed",

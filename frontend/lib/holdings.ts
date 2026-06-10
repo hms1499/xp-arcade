@@ -1,5 +1,6 @@
 import { stacks } from "./stacks";
 import { GAME_IDS, GAMES, type GameId } from "./game-registry";
+import { fetchJson } from "./http";
 
 export type ScoreNft = {
   id: number;
@@ -49,7 +50,7 @@ export async function fetchScoreHoldings(
       offset: String(offset),
     });
     const url = `${apiBase}/extended/v1/tokens/nft/holdings?${params.toString()}`;
-    const data = (await fetch(url).then((r) => r.json())) as HoldingsResponse;
+    const data = await fetchJson<HoldingsResponse>(url);
     const page = data.results ?? [];
     ids.push(...page.map((r) => Number(r.value.repr.replace("u", ""))));
     if (page.length < limit) break;
@@ -60,9 +61,9 @@ export async function fetchScoreHoldings(
 
   async function fetchMeta(id: number): Promise<ScoreNft | null> {
     try {
-      const res = await fetch(`/api/metadata/${game.metaSegment}/${id}`);
-      if (!res.ok) return null;
-      const meta = (await res.json()) as MetadataResponse;
+      const meta = await fetchJson<MetadataResponse>(
+        `/api/metadata/${game.metaSegment}/${id}`,
+      );
       return {
         id,
         gameId,

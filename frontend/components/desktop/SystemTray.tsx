@@ -25,6 +25,7 @@ const TX_LABEL = {
   abort_by_response: "Mint failed",
   abort_by_post_condition: "Mint blocked",
   failed: "Mint failed",
+  timeout: "Confirmation delayed",
 } as const;
 
 const TX_COLOR = {
@@ -33,6 +34,7 @@ const TX_COLOR = {
   abort_by_response: "#cc0000",
   abort_by_post_condition: "#cc0000",
   failed: "#cc0000",
+  timeout: "#9a6700",
 } as const;
 
 function shortTx(txId: string) {

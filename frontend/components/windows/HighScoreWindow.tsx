@@ -161,6 +161,11 @@ function LeaderboardTab({
             body: "Snapshot locked. Refreshing…",
           });
           setReloadKey((k) => k + 1);
+        } else if (s === "timeout") {
+          useToasts.getState().push({
+            title: "Confirmation delayed",
+            body: "Check the end-season transaction in Explorer.",
+          });
         } else if (s !== "pending") {
           useToasts.getState().push({
             title: "End-season failed",
@@ -304,6 +309,12 @@ function LeaderboardTab({
                       title: "Prize received",
                       body: `Season ${c.season} payout has arrived in your wallet.`,
                       type: "success",
+                    });
+                  } else if (outcome === "timeout") {
+                    useToasts.getState().push({
+                      title: "Confirmation delayed",
+                      body: `Season ${c.season} claim may still confirm. Check Explorer before retrying.`,
+                      type: "info",
                     });
                   } else {
                     useToasts.getState().push({

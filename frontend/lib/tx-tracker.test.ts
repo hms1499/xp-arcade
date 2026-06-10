@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { pollTxStatus } from "./tx-tracker";
+import { pollTxStatus, watchTx } from "./tx-tracker";
 
 function mockFetch(ok: boolean, body: unknown) {
   vi.stubGlobal(
     "fetch",
     vi.fn(async () => ({
       ok,
+      status: ok ? 200 : 503,
+      statusText: ok ? "OK" : "Unavailable",
       json: async () => body,
     })),
   );
@@ -47,5 +49,46 @@ describe("pollTxStatus", () => {
   it("returns 'pending' when tx_status is missing", async () => {
     mockFetch(true, {});
     expect(await pollTxStatus("0xabc")).toBe("pending");
+  });
+});
+
+describe("watchTx", () => {
+  it("stops polling and reports timeout after the configured duration", async () => {
+    vi.useFakeTimers();
+    mockFetch(true, { tx_status: "pending" });
+    const onUpdate = vi.fn();
+
+    watchTx("0xabc", onUpdate, {
+      initialIntervalMs: 10,
+      maxIntervalMs: 10,
+      maxDurationMs: 25,
+    });
+
+    await vi.advanceTimersByTimeAsync(30);
+    expect(onUpdate).toHaveBeenLastCalledWith("timeout");
+    vi.useRealTimers();
+  });
+
+  it("backs off polling intervals up to the configured cap", async () => {
+    vi.useFakeTimers();
+    mockFetch(true, { tx_status: "pending" });
+    const onUpdate = vi.fn();
+
+    const stop = watchTx("0xabc", onUpdate, {
+      initialIntervalMs: 10,
+      maxIntervalMs: 20,
+      maxDurationMs: 1000,
+    });
+
+    await vi.advanceTimersByTimeAsync(9);
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(onUpdate).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(19);
+    expect(onUpdate).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(onUpdate).toHaveBeenCalledTimes(3);
+    stop();
+    vi.useRealTimers();
   });
 });

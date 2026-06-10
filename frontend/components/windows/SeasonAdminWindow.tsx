@@ -130,6 +130,11 @@ export function SeasonAdminWindow() {
             loadPastSeasons(cs, gameId);
           });
           getPrizePoolBalanceForGame(gameId).then(setAccumulated);
+        } else if (s === "timeout") {
+          useToasts.getState().push({
+            title: "Confirmation delayed",
+            body: "Check the end-season transaction in Explorer.",
+          });
         } else if (s !== "pending") {
           useToasts.getState().push({
             title: "End-season failed",
