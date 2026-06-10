@@ -49,6 +49,13 @@ function topEntry(player: string, score: number) {
 // v3 is a single registry contract. Owner detection is now authoritative via
 // the `get-contract-owner` read-only (lib/owner.ts), so the mock must answer it.
 async function mockSeasonAdminReads(page: Page) {
+  await page.route("**/extended/v2/blocks?*", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ results: [{ height: 8_300_000 }] }),
+    });
+  });
+
   await page.route("**/v2/contracts/call-read/**", async (route: Route) => {
     const functionName = decodeURIComponent(route.request().url().split("/").pop() ?? "");
     const responseByFunction: Record<string, ClarityValue> = {

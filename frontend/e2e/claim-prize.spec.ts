@@ -44,6 +44,13 @@ function topEntry(player: string, score: number) {
 // surface a per-season Claim button. The get-season-prize mock answers for any
 // season, which is enough to exercise the season-1 scan in findClaimablePrizes.
 async function mockClaimReads(page: Page) {
+  await page.route("**/extended/v2/blocks?*", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ results: [{ height: 8_300_000 }] }),
+    });
+  });
+
   await page.route("**/v2/contracts/call-read/**", async (route: Route) => {
     const fn = decodeURIComponent(route.request().url().split("/").pop() ?? "");
     const byFn: Record<string, ClarityValue> = {
