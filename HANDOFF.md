@@ -1,6 +1,6 @@
 # Handoff — XP Arcade on Stacks
 
-**Status as of 2026-06-07:** Single registry contract **`xp-arcade-v4` deployed to mainnet** (block 8209345, Clarity 3). All 4 games registered on-chain (verified). Trustless pool + tie-fair atomic self-claim + burn-block claim window + permissionless `finalize-season` live. `set-base-uri` set to the production domain (`get-token-uri` verified on-chain). Frontend code (`game-registry.ts`, `.env.local`) already points to v4. **Remaining: set Vercel `NEXT_PUBLIC_CONTRACT_ADDRESS` to v4 + redeploy production frontend, then a live-wallet smoke test.**
+**Status as of 2026-06-10:** Single registry contract **`xp-arcade-v4` deployed to mainnet** (block 8209345, Clarity 3). All 4 games registered on-chain (verified). Trustless pool + tie-fair atomic self-claim + burn-block claim window + permissionless `finalize-season` live. Production metadata token #1 was verified on 2026-06-10 and resolves a Pac-Man score with an inline SVG. The latest frontend hardening adds per-game countdowns, bounded API/transaction polling, E2E CI, privacy-safe telemetry, and scheduled production health checks. **Remaining: deploy the latest frontend commit, verify `/api/health`, then complete the live-wallet smoke test.**
 
 ---
 
@@ -16,7 +16,7 @@
 | Base-uri | `https://xp-snake.vercel.app/api/metadata/score/` (set via `set-base-uri`; re-callable) |
 | Deployer / `contract-owner` | `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV` |
 | Deploy fee | ~0.5 STX |
-| Tests | contract: 139 ✓ · frontend: 142 ✓ · `typecheck`: clean · `build`: clean |
+| Tests | contract: 139 ✓ · frontend: 185 ✓ · stable E2E: 4 ✓ · `typecheck`: clean |
 | GitHub | `https://github.com/hms1499/xp-snake` (default branch: `main`) |
 
 > Legacy v1/v2 per-game contracts remain on mainnet but are frozen and no longer wired to the frontend. Their `.clar` sources stay in `contract/contracts/` for reference.
@@ -49,19 +49,20 @@ Contract suite 139 ✓; frontend 142 ✓ · tsc clean · build ✓.
 - [x] Deploy `xp-arcade-v4` (tx `0x5924dcde…`, block 8209345, 2026-06-07).
 - [x] `register-game` ×4 — Snake (1) · Tetris (2) · Pac-Man (3) · XP Bricks (4), same fees + rarity as v3.
 - [x] `set-base-uri` → `https://xp-snake.vercel.app/api/metadata/score/`; verified `get-token-uri(u1)` → `…/score/1`.
-- [ ] Set Vercel `NEXT_PUBLIC_CONTRACT_ADDRESS=SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4` + redeploy production frontend. (Local `frontend/.env.local` and `game-registry.ts` already point to v4.)
+- [ ] Deploy the latest `main` frontend and verify `https://xp-snake.vercel.app/api/health` reports mainnet + `xp-arcade-v4`.
 - [ ] Live-wallet smoke (see §2) **plus v4-specific**: claim **before** window closes works; claim **after** window → "Claim window closed" label (no button) / `ERR-CLAIM-CLOSED`; after window, anyone calls `finalize-season` → unclaimed rolls into the current pool (`get-prize-pool-balance` increases, `get-season-finalized` → true).
 - v3 wind-down: let any v3 top-10 players claim their share on v3 independently; no migration of v3 state or funds.
 
 ### 1. Set Vercel env + redeploy
 
-- [ ] In Vercel Project Settings, set:
+- [ ] Confirm these Vercel Project Settings before deploying:
   - `NEXT_PUBLIC_CONTRACT_ADDRESS=SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4`
   - `NEXT_PUBLIC_NETWORK=mainnet`
   - `NEXT_PUBLIC_APP_URL=https://xp-snake.vercel.app`
   - `NEXT_PUBLIC_SEASON_END_ISO=<ISO 8601 UTC>`
 - [ ] Redeploy. (Local `frontend/.env.local` and `game-registry.ts` already point at v4.)
-- [ ] After deploy: fetch `https://xp-snake.vercel.app/api/metadata/score/1` → expect SIP-016 JSON with an `image` field (needs token #1 to exist on-chain).
+- [x] Production metadata: `https://xp-snake.vercel.app/api/metadata/score/1` returns SIP-016 JSON with an inline SVG image (verified 2026-06-10).
+- [ ] After deploy: run `cd frontend && npm run health:production`.
 
 ### 2. Live-wallet smoke test
 
@@ -96,7 +97,7 @@ Walk through with the **owner wallet** and a **second non-owner wallet** on main
 1. **Score is client-trusted.** No on-chain anti-cheat. Score cap (`u9999`) + mint cap (10/game/season) limit abuse. Mention in the demo.
 2. **Soft deadline only.** `NEXT_PUBLIC_SEASON_END_ISO` is display-only; doesn't block mints. Owner calls `end-season` (or anyone, once an on-chain `season-end-block` is set and reached).
 3. **Rarity thresholds + fees are permanent per game.** Set at `register-game`; no update function — only `set-game-active` can toggle a game. Choose carefully before registering.
-4. **Owner detection still heuristic in the frontend.** `isOwnerAddress` uses `addr === stacks.contractAddress`. The contract now exposes `get-contract-owner`, so this *could* be made authoritative — but the frontend doesn't call it yet. Breaks if `transfer-ownership` is ever used.
+4. **Owner detection is authoritative but network-dependent.** The frontend reads `get-contract-owner` and fails closed to non-owner on read failure. Transient Hiro API outages can temporarily hide owner-only UI.
 5. **base-uri is a single string ≤ 80 chars.** `get-token-uri` = `base-uri + token-id`. If the production domain changes, re-call `set-base-uri` with `<domain>/api/metadata/score/`.
 6. **No path with spaces.** Vitest's worker pool fails on URL-encoded paths — keep the repo at `Desktop/xp-snake/`.
 7. **MCP `aibtc` wallet is not the owner.** It's `SP3BM...`, not the deployer `SP2CMK...`, so it cannot run owner-only calls (`register-game`, `set-base-uri`, `end-season` before deadline). Use the deployer wallet via a Clarinet plan (`-p <plan> -d --no-dashboard`, never `-c` on mainnet — it recomputes the fee).

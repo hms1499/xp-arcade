@@ -48,7 +48,7 @@
 - Modify: `frontend/components/shared/SharedMintDialog.tsx`
 - Modify: `frontend/components/game/GameCanvas.tsx`
 
-- [ ] **Step 1: Rewrite the test**
+- [x] **Step 1: Rewrite the test**
 
 ```ts
 // frontend/lib/high-score.test.ts
@@ -98,12 +98,12 @@ describe("high-score", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd frontend && npx vitest run lib/high-score.test.ts`
 Expected: FAIL — `getBestScore` now takes a `gameId` argument that the old impl ignores; per-game/legacy tests fail.
 
-- [ ] **Step 3: Rewrite `high-score.ts`**
+- [x] **Step 3: Rewrite `high-score.ts`**
 
 ```ts
 // frontend/lib/high-score.ts
@@ -147,12 +147,12 @@ export function recordScore(
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd frontend && npx vitest run lib/high-score.test.ts`
 Expected: PASS (6 tests).
 
-- [ ] **Step 5: Update `SharedMintDialog.tsx`**
+- [x] **Step 5: Update `SharedMintDialog.tsx`**
 
 Replace the Snake-only block (currently lines 121-125):
 
@@ -170,7 +170,7 @@ with (records for every game):
   const [hs] = useState(() => recordScore(gameId, score));
 ```
 
-- [ ] **Step 6: Update `GameCanvas.tsx` (Snake canvas) call sites**
+- [x] **Step 6: Update `GameCanvas.tsx` (Snake canvas) call sites**
 
 Line 55: change `getBestScore()` to `getBestScore("snake")`:
 
@@ -184,12 +184,12 @@ Line ~313: change `gameOverBestRef.current = getBestScore();` to:
           gameOverBestRef.current = getBestScore("snake");
 ```
 
-- [ ] **Step 7: Type-check**
+- [x] **Step 7: Type-check**
 
 Run: `cd frontend && npx tsc --noEmit`
 Expected: exit 0.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add frontend/lib/high-score.ts frontend/lib/high-score.test.ts frontend/components/shared/SharedMintDialog.tsx frontend/components/game/GameCanvas.tsx
@@ -206,7 +206,7 @@ git commit -m "fix(high-score): scope personal best per game"
 - Modify: `frontend/lib/metadata-route.ts`
 - Modify: `frontend/lib/metadata-route.test.ts`
 
-- [ ] **Step 1: Add the failing registry test**
+- [x] **Step 1: Add the failing registry test**
 
 Append to `frontend/lib/game-registry.test.ts` (inside the top-level `describe`, or add a new one):
 
@@ -229,12 +229,12 @@ describe("gameIdFromOnchainOrNull", () => {
 > If `game-registry.test.ts` already imports from `./game-registry`, merge these
 > named imports into the existing import line instead of adding a duplicate.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd frontend && npx vitest run lib/game-registry.test.ts`
 Expected: FAIL — `gameIdFromOnchainOrNull` is not exported.
 
-- [ ] **Step 3: Add `gameIdFromOnchainOrNull` and reuse it**
+- [x] **Step 3: Add `gameIdFromOnchainOrNull` and reuse it**
 
 In `frontend/lib/game-registry.ts`, replace the existing `gameIdFromOnchain` (lines 100-104):
 
@@ -260,12 +260,12 @@ export function gameIdFromOnchain(n: number): GameId {
 }
 ```
 
-- [ ] **Step 4: Run registry test to verify it passes**
+- [x] **Step 4: Run registry test to verify it passes**
 
 Run: `cd frontend && npx vitest run lib/game-registry.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Add the failing metadata-route test**
+- [x] **Step 5: Add the failing metadata-route test**
 
 Append inside the `describe("scoreMetadataResponseV3", ...)` block in `frontend/lib/metadata-route.test.ts`:
 
@@ -288,12 +288,12 @@ Append inside the `describe("scoreMetadataResponseV3", ...)` block in `frontend/
   });
 ```
 
-- [ ] **Step 6: Run test to verify it fails**
+- [x] **Step 6: Run test to verify it fails**
 
 Run: `cd frontend && npx vitest run lib/metadata-route.test.ts`
 Expected: FAIL — current code throws → 500, not 404.
 
-- [ ] **Step 7: Guard the route**
+- [x] **Step 7: Guard the route**
 
 In `frontend/lib/metadata-route.ts`, change the import on line 7 to also pull the null variant:
 
@@ -321,12 +321,12 @@ with:
     const gameName = GAMES[gameId].label;
 ```
 
-- [ ] **Step 8: Run test to verify it passes**
+- [x] **Step 8: Run test to verify it passes**
 
 Run: `cd frontend && npx vitest run lib/metadata-route.test.ts`
 Expected: PASS (existing + new test).
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add frontend/lib/game-registry.ts frontend/lib/game-registry.test.ts frontend/lib/metadata-route.ts frontend/lib/metadata-route.test.ts
@@ -341,7 +341,7 @@ git commit -m "fix(metadata): return 404 for unknown game-id"
 - Modify: `frontend/hooks/useLeaderboardShowcase.ts`
 - Create: `frontend/hooks/useLeaderboardShowcase.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // frontend/hooks/useLeaderboardShowcase.test.ts
@@ -373,12 +373,12 @@ describe("mergeWithFallback", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd frontend && npx vitest run hooks/useLeaderboardShowcase.test.ts`
 Expected: FAIL — `mergeWithFallback` is not exported.
 
-- [ ] **Step 3: Add the pure helper and use it in `refresh`**
+- [x] **Step 3: Add the pure helper and use it in `refresh`**
 
 In `frontend/hooks/useLeaderboardShowcase.ts`, add this exported helper near the top (after the type aliases, before `useLeaderboardShowcase`):
 
@@ -439,17 +439,17 @@ Replace the body of `refresh` (currently lines 39-65) with a per-game-caught ver
 > Note: pools intentionally keep the existing "null = unknown" display behaviour
 > (rendered as "…"), so they are not run through `mergeWithFallback`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd frontend && npx vitest run hooks/useLeaderboardShowcase.test.ts`
 Expected: PASS (2 tests).
 
-- [ ] **Step 5: Type-check**
+- [x] **Step 5: Type-check**
 
 Run: `cd frontend && npx tsc --noEmit`
 Expected: exit 0.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/hooks/useLeaderboardShowcase.ts frontend/hooks/useLeaderboardShowcase.test.ts
@@ -464,7 +464,7 @@ git commit -m "fix(showcase): keep per-game data when one game's read fails"
 - Modify: `frontend/lib/holdings.ts`
 - Modify: `frontend/lib/holdings.test.ts`
 
-- [ ] **Step 1: Update the test (realistic `ok`, skip-on-failure, concurrency cap)**
+- [x] **Step 1: Update the test (realistic `ok`, skip-on-failure, concurrency cap)**
 
 Replace the `jsonResponse` helper and `beforeEach` in `frontend/lib/holdings.test.ts` and add two tests. Full replacement of the file's top through the first test's start:
 
@@ -591,12 +591,12 @@ describe("holdings", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd frontend && npx vitest run lib/holdings.test.ts`
 Expected: FAIL — the skip-on-failure and concurrency-cap tests fail (current code uses `Promise.all`, no `ok` check, unbounded concurrency).
 
-- [ ] **Step 3: Rewrite the metadata-fetch section of `holdings.ts`**
+- [x] **Step 3: Rewrite the metadata-fetch section of `holdings.ts`**
 
 Replace the final `return Promise.all(...)` block (currently lines 59-74) with a concurrency-capped, failure-tolerant version:
 
@@ -637,17 +637,17 @@ Replace the final `return Promise.all(...)` block (currently lines 59-74) with a
   return results.filter((nft): nft is ScoreNft => nft !== null);
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd frontend && npx vitest run lib/holdings.test.ts`
 Expected: PASS (4 tests).
 
-- [ ] **Step 5: Type-check**
+- [x] **Step 5: Type-check**
 
 Run: `cd frontend && npx tsc --noEmit`
 Expected: exit 0.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/lib/holdings.ts frontend/lib/holdings.test.ts
@@ -662,7 +662,7 @@ git commit -m "fix(holdings): tolerate failed metadata and cap concurrency"
 - Modify: `frontend/state/wallet.ts`
 - Create: `frontend/state/wallet.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // frontend/state/wallet.test.ts
@@ -695,12 +695,12 @@ describe("wallet.connect", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd frontend && npx vitest run state/wallet.test.ts`
 Expected: FAIL — `connect()` rejects (the error propagates).
 
-- [ ] **Step 3: Wrap `connect()` in try/catch**
+- [x] **Step 3: Wrap `connect()` in try/catch**
 
 In `frontend/state/wallet.ts`, replace the `connect` action (lines 28-31):
 
@@ -725,12 +725,12 @@ with:
   },
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd frontend && npx vitest run state/wallet.test.ts`
 Expected: PASS (1 test).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/state/wallet.ts frontend/state/wallet.test.ts
@@ -749,7 +749,7 @@ git commit -m "fix(wallet): swallow wallet-cancel instead of unhandled rejection
 
 (`HighScoreWindow.tsx`'s countdown call is updated in Task 7, together with the S1 wiring.)
 
-- [ ] **Step 1: Update the countdown test for `endBlock`**
+- [x] **Step 1: Update the countdown test for `endBlock`**
 
 In `frontend/lib/season-countdown.test.ts`, replace the "reached block" test and add an `endBlock` assertion:
 
@@ -777,12 +777,12 @@ Also update the existing "future block -> live" test to include `endBlock` in it
   });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd frontend && npx vitest run lib/season-countdown.test.ts`
 Expected: FAIL — `block` source/`reached` state has no `endBlock` field (type + assertion).
 
-- [ ] **Step 3: Add `endBlock` to types + thread it; make the hook per-game**
+- [x] **Step 3: Add `endBlock` to types + thread it; make the hook per-game**
 
 In `frontend/lib/season-countdown.ts`:
 
@@ -860,12 +860,12 @@ export function useSeasonCountdown(gameId: GameId): Countdown {
 > `GAMES` / `onchainIdFor` may now be unused imports in this file. Remove any
 > import that `tsc`/lint flags as unused (keep `type GameId`).
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd frontend && npx vitest run lib/season-countdown.test.ts`
 Expected: PASS (6 tests).
 
-- [ ] **Step 5: Update `SeasonAdminWindow.tsx` (declare `gameId` before countdown)**
+- [x] **Step 5: Update `SeasonAdminWindow.tsx` (declare `gameId` before countdown)**
 
 Currently (lines 45-46):
 
@@ -881,7 +881,7 @@ Reorder and pass `gameId`:
   const countdown = useSeasonCountdown(gameId);
 ```
 
-- [ ] **Step 6: Update `DesktopLeaderboardShowcase.tsx`**
+- [x] **Step 6: Update `DesktopLeaderboardShowcase.tsx`**
 
 Change the countdown call (line 65) to pass the canonical display game:
 
@@ -889,7 +889,7 @@ Change the countdown call (line 65) to pass the canonical display game:
   const countdown = useSeasonCountdown("snake");
 ```
 
-- [ ] **Step 7: Type-check**
+- [x] **Step 7: Type-check**
 
 Run: `cd frontend && npx tsc --noEmit`
 Expected: exit 0.
@@ -899,7 +899,7 @@ Expected: exit 0.
 > type-check between tasks, do Step 8 commit after Task 7. Otherwise, proceed
 > directly to Task 7 and run `tsc` once at the end of Task 7.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add frontend/lib/season-countdown.ts frontend/lib/season-countdown.test.ts frontend/components/windows/SeasonAdminWindow.tsx frontend/components/desktop/DesktopLeaderboardShowcase.tsx
@@ -915,7 +915,7 @@ git commit -m "feat(season): per-game countdown with endBlock"
 - Create: `frontend/lib/ended-seasons.test.ts`
 - Modify: `frontend/components/windows/HighScoreWindow.tsx`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // frontend/lib/ended-seasons.test.ts
@@ -949,12 +949,12 @@ describe("ended-seasons", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd frontend && npx vitest run lib/ended-seasons.test.ts`
 Expected: FAIL — cannot resolve `./ended-seasons`.
 
-- [ ] **Step 3: Write `ended-seasons.ts`**
+- [x] **Step 3: Write `ended-seasons.ts`**
 
 ```ts
 // frontend/lib/ended-seasons.ts
@@ -992,12 +992,12 @@ export function wasSeasonEnded(gameId: GameId, endBlock: number): boolean {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd frontend && npx vitest run lib/ended-seasons.test.ts`
 Expected: PASS (4 tests).
 
-- [ ] **Step 5: Wire `HighScoreWindow.tsx` — per-game countdown + S1 gating**
+- [x] **Step 5: Wire `HighScoreWindow.tsx` — per-game countdown + S1 gating**
 
 (a) Add the import near the other `@/lib` imports:
 
@@ -1081,17 +1081,17 @@ to:
 > The block following this guard is unchanged. Ensure the closing `)}` of the JSX
 > conditional still matches — the expression is now a two-line `&&` chain.
 
-- [ ] **Step 6: Type-check**
+- [x] **Step 6: Type-check**
 
 Run: `cd frontend && npx tsc --noEmit`
 Expected: exit 0 (this clears the deferred `HighScoreWindow` type error from Task 6).
 
-- [ ] **Step 7: Run the full frontend test suite**
+- [x] **Step 7: Run the full frontend test suite**
 
 Run: `cd frontend && npm test`
 Expected: all suites PASS (existing + new `ended-seasons`, `wallet`, `useLeaderboardShowcase` tests; updated `high-score`, `holdings`, `metadata-route`, `game-registry`, `season-countdown`).
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add frontend/lib/ended-seasons.ts frontend/lib/ended-seasons.test.ts frontend/components/windows/HighScoreWindow.tsx
@@ -1102,17 +1102,17 @@ git commit -m "feat(season): mitigate stillborn-season re-close in UI"
 
 ## Task 8: Final verification gate
 
-- [ ] **Step 1: Frontend CI**
+- [x] **Step 1: Frontend CI**
 
 Run: `cd frontend && npm run ci`
 Expected: lint + test + typecheck + build all green. Read the output.
 
-- [ ] **Step 2: Contract unchanged (sanity)**
+- [x] **Step 2: Contract unchanged (sanity)**
 
 Run: `cd contract && clarinet check`
 Expected: exit 0 (no contract files were touched this plan).
 
-- [ ] **Step 3: Confirm clean tree**
+- [x] **Step 3: Confirm clean tree**
 
 Run: `git status -sb`
 Expected: no uncommitted changes from this plan.

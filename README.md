@@ -49,7 +49,8 @@ Deployer / `contract-owner`: `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV`
 - 🖼️ **My NFTs window** — shows all score NFTs across all registered games with color-coded game badges, sorted by score.
 - 💰 **Trustless prize pool** — every mint fee accrues into the contract itself (via `as-contract`) for the current season. Winners claim their share directly on-chain; no owner-custodied payouts.
 - 🛠️ **Season Admin (owner-only)** — pre-flight summary + **End Season**, plus read-only pool/leaderboard views. Payouts are no longer manual — they are self-claimed.
-- ⏳ **Soft season countdown** — display-only deadline from `NEXT_PUBLIC_SEASON_END_ISO`.
+- ⏳ **Per-game season countdown** — reads each game's on-chain deadline block,
+  with `NEXT_PUBLIC_SEASON_END_ISO` only as a display fallback while unset.
 - 🪟 **Windows 95 desktop UX** — boot screen, taskbar, Start menu → Games submenu, draggable windows, balloon notifications, pause overlays.
 - 👤 **Public player profiles** — `/player/<stx-address>` shows score NFTs, best scores, total mints, seasons played.
 
@@ -169,16 +170,25 @@ cd contract && npm test          # 139 tests
 cd contract && clarinet check    # syntax/type/lint checks for .clar files
 
 # frontend (Vitest)
-cd frontend && npm test          # 142 tests
+cd frontend && npm test          # 185 tests
 cd frontend && npm run typecheck # type-check
 cd frontend && npm run build     # production build
 cd frontend && npm run ci        # full local frontend CI
+cd frontend && npm run test:e2e:ci       # stable mocked wallet/admin/claim smoke
+cd frontend && npm run health:production # production + mainnet read-only checks
 ```
 
-GitHub Actions runs two jobs on pushes to `main` and pull requests:
+GitHub Actions runs three jobs on pushes to `main` and pull requests:
 
 - **Frontend:** `npm ci` then `npm run ci`.
+- **Frontend E2E:** Chromium + stable mocked owner/claim Playwright smoke tests.
 - **Contract:** `npm ci`, install Clarinet, `npm test`, then `clarinet check`.
+
+A separate scheduled workflow runs every six hours against production. It checks
+the public health route, token metadata, configured v4 contract, owner, current
+season, pool, top-10, and deadline reads for all four games. Client-side wallet,
+holdings, and transaction-timeout errors are sent to a rate-limited telemetry
+route with wallet addresses and transaction IDs redacted before Vercel logging.
 
 ---
 
