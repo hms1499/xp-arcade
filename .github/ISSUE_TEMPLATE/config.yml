@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Mainnet contract
+    url: https://explorer.hiro.so/address/SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4?chain=mainnet
+    about: Inspect the active contract and read-only state.

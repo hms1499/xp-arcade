@@ -1,0 +1,55 @@
+name: Production release
+description: Track a frontend release without changing the mainnet contract.
+title: "release: "
+labels:
+  - release
+body:
+  - type: input
+    id: commit
+    attributes:
+      label: Commit SHA
+      description: Exact commit being deployed.
+    validations:
+      required: true
+
+  - type: input
+    id: deployment
+    attributes:
+      label: Vercel deployment URL
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: predeploy
+    attributes:
+      label: Pre-deploy checks
+      options:
+        - label: Frontend CI and stable Playwright smoke tests are green.
+          required: true
+        - label: Contract files and mainnet deployment plans are unchanged.
+          required: true
+        - label: NEXT_PUBLIC_NETWORK is mainnet.
+          required: true
+        - label: NEXT_PUBLIC_CONTRACT_ADDRESS points to xp-arcade-v4.
+          required: true
+
+  - type: checkboxes
+    id: postdeploy
+    attributes:
+      label: Post-deploy checks
+      options:
+        - label: Production health workflow passes.
+          required: true
+        - label: Metadata token 1 returns a name and image.
+          required: true
+        - label: Wallet connect and disconnect work on production.
+          required: true
+        - label: High Scores and My NFTs load without malformed values.
+          required: true
+        - label: Previous Vercel deployment is retained for rollback.
+          required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Release notes and rollback decision

@@ -1,0 +1,58 @@
+name: Season operation
+description: Run the mainnet season transition in the required order.
+title: "ops: season transition "
+labels:
+  - operations
+body:
+  - type: input
+    id: deadline
+    attributes:
+      label: New deadline block
+      description: The same future block must be configured for all active games.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: before
+    attributes:
+      label: Before ending any season
+      options:
+        - label: Confirm the new deadline block is in the future.
+          required: true
+        - label: Set the new deadline for Snake, Tetris, Pac-Man, and XP Bricks.
+          required: true
+        - label: Read back all four deadline values from mainnet.
+          required: true
+        - label: Record current season, pool, top ten, and tie state per game.
+          required: true
+
+  - type: checkboxes
+    id: close
+    attributes:
+      label: Close and verify
+      options:
+        - label: End only the intended game season.
+          required: true
+        - label: Confirm the transaction succeeded on Hiro Explorer.
+          required: true
+        - label: Confirm current season incremented exactly once.
+          required: true
+        - label: Confirm the closed snapshot and prize total are readable.
+          required: true
+        - label: Confirm the new season still has the future deadline.
+          required: true
+
+  - type: checkboxes
+    id: claim_window
+    attributes:
+      label: Claim-window follow-up
+      options:
+        - label: Verify an eligible winner can claim before the window closes.
+        - label: After the claim window, finalize the season and verify rollover.
+
+  - type: textarea
+    id: transactions
+    attributes:
+      label: Transaction IDs and observations
+    validations:
+      required: true
