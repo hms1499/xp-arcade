@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "test:visual": "playwright test",
     "test:e2e:ci": "playwright test e2e/season-admin.spec.ts e2e/claim-prize.spec.ts",
+    "health:production": "node scripts/production-health.mjs",
     "typecheck": "tsc --noEmit",
     "ci": "npm run lint && npm run test && npm run typecheck && npm run build"
   },
