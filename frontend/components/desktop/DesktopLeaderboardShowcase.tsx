@@ -62,7 +62,7 @@ export function DesktopLeaderboardShowcase({
   error: string | null;
 }) {
   const open = useWindows((s) => s.open);
-  const countdown = useSeasonCountdown();
+  const countdown = useSeasonCountdown("snake");
   const [slideIndex, setSlideIndex] = useState(0);
   const slides = useMemo(
     () =>

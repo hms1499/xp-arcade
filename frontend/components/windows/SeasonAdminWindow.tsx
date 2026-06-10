@@ -42,8 +42,8 @@ export function SeasonAdminWindow() {
   const [seasons, setSeasons] = useState<SeasonView[]>([]);
   const [busyEnd, setBusyEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const countdown = useSeasonCountdown();
   const [gameId, setGameId] = useState<GameId>("snake");
+  const countdown = useSeasonCountdown(gameId);
 
   const loadPastSeasons = useCallback(async (cs: number, g: GameId) => {
     const results: SeasonView[] = [];

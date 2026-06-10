@@ -3,13 +3,13 @@ import { useEffect, useState } from "react";
 import { blocksToEta } from "./season-blocks";
 import { getSeasonEndBlockForGame } from "./contract-calls";
 import { getCurrentStacksBlockHeight } from "./stacks-api";
-import { GAMES, onchainIdFor, type GameId } from "./game-registry";
+import type { GameId } from "./game-registry";
 
 export type Countdown =
   | { state: "loading" }
   | { state: "unset" }
   | { state: "iso-expired"; endsAt: Date }
-  | { state: "reached"; endsAt: Date }
+  | { state: "reached"; endsAt: Date; endBlock: number }
   | {
       state: "live";
       endsAt: Date;
@@ -23,14 +23,18 @@ export type CountdownSource =
   | { kind: "loading" }
   | { kind: "none" }
   | { kind: "iso"; endsAt: Date }
-  | { kind: "block"; reached: boolean; endsAt: Date };
+  | { kind: "block"; reached: boolean; endsAt: Date; endBlock: number };
 
 /** Pure state machine: resolved source + current epoch ms -> Countdown. */
 export function deriveCountdown(source: CountdownSource, now: number): Countdown {
   if (source.kind === "loading") return { state: "loading" };
   if (source.kind === "none") return { state: "unset" };
   if (source.kind === "block" && source.reached) {
-    return { state: "reached", endsAt: source.endsAt };
+    return {
+      state: "reached",
+      endsAt: source.endsAt,
+      endBlock: source.endBlock,
+    };
   }
 
   const { endsAt } = source;
@@ -61,23 +65,17 @@ function parseIso(): Date | null {
   return Number.isFinite(d.getTime()) ? d : null;
 }
 
-// Canonical deadline source: the game with on-chain id 1 (Snake), always
-// registered. The deadline is shared across all games (see spec).
-const CANONICAL_GAME: GameId = (Object.keys(GAMES) as GameId[]).find(
-  (g) => onchainIdFor(g) === 1,
-)!;
-
-export function useSeasonCountdown(): Countdown {
+export function useSeasonCountdown(gameId: GameId): Countdown {
   const [source, setSource] = useState<CountdownSource>({ kind: "loading" });
   const [now, setNow] = useState(() => Date.now());
 
-  // Resolve the on-chain deadline (canonical game) + tip; refetch every 30s.
+  // Resolve this game's on-chain deadline + tip; refetch every 30s.
   useEffect(() => {
     let cancelled = false;
     async function resolve() {
       try {
         const [endBlock, currentBlock] = await Promise.all([
-          getSeasonEndBlockForGame(CANONICAL_GAME),
+          getSeasonEndBlockForGame(gameId),
           getCurrentStacksBlockHeight(),
         ]);
         if (cancelled) return;
@@ -86,6 +84,7 @@ export function useSeasonCountdown(): Countdown {
             kind: "block",
             reached: currentBlock >= endBlock,
             endsAt: blocksToEta(endBlock, currentBlock),
+            endBlock,
           });
           return;
         }
@@ -103,7 +102,7 @@ export function useSeasonCountdown(): Countdown {
       cancelled = true;
       clearInterval(id);
     };
-  }, []);
+  }, [gameId]);
 
   // Tick the display every second.
   useEffect(() => {

@@ -17,6 +17,7 @@ import { watchTx } from "@/lib/tx-tracker";
 import { useToasts } from "@/state/toasts";
 import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
+import { markSeasonEnded, wasSeasonEnded } from "@/lib/ended-seasons";
 import { stacks } from "@/lib/stacks";
 
 const BADGE_BG: Record<number, string> = { 1: "#ffd700", 2: "#c0c0c0", 3: "#cd7f32" };
@@ -76,7 +77,7 @@ function LeaderboardTab({
   address: string | null;
 }) {
   const [loadState, setLoadState] = useState<LeaderboardLoadState | null>(null);
-  const countdown = useSeasonCountdown();
+  const countdown = useSeasonCountdown(gameId);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [busyEnd, setBusyEnd] = useState(false);
@@ -136,7 +137,10 @@ function LeaderboardTab({
       !confirm(
         `The on-chain deadline for ${GAMES[gameId].label} has passed.\n\n` +
           "End this season now? This locks the top-10 snapshot and opens prize claims. " +
-          "Anyone may do this — no owner needed.",
+          "Anyone may do this — no owner needed.\n\n" +
+          "Note: the deadline block is in the past and is NOT reset on close, so a " +
+          "freshly-opened season can be closed again immediately. Only proceed if " +
+          "this is the intended contest close.",
       )
     )
       return;
@@ -149,6 +153,9 @@ function LeaderboardTab({
       });
       watchTx(txId, (s) => {
         if (s === "success") {
+          if (countdown.state === "reached") {
+            markSeasonEnded(gameId, countdown.endBlock);
+          }
           useToasts.getState().push({
             title: "Season closed",
             body: "Snapshot locked. Refreshing…",
@@ -382,7 +389,8 @@ function LeaderboardTab({
           )}
         </div>
       </div>
-      {countdown.state === "reached" && (
+      {countdown.state === "reached" &&
+        !wasSeasonEnded(gameId, countdown.endBlock) && (
         <div className="mb-2 px-1">
           <button
             type="button"
@@ -401,7 +409,7 @@ function LeaderboardTab({
             unlock prize claims.
           </p>
         </div>
-      )}
+        )}
       <details
         className="text-[10px] mb-2 px-1 py-1"
         style={{

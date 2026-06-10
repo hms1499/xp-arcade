@@ -12,17 +12,28 @@ describe("deriveCountdown", () => {
     expect(deriveCountdown({ kind: "none" }, now).state).toBe("unset");
   });
 
-  it("reached block -> reached", () => {
+  it("reached block -> reached and carries endBlock", () => {
     const c = deriveCountdown(
-      { kind: "block", reached: true, endsAt: new Date(now) },
+      {
+        kind: "block",
+        reached: true,
+        endsAt: new Date(now),
+        endBlock: 8470355,
+      },
       now,
     );
     expect(c.state).toBe("reached");
+    if (c.state === "reached") expect(c.endBlock).toBe(8470355);
   });
 
   it("future block -> live with remaining time", () => {
     const c = deriveCountdown(
-      { kind: "block", reached: false, endsAt: new Date(now + 3_600_000) },
+      {
+        kind: "block",
+        reached: false,
+        endsAt: new Date(now + 3_600_000),
+        endBlock: 8470355,
+      },
       now,
     );
     expect(c.state).toBe("live");
