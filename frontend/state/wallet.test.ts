@@ -6,6 +6,12 @@ vi.mock("@stacks/connect", () => ({
   getLocalStorage: vi.fn(() => null),
   isConnected: vi.fn(() => false),
 }));
+const { reportClientError } = vi.hoisted(() => ({
+  reportClientError: vi.fn(),
+}));
+vi.mock("@/lib/telemetry", () => ({
+  reportClientError: (...args: unknown[]) => reportClientError(...args),
+}));
 
 import { connect as connectWallet, getLocalStorage } from "@stacks/connect";
 import { useWallet } from "./wallet";
@@ -19,6 +25,7 @@ describe("wallet.connect", () => {
     mockConnect.mockReset();
     mockGetLocalStorage.mockReset();
     mockGetLocalStorage.mockReturnValue(null);
+    reportClientError.mockReset();
   });
   afterEach(() => vi.clearAllMocks());
 
@@ -37,5 +44,18 @@ describe("wallet.connect", () => {
     mockConnect.mockRejectedValueOnce(new Error("User canceled"));
     await expect(useWallet.getState().connect()).resolves.toBeUndefined();
     expect(useWallet.getState().address).toBeNull();
+    expect(reportClientError).not.toHaveBeenCalled();
+  });
+
+  it("reports a non-cancel wallet error without throwing", async () => {
+    const error = new Error("Wallet provider unavailable");
+    mockConnect.mockRejectedValueOnce(error);
+
+    await expect(useWallet.getState().connect()).resolves.toBeUndefined();
+
+    expect(reportClientError).toHaveBeenCalledWith(
+      "wallet_connect_error",
+      error,
+    );
   });
 });

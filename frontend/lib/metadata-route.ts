@@ -5,6 +5,7 @@ import { unwrap } from "@/lib/cv-unwrap";
 import { scoreSvg } from "@/lib/metadata-svg";
 import { rateLimit } from "@/lib/rate-limit";
 import { GAMES, gameIdFromOnchainOrNull } from "@/lib/game-registry";
+import { redactSensitiveText } from "@/lib/telemetry";
 
 const RL_LIMIT = 60;
 const RL_WINDOW_MS = 60_000;
@@ -97,6 +98,15 @@ export async function scoreMetadataResponseV3(
       },
     );
   } catch (e) {
+    console.error(
+      `[metadata-error] ${JSON.stringify({
+        tokenId,
+        message:
+          e instanceof Error
+            ? redactSensitiveText(e.message).slice(0, 300)
+            : "lookup failed",
+      })}`,
+    );
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "lookup failed" },
       { status: 500 },

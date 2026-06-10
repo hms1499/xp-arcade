@@ -6,6 +6,7 @@ import {
   getLocalStorage,
   isConnected,
 } from "@stacks/connect";
+import { reportClientError } from "@/lib/telemetry";
 
 type WalletState = {
   address: string | null;
@@ -29,9 +30,13 @@ export const useWallet = create<WalletState>((set) => ({
     try {
       await connectWallet();
       set({ address: readStoredAddress() });
-    } catch {
+    } catch (error) {
       // User cancelled the wallet modal (or the wallet errored). Keep the
       // current address rather than surfacing an unhandled rejection.
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/cancel/i.test(message)) {
+        reportClientError("wallet_connect_error", error);
+      }
     }
   },
   disconnect: () => {

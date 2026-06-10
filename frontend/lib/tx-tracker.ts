@@ -1,6 +1,7 @@
 "use client";
 import { stacks } from "./stacks";
 import { fetchJson } from "./http";
+import { reportClientError } from "./telemetry";
 
 export type TxStatus =
   | "pending"
@@ -51,6 +52,10 @@ export function watchTx(
   async function check() {
     if (stopped) return;
     if (Date.now() - startedAt >= maxDurationMs) {
+      reportClientError(
+        "tx_confirmation_timeout",
+        new Error("Transaction confirmation polling exceeded its time limit"),
+      );
       onUpdate("timeout");
       stopped = true;
       return;

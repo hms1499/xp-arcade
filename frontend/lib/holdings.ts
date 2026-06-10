@@ -1,6 +1,7 @@
 import { stacks } from "./stacks";
 import { GAME_IDS, GAMES, type GameId } from "./game-registry";
 import { fetchJson } from "./http";
+import { reportClientError } from "./telemetry";
 
 export type ScoreNft = {
   id: number;
@@ -99,5 +100,11 @@ export async function fetchAllScoreHoldings(addr: string): Promise<ScoreNft[]> {
       fetchScoreHoldings(addr, id)
     )
   );
+  if (results.every((result) => result.status === "rejected")) {
+    reportClientError(
+      "holdings_total_failure",
+      new Error("Every game holdings request failed"),
+    );
+  }
   return results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
 }
