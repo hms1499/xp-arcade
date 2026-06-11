@@ -1,5 +1,6 @@
 import { cache } from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchScoreLookup, type ScoreLookup } from "@/lib/score-lookup";
 import { shareTitle, shareDescription } from "@/lib/share";
@@ -90,7 +91,7 @@ export default async function ScoreSharePage({
               {data.playerName} · Season {data.season} · Token #{data.tokenId}
             </div>
           </div>
-          <a
+          <Link
             href="/"
             style={{
               textAlign: "center",
@@ -103,7 +104,7 @@ export default async function ScoreSharePage({
             }}
           >
             🕹️ Play XP Arcade
-          </a>
+          </Link>
         </div>
       </div>
     </main>

@@ -123,12 +123,6 @@ export function SharedMintDialog({
 
   const [mintedTokenId, setMintedTokenId] = useState<number | null>(null);
 
-  // Reset resolved token id whenever a new tx starts so a stale id from a
-  // previous mint is never shown against a different transaction.
-  useEffect(() => {
-    setMintedTokenId(null);
-  }, [txId]);
-
   useEffect(() => {
     if (mintStatus !== "success" || !txId) return;
     let cancelled = false;
@@ -165,6 +159,7 @@ export function SharedMintDialog({
         name || defaultName,
         address,
       );
+      setMintedTokenId(null);
       setTxId(tx);
       startMintTx(gameId, tx, score);
     } catch (e) {
