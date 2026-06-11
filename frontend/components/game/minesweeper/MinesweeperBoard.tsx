@@ -46,6 +46,7 @@ export function MinesweeperBoard({
         row.map((cell, c) => {
           const face = cellFace(cell);
           const sunken = cell.revealed;
+          const bg = cell.exploded ? "#ff0000" : "#bdbdbd";
           return (
             <button
               key={`${r}-${c}`}
@@ -70,7 +71,7 @@ export function MinesweeperBoard({
                 lineHeight: `${CELL}px`,
                 fontFamily: '"Pixelated MS Sans Serif", Arial, sans-serif',
                 color: face.color,
-                background: "#bdbdbd",
+                background: bg,
                 border: sunken ? "1px solid #7b7b7b" : "2px solid",
                 borderColor: sunken
                   ? "#7b7b7b"

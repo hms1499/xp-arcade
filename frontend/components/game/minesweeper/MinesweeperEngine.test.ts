@@ -49,6 +49,28 @@ describe("MinesweeperEngine", () => {
     expect(s.grid[0][0].revealed).toBe(true);
   });
 
+  it("losing reveals every mine and flags the detonated one", () => {
+    let s = placeMinesAt(createMinesweeperState("beginner"), [
+      [0, 0],
+      [8, 8],
+      [4, 4],
+    ]);
+    s = reveal(s, 4, 4);
+    expect(s.status).toBe("lost");
+    // Every mine cell is revealed so the player can see the whole field.
+    for (const [r, c] of [
+      [0, 0],
+      [8, 8],
+      [4, 4],
+    ] as const) {
+      expect(s.grid[r][c].mine).toBe(true);
+      expect(s.grid[r][c].revealed).toBe(true);
+    }
+    // Only the clicked mine is marked as the one that exploded.
+    expect(s.grid[4][4].exploded).toBe(true);
+    expect(s.grid[0][0].exploded ?? false).toBe(false);
+  });
+
   it("revealing every non-mine cell wins the game", () => {
     let s = placeMinesAt(createMinesweeperState("beginner"), [[0, 0]]);
     s = reveal(s, 8, 8);

@@ -6,6 +6,7 @@ export type Cell = {
   revealed: boolean;
   flagged: boolean;
   adjacent: number; // 0-8, only meaningful once mines are placed
+  exploded?: boolean; // the single mine the player detonated (for red styling)
 };
 
 export type MinesweeperState = {
@@ -155,8 +156,15 @@ export function reveal(
   if (base.grid[r][c].flagged || base.grid[r][c].revealed) return base;
 
   if (base.grid[r][c].mine) {
-    const grid = base.grid.map((row) => row.map((cell) => ({ ...cell })));
-    grid[r][c].revealed = true;
+    // Lose: uncover the whole minefield so the player sees every bomb, and
+    // mark the one they clicked as the detonated cell.
+    const grid = base.grid.map((row) =>
+      row.map((cell) => ({
+        ...cell,
+        revealed: cell.revealed || cell.mine,
+      })),
+    );
+    grid[r][c].exploded = true;
     return { ...base, grid, status: "lost" };
   }
 
