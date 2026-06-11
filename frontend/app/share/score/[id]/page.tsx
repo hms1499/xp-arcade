@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { fetchScoreLookup, type ScoreLookup } from "@/lib/score-lookup";
@@ -14,11 +15,14 @@ function parseTokenId(id: string): number | null {
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
-async function lookupOrNull(id: string): Promise<ScoreLookup | null> {
+// Request-memoized: generateMetadata and the page share one chain read.
+// Network errors intentionally propagate (500) so crawlers don't cache a 404
+// for a valid, immutable token.
+const lookupOrNull = cache(async (id: string): Promise<ScoreLookup | null> => {
   const tokenId = parseTokenId(id);
   if (!tokenId) return null;
-  return fetchScoreLookup(tokenId).catch(() => null);
-}
+  return fetchScoreLookup(tokenId);
+});
 
 export async function generateMetadata({
   params,
