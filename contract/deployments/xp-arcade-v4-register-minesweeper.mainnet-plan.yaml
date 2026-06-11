@@ -1,0 +1,37 @@
+id: 0
+name: XP Arcade v4 register Minesweeper (mainnet)
+network: mainnet
+stacks-node: https://api.hiro.so
+bitcoin-node: http://blockstack:blockstacksystem@bitcoin.blockstack.com:8332
+# PERMANENT, owner-only. Run with the deployer wallet:
+#   clarinet deployments apply -p contract/deployments/xp-arcade-v4-register-minesweeper.mainnet-plan.yaml --no-dashboard
+# Never use -c on mainnet (it recomputes the fee). register-game freezes
+# fee (u20000) + rarity thresholds (u9819 rare / u9909 epic / u9959 legend)
+# forever. The deadline block u8470355 is the shared H used by games 1-4
+# (see xp-arcade-v4-set-season-end-block.mainnet-plan.yaml) -- confirm it is
+# still the current value on-chain before running; if the season rolled, use
+# the current shared block instead.
+plan:
+  batches:
+  - id: 0
+    transactions:
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: register-game
+      parameters:
+      - u5
+      - '"Minesweeper"'
+      - u20000
+      - u9819
+      - u9909
+      - u9959
+      cost: 20000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: set-season-end-block
+      parameters:
+      - u5
+      - u8470355
+      cost: 10000

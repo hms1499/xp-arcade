@@ -41,6 +41,23 @@ To check live on-chain state, query the contract via Hiro Explorer or `clarinet 
 
 ## To-do for next session
 
+### Minesweeper (game id 5) — built locally, awaiting on-chain register
+
+Fifth game implemented on `main`: pure engine + Win95 board + window wired to the
+shared mint flow; time-based score (`score = 9999 - seconds`, ranked = Intermediate
+16×16/40 only) displayed as "Cleared in N s" across all leaderboards/metadata.
+`tsc` clean · 210 frontend tests ✓ · build ✓.
+
+- [x] Frontend game + score-time display + tests (committed, unpushed).
+- [ ] **Owner runs** `contract/deployments/xp-arcade-v4-register-minesweeper.mainnet-plan.yaml`
+      with the deployer wallet (`clarinet deployments apply -p <plan> --no-dashboard`,
+      never `-c` on mainnet). **PERMANENT:** fee `u20000`, rarity `u9819/u9909/u9959`,
+      and `set-season-end-block(u5, u8470355)` (confirm the shared block first).
+- [ ] Redeploy frontend; extend `npm run health:production` to assert game 5 has a
+      pool + top-10 + endBlock.
+- [ ] Live-wallet smoke (§2) for Minesweeper: win Intermediate → mint 0.02 STX;
+      a loss / a Beginner/Expert win must NOT mint.
+
 ### 0. Deploy `xp-arcade-v4` (tie-rank fairness) — LIVE on mainnet (2026-06-07)
 
 `xp-arcade-v4.clar` is live: tie-fair split-occupied payout, burn-block claim
