@@ -7,6 +7,8 @@ const NUMBER_COLORS: Record<number, string> = {
 };
 
 function cellFace(cell: Cell): { text: string; color: string } {
+  // A flag left on a safe cell when the game is lost: cross it out.
+  if (cell.revealed && cell.flagged && !cell.mine) return { text: "❌", color: "#aa0000" };
   if (cell.flagged && !cell.revealed) return { text: "🚩", color: "#000" };
   if (!cell.revealed) return { text: "", color: "#000" };
   if (cell.mine) return { text: "💣", color: "#000" };

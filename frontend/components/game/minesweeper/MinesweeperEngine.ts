@@ -156,23 +156,64 @@ export function reveal(
   if (base.grid[r][c].flagged || base.grid[r][c].revealed) return base;
 
   if (base.grid[r][c].mine) {
-    // Lose: uncover the whole minefield so the player sees every bomb, and
-    // mark the one they clicked as the detonated cell.
+    // Lose: uncover unflagged mines (so every bomb shows), uncover wrongly
+    // flagged safe cells (so the board can cross them out), leave correctly
+    // flagged mines as flags, and mark the clicked cell as the detonation.
     const grid = base.grid.map((row) =>
-      row.map((cell) => ({
-        ...cell,
-        revealed: cell.revealed || cell.mine,
-      })),
+      row.map((cell) => {
+        if (cell.mine && !cell.flagged) return { ...cell, revealed: true };
+        if (!cell.mine && cell.flagged) return { ...cell, revealed: true };
+        return { ...cell };
+      }),
     );
+    grid[r][c].revealed = true;
     grid[r][c].exploded = true;
     return { ...base, grid, status: "lost" };
   }
 
   const next = floodReveal(base, r, c);
   const totalNonMines = next.rows * next.cols - next.mines;
-  const status: MineStatus =
-    countRevealedNonMines(next) === totalNonMines ? "won" : "playing";
-  return { ...next, status };
+  if (countRevealedNonMines(next) === totalNonMines) {
+    // Win: every safe cell is open, so every remaining covered cell is a mine.
+    // Auto-flag them to mirror classic Minesweeper (minesLeft drops to 0).
+    const grid = next.grid.map((row) =>
+      row.map((cell) =>
+        cell.mine && !cell.flagged ? { ...cell, flagged: true } : { ...cell },
+      ),
+    );
+    return { ...next, grid, status: "won", flagsUsed: next.mines };
+  }
+  return { ...next, status: "playing" };
+}
+
+/**
+ * Chord: clicking an already-revealed number whose adjacent flag count equals
+ * the number reveals all of its still-covered, unflagged neighbors. A wrong
+ * flag here can detonate a hidden mine — exactly like the desktop game.
+ */
+export function chord(
+  state: MinesweeperState,
+  r: number,
+  c: number,
+  rng: () => number = Math.random,
+): MinesweeperState {
+  if (state.status === "won" || state.status === "lost") return state;
+  const cell = state.grid[r][c];
+  if (!cell.revealed || cell.adjacent === 0) return state;
+
+  const nbrs = neighbors(state, r, c);
+  const flagged = nbrs.filter(([nr, nc]) => state.grid[nr][nc].flagged).length;
+  if (flagged !== cell.adjacent) return state;
+
+  let next = state;
+  for (const [nr, nc] of nbrs) {
+    const n = next.grid[nr][nc];
+    if (!n.flagged && !n.revealed) {
+      next = reveal(next, nr, nc, rng);
+      if (next.status === "lost") return next;
+    }
+  }
+  return next;
 }
 
 export function toggleFlag(state: MinesweeperState, r: number, c: number): MinesweeperState {

@@ -7,6 +7,7 @@ import { useGameSession } from "@/hooks/useGameSession";
 import {
   type Difficulty,
   createMinesweeperState,
+  chord,
   minesLeft,
   reveal,
   toggleFlag,
@@ -67,6 +68,10 @@ export function MinesweeperWindow() {
       }
       setGame((g) => {
         if (!g.minesPlaced) startedAtRef.current = Date.now();
+        // Clicking an already-revealed number chords (reveals its neighbors);
+        // a fresh cell reveals normally.
+        const cell = g.grid[r][c];
+        if (cell.revealed && cell.adjacent > 0) return chord(g, r, c);
         return reveal(g, r, c);
       });
     },

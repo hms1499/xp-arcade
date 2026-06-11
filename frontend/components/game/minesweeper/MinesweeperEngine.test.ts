@@ -6,6 +6,7 @@ import {
   reveal,
   toggleFlag,
   minesLeft,
+  chord,
 } from "./MinesweeperEngine";
 
 describe("MinesweeperEngine", () => {
@@ -75,6 +76,67 @@ describe("MinesweeperEngine", () => {
     let s = placeMinesAt(createMinesweeperState("beginner"), [[0, 0]]);
     s = reveal(s, 8, 8);
     expect(s.status).toBe("won");
+  });
+
+  it("on loss keeps correct flags, marks wrong flags, explodes the click", () => {
+    let s = placeMinesAt(createMinesweeperState("beginner"), [
+      [0, 0],
+      [0, 1],
+    ]);
+    s = toggleFlag(s, 0, 0); // correct flag on a mine
+    s = toggleFlag(s, 5, 5); // wrong flag on a safe cell
+    s = reveal(s, 0, 1); // detonate the other mine
+    expect(s.status).toBe("lost");
+    // Correctly flagged mine stays flagged + covered (renders as a flag).
+    expect(s.grid[0][0].flagged).toBe(true);
+    expect(s.grid[0][0].revealed).toBe(false);
+    // Wrong flag is uncovered so the board can cross it out.
+    expect(s.grid[5][5].mine).toBe(false);
+    expect(s.grid[5][5].flagged).toBe(true);
+    expect(s.grid[5][5].revealed).toBe(true);
+    // Detonated mine is flagged as exploded.
+    expect(s.grid[0][1].exploded).toBe(true);
+  });
+
+  it("winning auto-flags every mine and zeroes minesLeft", () => {
+    let s = placeMinesAt(createMinesweeperState("beginner"), [[0, 0]]);
+    s = reveal(s, 8, 8); // clears the whole board
+    expect(s.status).toBe("won");
+    expect(s.grid[0][0].flagged).toBe(true);
+    expect(minesLeft(s)).toBe(0);
+  });
+
+  it("chording a satisfied number reveals its covered neighbors", () => {
+    let s = placeMinesAt(createMinesweeperState("beginner"), [[0, 0]]);
+    s = reveal(s, 1, 1); // adjacent === 1 (only neighbour mine is 0,0)
+    expect(s.grid[1][1].adjacent).toBe(1);
+    s = toggleFlag(s, 0, 0); // satisfy the number
+    s = chord(s, 1, 1);
+    expect(s.grid[0][1].revealed).toBe(true);
+    expect(s.grid[1][0].revealed).toBe(true);
+    expect(s.grid[2][2].revealed).toBe(true);
+    expect(s.grid[0][0].revealed).toBe(false); // flagged neighbour untouched
+  });
+
+  it("chording does nothing until flags match the number", () => {
+    let s = placeMinesAt(createMinesweeperState("beginner"), [[0, 0]]);
+    s = reveal(s, 1, 1); // adjacent 1, no flags yet
+    s = chord(s, 1, 1);
+    expect(s.grid[0][1].revealed).toBe(false);
+    expect(s.status).toBe("playing");
+  });
+
+  it("chording onto a mis-flag detonates the hidden mine", () => {
+    let s = placeMinesAt(createMinesweeperState("beginner"), [
+      [0, 0],
+      [2, 2],
+    ]);
+    s = reveal(s, 1, 1); // neighbours 0,0 and 2,2 => adjacent 2
+    expect(s.grid[1][1].adjacent).toBe(2);
+    s = toggleFlag(s, 0, 0); // correct
+    s = toggleFlag(s, 0, 1); // wrong — count now equals 2
+    s = chord(s, 1, 1);
+    expect(s.status).toBe("lost"); // the unflagged mine at 2,2 blows up
   });
 
   it("toggleFlag flips a cell and tracks minesLeft", () => {
