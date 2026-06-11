@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   expectedPrimaryContractId,
   GAMES,
+  GAME_IDS,
   parseRegistryNetwork,
   validateGameDef,
   validateGameRegistry,
@@ -13,7 +14,7 @@ import {
 
 describe("game-registry", () => {
   it("has all registered game entries", () => {
-    const ids: GameId[] = ["snake", "tetris", "pacman", "breakout"];
+    const ids: GameId[] = ["snake", "tetris", "pacman", "breakout", "minesweeper"];
     for (const id of ids) {
       expect(GAMES[id]).toBeDefined();
       expect(GAMES[id].id).toBe(id);
@@ -31,6 +32,7 @@ describe("game-registry", () => {
     expect(GAMES.tetris.mintFeeUstx).toBe(BigInt(20_000));
     expect(GAMES.pacman.mintFeeUstx).toBe(BigInt(20_000));
     expect(GAMES.breakout.mintFeeUstx).toBe(BigInt(20_000));
+    expect(GAMES.minesweeper.mintFeeUstx).toBe(BigInt(20_000));
   });
 
   it("uses the shared v3 NFT asset name for all games", () => {
@@ -38,10 +40,11 @@ describe("game-registry", () => {
     expect(GAMES.tetris.nftAssetName).toBe("xp-score");
     expect(GAMES.pacman.nftAssetName).toBe("xp-score");
     expect(GAMES.breakout.nftAssetName).toBe("xp-score");
+    expect(GAMES.minesweeper.nftAssetName).toBe("xp-score");
   });
 
   it("maps every game to the single shared v4 contract", () => {
-    for (const id of ["snake", "tetris", "pacman", "breakout"] as GameId[]) {
+    for (const id of ["snake", "tetris", "pacman", "breakout", "minesweeper"] as GameId[]) {
       expect(GAMES[id].contractName).toBe("xp-arcade-v4");
       expect(GAMES[id].contractAddress).toBe("SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV");
     }
@@ -52,6 +55,7 @@ describe("game-registry", () => {
     expect(GAMES.tetris.onchainId).toBe(2);
     expect(GAMES.pacman.onchainId).toBe(3);
     expect(GAMES.breakout.onchainId).toBe(4);
+    expect(GAMES.minesweeper.onchainId).toBe(5);
   });
 
   it("rejects invalid registry entries", () => {
@@ -78,6 +82,14 @@ describe("game-registry", () => {
     ).toThrow(/key mismatch/);
   });
 
+  it("registers minesweeper as game id 5", () => {
+    expect(GAME_IDS).toContain("minesweeper");
+    expect(GAMES.minesweeper.onchainId).toBe(5);
+    expect(GAMES.minesweeper.label).toBe("Minesweeper");
+    expect(GAMES.minesweeper.mintFeeUstx).toBe(BigInt(20_000));
+    expect(GAMES.minesweeper.metaSegment).toBe("mines");
+  });
+
   it("exposes the shared v4 contract id as primary", () => {
     expect(expectedPrimaryContractId()).toBe(
       "SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4",
@@ -87,7 +99,7 @@ describe("game-registry", () => {
 
 describe("onchain id mapping", () => {
   it("round-trips game id <-> onchain id", () => {
-    for (const id of ["snake", "tetris", "pacman", "breakout"] as GameId[]) {
+    for (const id of ["snake", "tetris", "pacman", "breakout", "minesweeper"] as GameId[]) {
       expect(gameIdFromOnchain(onchainIdFor(id))).toBe(id);
     }
   });
