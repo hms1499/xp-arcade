@@ -160,6 +160,11 @@ export function MinesweeperWindow() {
             </div>
           )}
 
+          <div style={{ fontSize: 10, color: "#666" }}>
+            Tip: right-click flags a mine · click a fully-flagged number to
+            clear its neighbours.
+          </div>
+
           <MinesweeperBoard
             state={game}
             onReveal={onReveal}
