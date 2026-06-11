@@ -63,6 +63,13 @@ export function MinesweeperBoard({
                 if (!disabled) onFlag(r, c);
               }}
               style={{
+                // 98.css forces button min-width:75px / min-height:23px;
+                // clear it so each cell is exactly CELL px (otherwise the
+                // last column/row — with no neighbour painting over it —
+                // stretches to the 98.css minimum).
+                minWidth: 0,
+                minHeight: 0,
+                boxSizing: "border-box",
                 width: CELL,
                 height: CELL,
                 padding: 0,
