@@ -15,6 +15,9 @@ export default async function Image({
 }) {
   const { id } = await params;
   const tokenId = Number(id);
+  // Unlike page.tsx (which propagates lookup errors as 500 so crawlers retry),
+  // this image route falls back to a generic branded card: for the unfurl,
+  // a generic image beats a broken one.
   const data =
     Number.isInteger(tokenId) && tokenId > 0
       ? await fetchScoreLookup(tokenId).catch(() => null)
@@ -85,7 +88,7 @@ export default async function Image({
               <span style={{ fontSize: 42, fontWeight: 700, color: accent }}>
                 {data ? data.rarity : "Play. Mint. Climb."}
               </span>
-              <span style={{ fontSize: 28, color: "#333333", marginTop: 10 }}>
+              <span style={{ fontSize: 28, color: "#333333", marginTop: 10, whiteSpace: "nowrap" }}>
                 {data
                   ? `${data.playerName} · Season ${data.season}`
                   : "On-chain arcade scores"}
