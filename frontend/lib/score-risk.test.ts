@@ -71,3 +71,15 @@ describe("score risk presentation helpers", () => {
     expect(scoreRiskColor("high")).toBe("#aa0000");
   });
 });
+
+describe("score-risk minesweeper", () => {
+  it("does not throw and treats a normal time as low risk", () => {
+    const r = assessScoreRisk({ gameId: "minesweeper", score: 9850, durationMs: 149_000 });
+    expect(r.level).toBe("low");
+  });
+
+  it("flags a perfect 9999 (0-second win) as high risk", () => {
+    const r = assessScoreRisk({ gameId: "minesweeper", score: 9999, durationMs: 200 });
+    expect(r.level).toBe("high");
+  });
+});
