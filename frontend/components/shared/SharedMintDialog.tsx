@@ -22,6 +22,7 @@ import {
   leaderboardGoal,
   type LeaderboardGoal,
 } from "@/lib/leaderboard-showcase";
+import { resolveMintedTokenId } from "@/lib/share";
 
 const STATUS_LABEL: Record<TxStatus, string> = {
   pending: "Submitted · confirming on-chain",
@@ -119,6 +120,25 @@ export function SharedMintDialog({
       cancelled = true;
     };
   }, [gameId, score]);
+
+  const [mintedTokenId, setMintedTokenId] = useState<number | null>(null);
+
+  // Reset resolved token id whenever a new tx starts so a stale id from a
+  // previous mint is never shown against a different transaction.
+  useEffect(() => {
+    setMintedTokenId(null);
+  }, [txId]);
+
+  useEffect(() => {
+    if (mintStatus !== "success" || !txId) return;
+    let cancelled = false;
+    resolveMintedTokenId(txId, gameId).then((id) => {
+      if (!cancelled && id) setMintedTokenId(id);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mintStatus, txId, gameId]);
 
   const [hs] = useState(() => recordScore(gameId, score));
 
@@ -393,6 +413,7 @@ export function SharedMintDialog({
           player={address}
           rankHint={goal?.secondary}
           txId={txId}
+          tokenId={mintedTokenId}
         />
       </div>
     </div>
