@@ -1,22 +1,11 @@
 import { NextResponse } from "next/server";
-import { fetchCallReadOnlyFunction, cvToValue, uintCV } from "@stacks/transactions";
-import { stacks } from "@/lib/stacks";
-import { unwrap } from "@/lib/cv-unwrap";
 import { scoreSvg } from "@/lib/metadata-svg";
 import { rateLimit } from "@/lib/rate-limit";
-import { GAMES, gameIdFromOnchainOrNull } from "@/lib/game-registry";
 import { redactSensitiveText } from "@/lib/telemetry";
+import { fetchScoreLookup } from "@/lib/score-lookup";
 
 const RL_LIMIT = 60;
 const RL_WINDOW_MS = 60_000;
-
-type ScoreData = {
-  score: string;
-  "player-name": string;
-  rarity: string;
-  season: string;
-  "game-id": string;
-};
 
 export async function scoreMetadataResponseV3(
   req: Request,
@@ -46,49 +35,31 @@ export async function scoreMetadataResponseV3(
   }
 
   try {
-    const res = await fetchCallReadOnlyFunction({
-      network: stacks.network,
-      contractAddress: stacks.contractAddress,
-      contractName: stacks.contractName,
-      functionName: "get-score-data",
-      functionArgs: [uintCV(tokenId)],
-      senderAddress: stacks.contractAddress,
-    });
-    const v = unwrap<null | ScoreData>(cvToValue(res));
-    if (!v) {
+    const data = await fetchScoreLookup(tokenId);
+    if (!data) {
       return NextResponse.json(
         { error: "not found" },
         { status: 404, headers: { "Cache-Control": "public, max-age=60" } },
       );
     }
 
-    const gameId = gameIdFromOnchainOrNull(Number(v["game-id"]));
-    if (!gameId) {
-      return NextResponse.json(
-        { error: "not found" },
-        { status: 404, headers: { "Cache-Control": "public, max-age=60" } },
-      );
-    }
-    const gameName = GAMES[gameId].label;
-    const rarity = String(v.rarity ?? "Common");
-    const season = Number(v.season ?? 1);
     const svg = scoreSvg({
       tokenId,
-      score: Number(v.score),
-      playerName: String(v["player-name"]),
-      rarity,
-      gameName,
+      score: data.score,
+      playerName: data.playerName,
+      rarity: data.rarity,
+      gameName: data.gameName,
     });
     return NextResponse.json(
       {
-        name: `${gameName} Score #${tokenId}`,
-        description: `On-chain proof of a ${gameName} game score: ${v.score}.`,
+        name: `${data.gameName} Score #${tokenId}`,
+        description: `On-chain proof of a ${data.gameName} game score: ${data.score}.`,
         image: "data:image/svg+xml;utf8," + encodeURIComponent(svg),
         attributes: [
-          { trait_type: "Rarity", value: rarity },
-          { trait_type: "Season", value: String(season) },
-          { trait_type: "Score", value: String(Number(v.score)) },
-          { trait_type: "Game", value: gameName },
+          { trait_type: "Rarity", value: data.rarity },
+          { trait_type: "Season", value: String(data.season) },
+          { trait_type: "Score", value: String(data.score) },
+          { trait_type: "Game", value: data.gameName },
         ],
       },
       {
