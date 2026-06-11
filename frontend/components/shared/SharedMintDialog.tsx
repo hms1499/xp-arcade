@@ -10,6 +10,7 @@ import { useMintTx } from "@/state/mint-tx";
 import { type TxStatus } from "@/lib/tx-tracker";
 import { recordScore } from "@/lib/high-score";
 import { GAMES, type GameId } from "@/lib/game-registry";
+import { formatScore } from "@/lib/score-format";
 import { useWindows } from "@/state/window-manager";
 import { stacks } from "@/lib/stacks";
 import {
@@ -202,13 +203,13 @@ export function SharedMintDialog({
         </div>
       )}
       <p className="mb-2">
-        <b>Game Over</b> - Score: <b>{score}</b>
+        <b>Game Over</b> - Score: <b>{formatScore(gameId, score)}</b>
         <span className="block text-xs mt-1">
           {hs.isNewRecord ? (
             <b style={{ color: "#007700" }}>New personal best</b>
           ) : (
             <span className="text-gray-500">
-              Personal best: <b>{hs.best}</b>
+              Personal best: <b>{formatScore(gameId, hs.best)}</b>
             </span>
           )}
         </span>

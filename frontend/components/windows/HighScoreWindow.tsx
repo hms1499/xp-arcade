@@ -16,6 +16,7 @@ import { findClaimablePrizes, classifyClaimTx, type Claim } from "@/lib/claimabl
 import { watchTx } from "@/lib/tx-tracker";
 import { useToasts } from "@/state/toasts";
 import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
+import { formatScoreValue } from "@/lib/score-format";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
 import { markSeasonEnded, wasSeasonEnded } from "@/lib/ended-seasons";
 import { stacks } from "@/lib/stacks";
@@ -381,7 +382,7 @@ function LeaderboardTab({
             </b>
           </span>
           <span>
-            {cutoff !== null ? <>Cutoff <b>{cutoff}</b></> : "Open top-10"}
+            {cutoff !== null ? <>Cutoff <b>{formatScoreValue(gameId, cutoff)}</b></> : "Open top-10"}
           </span>
           {countdown.state !== "unset" && countdown.state !== "loading" && (
             <span
@@ -569,7 +570,7 @@ function LeaderboardTab({
                 </button>
               </div>
               <span style={{ fontWeight: "bold", minWidth: 36, textAlign: "right" }}>
-                {r.score}
+                {formatScoreValue(gameId, r.score)}
               </span>
               <span
                 style={{

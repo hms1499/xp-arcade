@@ -13,6 +13,7 @@ import {
   type TopEntry,
 } from "@/lib/contract-calls";
 import { leaderboardGoal } from "@/lib/leaderboard-showcase";
+import { formatScoreValue } from "@/lib/score-format";
 
 type GoalState = {
   rows: TopEntry[];
@@ -137,12 +138,12 @@ export function GameShellWindow({
           <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {sessionStats.runs > 0 && (
               <span style={{ color: "#555" }}>
-                Session: <b>{sessionStats.bestScore}</b> best · {sessionStats.runs} run
+                Session: <b>{formatScoreValue(gameId, sessionStats.bestScore)}</b> best · {sessionStats.runs} run
                 {sessionStats.runs === 1 ? "" : "s"}
               </span>
             )}
             <span>
-              Score: <b>{score}</b>
+              Score: <b>{formatScoreValue(gameId, score)}</b>
             </span>
           </span>
         </div>
@@ -188,7 +189,7 @@ export function GameShellWindow({
             </span>
             {address && goalState.playerBest !== null && (
               <span>
-                Your best <b>{goalState.playerBest}</b>
+                Your best <b>{formatScoreValue(gameId, goalState.playerBest)}</b>
               </span>
             )}
           </div>

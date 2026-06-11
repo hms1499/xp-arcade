@@ -1,6 +1,7 @@
 import { GAMES, type GameId } from "@/lib/game-registry";
 import { scoreRarity, shortPlayer } from "@/lib/leaderboard-showcase";
 import { rarityColor } from "@/lib/metadata-svg";
+import { formatScoreValue } from "@/lib/score-format";
 
 const CARD_WIDTH = 1200;
 const CARD_HEIGHT = 630;
@@ -78,8 +79,10 @@ export function drawScoreCard(
   ctx.strokeRect(86, 148, CARD_WIDTH - 172, 350);
 
   ctx.fillStyle = "#111111";
-  ctx.font = "bold 170px Arial, sans-serif";
-  drawText(ctx, String(input.score), 126, 332, 620);
+  const scoreDisplay = formatScoreValue(input.gameId, input.score);
+  const scoreFontSize = scoreDisplay.length > 4 ? 110 : 170;
+  ctx.font = `bold ${scoreFontSize}px Arial, sans-serif`;
+  drawText(ctx, scoreDisplay, 126, 332, 620);
 
   ctx.fillStyle = accent;
   ctx.font = "bold 42px Arial, sans-serif";

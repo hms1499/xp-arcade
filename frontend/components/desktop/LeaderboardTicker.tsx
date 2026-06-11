@@ -2,6 +2,7 @@
 
 import { GAMES, type GameId } from "@/lib/game-registry";
 import { shortPlayer, type LeaderboardSummary } from "@/lib/leaderboard-showcase";
+import { formatScoreValue } from "@/lib/score-format";
 import { useWindows } from "@/state/window-manager";
 
 const GAME_IDS = Object.keys(GAMES) as GameId[];
@@ -16,7 +17,7 @@ export function LeaderboardTicker({
     const game = GAMES[gameId];
     const leader = summaries[gameId].leader;
     return leader
-      ? `${game.emoji} ${game.label} #1 ${shortPlayer(leader.player)} ${leader.score}`
+      ? `${game.emoji} ${game.label} #1 ${shortPlayer(leader.player)} ${formatScoreValue(gameId, leader.score)}`
       : `${game.emoji} ${game.label} awaiting scores`;
   });
 

@@ -9,6 +9,7 @@ import {
   type TopEntry,
 } from "@/lib/contract-calls";
 import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
+import { formatScoreValue } from "@/lib/score-format";
 import { rankRows, scoreRarity, shortPlayer } from "@/lib/leaderboard-showcase";
 import { rarityColor } from "@/lib/metadata-svg";
 
@@ -190,7 +191,7 @@ export function HallOfFameWindow() {
                 <div style={{ color: "#555", marginBottom: 4 }}>
                   {game.emoji} {seasonLabel(snapshot)}
                 </div>
-                <div style={{ fontSize: 18, fontWeight: "bold" }}>{leader.score}</div>
+                <div style={{ fontSize: 18, fontWeight: "bold" }}>{formatScoreValue(snapshot.gameId, leader.score)}</div>
                 <button
                   onClick={() =>
                     useWindows.getState().open("player-profile", { address: leader.player })
@@ -278,7 +279,7 @@ export function HallOfFameWindow() {
                           >
                             {shortPlayer(row.player)}
                           </button>
-                          <b style={{ textAlign: "right" }}>{row.score}</b>
+                          <b style={{ textAlign: "right" }}>{formatScoreValue(snapshot.gameId, row.score)}</b>
                           <span style={{ color: rarityColor(rarity), textAlign: "right" }}>
                             {rarity}
                           </span>

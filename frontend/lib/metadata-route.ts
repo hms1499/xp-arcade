@@ -3,6 +3,7 @@ import { scoreSvg } from "@/lib/metadata-svg";
 import { rateLimit } from "@/lib/rate-limit";
 import { redactSensitiveText } from "@/lib/telemetry";
 import { fetchScoreLookup } from "@/lib/score-lookup";
+import { formatScore } from "@/lib/score-format";
 
 const RL_LIMIT = 60;
 const RL_WINDOW_MS = 60_000;
@@ -49,11 +50,12 @@ export async function scoreMetadataResponseV3(
       playerName: data.playerName,
       rarity: data.rarity,
       gameName: data.gameName,
+      gameId: data.gameId,
     });
     return NextResponse.json(
       {
         name: `${data.gameName} Score #${tokenId}`,
-        description: `On-chain proof of a ${data.gameName} game score: ${data.score}.`,
+        description: `On-chain proof of a ${data.gameName} result: ${formatScore(data.gameId, data.score)}.`,
         image: "data:image/svg+xml;utf8," + encodeURIComponent(svg),
         attributes: [
           { trait_type: "Rarity", value: data.rarity },

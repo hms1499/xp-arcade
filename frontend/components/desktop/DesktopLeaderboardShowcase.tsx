@@ -9,6 +9,7 @@ import {
   type RankedEntry,
 } from "@/lib/leaderboard-showcase";
 import { formatCountdown, useSeasonCountdown } from "@/lib/season-countdown";
+import { formatScoreValue } from "@/lib/score-format";
 import { useWindows } from "@/state/window-manager";
 
 const GAME_IDS = Object.keys(GAMES) as GameId[];
@@ -135,7 +136,7 @@ export function DesktopLeaderboardShowcase({
                   {leader ? shortPlayer(leader.player) : "No scores"}
                 </span>
                 <span style={{ textAlign: "right", color: "#000080", fontWeight: "bold" }}>
-                  {leader ? leader.score : "—"}
+                  {leader ? formatScoreValue(gameId, leader.score) : "—"}
                 </span>
               </button>
             );
@@ -197,7 +198,7 @@ export function DesktopLeaderboardShowcase({
                   {pool === null ? "…" : `${(pool / 1_000_000).toFixed(2)} STX`}
                 </span>
                 <span style={{ color: "#555" }}>
-                  {cutoff ? `#10 cutoff ${cutoff.score}` : "Top-10 still open"}
+                  {cutoff ? `#10 cutoff ${formatScoreValue(gameId, cutoff.score)}` : "Top-10 still open"}
                 </span>
               </div>
             );
@@ -242,7 +243,7 @@ function ScoreCardSlide({ slide }: { slide: Slide }) {
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={scoreCardImage(slide.entry, game.label)}
+        src={scoreCardImage(slide.entry, game.label, slide.gameId)}
         alt={`${game.label} rank ${slide.entry.rank}`}
         style={{ width: 82, height: 82, objectFit: "cover", border: "2px inset #dfdfdf" }}
       />
@@ -251,7 +252,7 @@ function ScoreCardSlide({ slide }: { slide: Slide }) {
           {game.emoji} {game.label} #{slide.entry.rank}
         </span>
         <span style={{ fontSize: 22, fontWeight: "bold", color: "#000080" }}>
-          {slide.entry.score}
+          {formatScoreValue(slide.gameId, slide.entry.score)}
         </span>
         <span style={{ fontFamily: "monospace", color: "#555" }}>
           {shortPlayer(slide.entry.player)}

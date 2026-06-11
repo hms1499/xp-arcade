@@ -205,13 +205,14 @@ export function findTopTenChange(
   return null;
 }
 
-export function scoreCardImage(entry: RankedEntry, gameName: string): string {
+export function scoreCardImage(entry: RankedEntry, gameName: string, gameId?: GameId): string {
   const svg = scoreSvg({
     tokenId: entry.rank,
     score: entry.score,
     playerName: shortPlayer(entry.player),
     rarity: scoreRarity(entry.score),
     gameName,
+    gameId,
   });
   return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
 }

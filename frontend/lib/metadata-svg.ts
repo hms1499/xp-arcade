@@ -1,3 +1,6 @@
+import type { GameId } from "@/lib/game-registry";
+import { formatScoreValue } from "@/lib/score-format";
+
 export type Rarity = "Common" | "Rare" | "Epic" | "Legendary";
 
 const RARITY_COLOR: Record<Rarity, string> = {
@@ -24,17 +27,20 @@ export function scoreSvg(o: {
   playerName: string;
   rarity: string;
   gameName?: string;
+  gameId?: GameId;
 }) {
   const game = o.gameName ?? "Snake";
   const bg = GAME_BG[game] ?? "#245edb";
   const headerBg = bg + "cc";
   const color = rarityColor(o.rarity);
+  const display = o.gameId ? formatScoreValue(o.gameId, o.score) : String(o.score);
+  const bigFont = display.length > 4 ? 96 : 140;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400">
   <rect width="400" height="400" fill="${bg}"/>
   <rect x="0" y="0" width="400" height="32" fill="${headerBg}"/>
   <rect x="0" y="0" width="400" height="4" fill="${color}"/>
   <text x="12" y="22" font-family="Tahoma, sans-serif" font-size="14" fill="white">${escapeXml(game)} Score #${o.tokenId}</text>
-  <text x="200" y="220" font-family="Tahoma, sans-serif" font-weight="bold" font-size="140" fill="white" text-anchor="middle">${o.score}</text>
+  <text x="200" y="220" font-family="Tahoma, sans-serif" font-weight="bold" font-size="${bigFont}" fill="white" text-anchor="middle">${escapeXml(display)}</text>
   <text x="200" y="280" font-family="Tahoma, sans-serif" font-size="22" fill="white" text-anchor="middle">${escapeXml(o.playerName)}</text>
   <text x="388" y="22" font-family="Tahoma, sans-serif" font-size="11" fill="${color}" text-anchor="end">${o.rarity}</text>
   <text x="200" y="370" font-family="Tahoma, sans-serif" font-size="14" fill="#bcd" text-anchor="middle">XP Arcade on Stacks</text>
