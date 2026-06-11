@@ -9,6 +9,7 @@ import { rarityColor } from "@/lib/metadata-svg";
 import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
 import { shortAddress } from "@/lib/stacks-address";
 import { stacks } from "@/lib/stacks";
+import { ShareActions } from "@/components/shared/ShareActions";
 
 const GAME_BADGE_BG: Record<string, string> = {
   snake: "#d4edda",
@@ -533,6 +534,13 @@ function NftDetailDialog({
               >
                 Contract
               </a>
+              {typeof nft.score === "number" && (
+                <ShareActions
+                  gameId={nft.gameId}
+                  score={nft.score}
+                  tokenId={nft.id}
+                />
+              )}
               <button type="button" onClick={onClose}>
                 Close
               </button>
