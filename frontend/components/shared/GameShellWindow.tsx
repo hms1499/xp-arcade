@@ -65,7 +65,7 @@ export function GameShellWindow({
         getPrizePoolBalanceForGame(gameId).catch(() => null),
         address
           ? getBestScoreForGame(gameId, address)
-              .then((value) => value?.score ?? 0)
+              .then((value) => value?.score ?? null)
               .catch(() => null)
           : Promise.resolve(null),
       ]);
