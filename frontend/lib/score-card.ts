@@ -5,7 +5,7 @@ import { rarityColor } from "@/lib/metadata-svg";
 const CARD_WIDTH = 1200;
 const CARD_HEIGHT = 630;
 
-const GAME_BG: Record<GameId, string> = {
+export const GAME_BG: Record<GameId, string> = {
   snake: "#1a472a",
   tetris: "#6b3a2a",
   pacman: "#1a1a2e",
