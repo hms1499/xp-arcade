@@ -35,6 +35,7 @@ To check live on-chain state, query the contract via Hiro Explorer or `clarinet 
 | Frontend | Repointed to the single v3 contract; `game-registry.ts` carries `onchainId` per game; every `*ForGame` call prepends the game-id; `claimPrizeV3` + **Claim UI in HighScoreWindow** (post-condition `willSendLte(payout)`); SeasonAdminWindow gutted to End Season + read-only; metadata collapsed to one route `/api/metadata/score/[id]`. |
 | Cleanup | Deleted dead v2 payout modules (payout-ledger/reconciliation/payout-csv/payout-memo/stx-balance/payout-safety + tests). |
 | Docs | README + this HANDOFF rewritten for v3. |
+| Share links | `/share/score/[id]` public page + opengraph-image PNG card (next/og, 1200×630, Win95 style); `ShareActions` (X intent + copy link) in mint dialog (token-id resolved from tx mint events after confirmation) and My NFTs detail dialog; on-chain lookup extracted to `lib/score-lookup.ts`, URL/intent helpers in `lib/share.ts`. |
 
 ---
 
@@ -77,6 +78,8 @@ Walk through with the **owner wallet** and a **second non-owner wallet** on main
 - [ ] My NFTs → score NFT renders with inline SVG + rarity badge (game-colored)
 - [ ] High Score → per-game tab shows real addresses + scores (no "undefined"/NaN); countdown ticks
 - [ ] After a season is ended, if in that season's top-10: a **Claim** button appears → click → wallet shows the inbound STX (post-condition `willSendLte`) → confirm → STX arrives, button becomes claimed/idempotent
+- [ ] Paste `https://xp-snake.vercel.app/share/score/1` into an X draft / Discord message → rich preview card renders (game, score, rarity)
+- [ ] After a confirmed mint: "Share on X" opens a prefilled post whose link points to `/share/score/<new token id>`; "Copy link" copies the same URL
 
 **As owner:**
 - [ ] Connect with `SP2C...3SV` → Start menu shows 🛠️ "Season Admin"
