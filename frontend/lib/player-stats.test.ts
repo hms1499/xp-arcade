@@ -15,6 +15,7 @@ describe("computePlayerStats", () => {
         tetris: { totalMints: 0, bestScore: 0, totalScore: 0, seasonsPlayed: 0, mintFeesUstx: 0 },
         pacman: { totalMints: 0, bestScore: 0, totalScore: 0, seasonsPlayed: 0, mintFeesUstx: 0 },
         breakout: { totalMints: 0, bestScore: 0, totalScore: 0, seasonsPlayed: 0, mintFeesUstx: 0 },
+        minesweeper: { totalMints: 0, bestScore: 0, totalScore: 0, seasonsPlayed: 0, mintFeesUstx: 0 },
       },
     });
   });
