@@ -50,7 +50,7 @@ export async function resolveMintedTokenId(
   gameId: GameId,
 ): Promise<number | null> {
   const game = GAMES[gameId];
-  const base = stacks.network.client.baseUrl;
+  const base = stacks.network.client?.baseUrl ?? "https://api.hiro.so";
   const data = await fetchJson<TxEventsResponse>(
     `${base}/extended/v1/tx/${txId}?event_limit=50`,
   ).catch(() => null);
