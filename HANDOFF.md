@@ -1,6 +1,6 @@
 # Handoff — XP Arcade on Stacks
 
-**Status as of 2026-06-10:** Single registry contract **`xp-arcade-v4` deployed to mainnet** (block 8209345, Clarity 3). All 4 games registered on-chain (verified). Trustless pool + tie-fair atomic self-claim + burn-block claim window + permissionless `finalize-season` live. Production metadata token #1 was verified on 2026-06-10 and resolves a Pac-Man score with an inline SVG. The latest frontend hardening adds per-game countdowns, bounded API/transaction polling, E2E CI, privacy-safe telemetry, and scheduled production health checks. **Remaining: deploy the latest frontend commit, verify `/api/health`, then complete the live-wallet smoke test.**
+**Status as of 2026-06-10:** Single registry contract **`xp-arcade-v4` deployed to mainnet** (block 8209345, Clarity 3). All 4 games registered on-chain (verified). Trustless pool + tie-fair atomic self-claim + burn-block claim window + permissionless `finalize-season` live. Production metadata token #1 was verified on 2026-06-10 and resolves a Pac-Man score with an inline SVG. The latest frontend hardening adds per-game countdowns, bounded API/transaction polling, E2E CI, privacy-safe telemetry, and scheduled production health checks. Production deploy of the latest `main` (`d7d8abf`) was verified on 2026-06-11: `/api/health` reports mainnet + `xp-arcade-v4` and `npm run health:production` passes 7/7. **Remaining: complete the live-wallet smoke test.**
 
 ---
 
@@ -49,20 +49,20 @@ Contract suite 139 ✓; frontend 142 ✓ · tsc clean · build ✓.
 - [x] Deploy `xp-arcade-v4` (tx `0x5924dcde…`, block 8209345, 2026-06-07).
 - [x] `register-game` ×4 — Snake (1) · Tetris (2) · Pac-Man (3) · XP Bricks (4), same fees + rarity as v3.
 - [x] `set-base-uri` → `https://xp-snake.vercel.app/api/metadata/score/`; verified `get-token-uri(u1)` → `…/score/1`.
-- [ ] Deploy the latest `main` frontend and verify `https://xp-snake.vercel.app/api/health` reports mainnet + `xp-arcade-v4`.
+- [x] Deploy the latest `main` frontend and verify `https://xp-snake.vercel.app/api/health` reports mainnet + `xp-arcade-v4` (verified 2026-06-11; production serves `d7d8abf`).
 - [ ] Live-wallet smoke (see §2) **plus v4-specific**: claim **before** window closes works; claim **after** window → "Claim window closed" label (no button) / `ERR-CLAIM-CLOSED`; after window, anyone calls `finalize-season` → unclaimed rolls into the current pool (`get-prize-pool-balance` increases, `get-season-finalized` → true).
 - v3 wind-down: let any v3 top-10 players claim their share on v3 independently; no migration of v3 state or funds.
 
 ### 1. Set Vercel env + redeploy
 
-- [ ] Confirm these Vercel Project Settings before deploying:
+- [x] Confirm these Vercel Project Settings before deploying (verified live 2026-06-11 — `/api/health` returns the v4 contract on mainnet):
   - `NEXT_PUBLIC_CONTRACT_ADDRESS=SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4`
   - `NEXT_PUBLIC_NETWORK=mainnet`
   - `NEXT_PUBLIC_APP_URL=https://xp-snake.vercel.app`
   - `NEXT_PUBLIC_SEASON_END_ISO=<ISO 8601 UTC>`
-- [ ] Redeploy. (Local `frontend/.env.local` and `game-registry.ts` already point at v4.)
+- [x] Redeploy — git-integration deploy of `d7d8abf` is live and READY (2026-06-10 21:29 ICT).
 - [x] Production metadata: `https://xp-snake.vercel.app/api/metadata/score/1` returns SIP-016 JSON with an inline SVG image (verified 2026-06-10).
-- [ ] After deploy: run `cd frontend && npm run health:production`.
+- [x] After deploy: `cd frontend && npm run health:production` — 7/7 PASS (2026-06-11): config, metadata token 1, contract owner, and chain reads for all 4 games (each has pool, top-10, endBlock 8470355).
 
 ### 2. Live-wallet smoke test
 
