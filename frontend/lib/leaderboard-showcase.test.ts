@@ -77,6 +77,27 @@ describe("leaderboard showcase helpers", () => {
     expect(scoreRarity(1000)).toBe("Legendary");
   });
 
+  it("uses minesweeper time-based rarity thresholds", () => {
+    // Match on-chain register-game: u9819 rare / u9909 epic / u9959 legend.
+    expect(scoreRarity(9800, "minesweeper")).toBe("Common");
+    expect(scoreRarity(9819, "minesweeper")).toBe("Rare");
+    expect(scoreRarity(9909, "minesweeper")).toBe("Epic");
+    expect(scoreRarity(9959, "minesweeper")).toBe("Legendary");
+  });
+
+  it("phrases minesweeper goal copy in seconds, not points", () => {
+    const rows = Array.from({ length: 10 }, (_, index) => ({
+      player: `SP_${index}`,
+      score: 9900 - index, // #10 cutoff = 9891
+    }));
+    expect(leaderboardGoal({ rows, playerBest: 9880, gameId: "minesweeper" }).primary).toBe(
+      "Need 12s faster.",
+    );
+    expect(leaderboardGoal({ rows, playerBest: null, gameId: "minesweeper" }).primary).toBe(
+      "Beat #10: 108s",
+    );
+  });
+
   it("builds player goal copy for open, cutoff, and ready states", () => {
     expect(leaderboardGoal({ rows: [] }).primary).toBe("Top-10 is open.");
 

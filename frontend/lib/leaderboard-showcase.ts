@@ -1,6 +1,7 @@
 import { scoreSvg } from "@/lib/metadata-svg";
 import type { TopEntry } from "@/lib/contract-calls";
 import type { GameId } from "@/lib/game-registry";
+import { formatScoreValue } from "@/lib/score-format";
 
 export type RankedEntry = TopEntry & {
   rank: number;
@@ -48,7 +49,18 @@ export function shortPlayer(player: string): string {
   return player.length > 12 ? `${player.slice(0, 5)}…${player.slice(-4)}` : player;
 }
 
-export function scoreRarity(score: number): "Common" | "Rare" | "Epic" | "Legendary" {
+export function scoreRarity(
+  score: number,
+  gameId?: GameId,
+): "Common" | "Rare" | "Epic" | "Legendary" {
+  // Minesweeper is time-based; its on-chain rarity thresholds differ from the
+  // points games. Keep in sync with register-game (u9819/u9909/u9959).
+  if (gameId === "minesweeper") {
+    if (score >= 9959) return "Legendary";
+    if (score >= 9909) return "Epic";
+    if (score >= 9819) return "Rare";
+    return "Common";
+  }
   if (score >= 1000) return "Legendary";
   if (score >= 500) return "Epic";
   if (score >= 167) return "Rare";
@@ -79,13 +91,23 @@ export function leaderboardGoal({
   rows,
   playerBest,
   score,
+  gameId,
 }: {
   rows: TopEntry[];
   playerBest?: number | null;
   score?: number | null;
+  gameId?: GameId;
 }): LeaderboardGoal {
   const ranked = rankRows(rows);
   const cutoff = ranked.length >= 10 ? ranked[9] : null;
+  // Display a score the way humans read it for this game (time vs. points).
+  const fmt = (n: number) => (gameId ? formatScoreValue(gameId, n) : String(n));
+  // The gap to close: minesweeper scores higher by being faster, so a 1-point
+  // gap is "1s faster"; points games gain "more points".
+  const gap = (n: number) =>
+    gameId === "minesweeper"
+      ? `${n}s faster`
+      : `${n} more point${n === 1 ? "" : "s"}`;
 
   if (typeof score === "number") {
     if (ranked.length === 0) {
@@ -113,7 +135,7 @@ export function leaderboardGoal({
     return {
       tone: "warning",
       primary: `Mint as a collectible score NFT.`,
-      secondary: `Needs ${needed} more point${needed === 1 ? "" : "s"} to beat #10 (${cutoff?.score ?? "?"}).`,
+      secondary: `Needs ${gap(needed)} to beat #10 (${cutoff ? fmt(cutoff.score) : "?"}).`,
       pointsNeeded: needed,
       topTenReady: false,
     };
@@ -131,7 +153,7 @@ export function leaderboardGoal({
   if (typeof playerBest !== "number") {
     return {
       tone: "info",
-      primary: `Beat #10: ${cutoff.score}`,
+      primary: `Beat #10: ${fmt(cutoff.score)}`,
       secondary: "Connect wallet to compare your best score.",
       topTenReady: false,
     };
@@ -142,15 +164,15 @@ export function leaderboardGoal({
     return {
       tone: "success",
       primary: "Your best is top-10 ready.",
-      secondary: `Mint a run over ${cutoff.score} to update the board.`,
+      secondary: `Mint a run beating ${fmt(cutoff.score)} to update the board.`,
       topTenReady: true,
     };
   }
 
   return {
     tone: "warning",
-    primary: `Need ${needed} more point${needed === 1 ? "" : "s"}.`,
-    secondary: `Your best ${playerBest} · #10 is ${cutoff.score}.`,
+    primary: `Need ${gap(needed)}.`,
+    secondary: `Your best ${fmt(playerBest)} · #10 is ${fmt(cutoff.score)}.`,
     pointsNeeded: needed,
     topTenReady: false,
   };
@@ -210,7 +232,7 @@ export function scoreCardImage(entry: RankedEntry, gameName: string, gameId?: Ga
     tokenId: entry.rank,
     score: entry.score,
     playerName: shortPlayer(entry.player),
-    rarity: scoreRarity(entry.score),
+    rarity: scoreRarity(entry.score, gameId),
     gameName,
     gameId,
   });

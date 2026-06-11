@@ -177,7 +177,7 @@ export function HallOfFameWindow() {
         >
           {leaders.slice(0, 3).map(({ snapshot, leader }) => {
             const game = GAMES[snapshot.gameId];
-            const rarity = scoreRarity(leader.score);
+            const rarity = scoreRarity(leader.score, snapshot.gameId);
             return (
               <div
                 key={`${snapshot.gameId}-${snapshot.season}-hero`}
@@ -249,7 +249,7 @@ export function HallOfFameWindow() {
                 ) : (
                   <div style={{ display: "grid" }}>
                     {ranked.slice(0, 10).map((row) => {
-                      const rarity = scoreRarity(row.score);
+                      const rarity = scoreRarity(row.score, snapshot.gameId);
                       return (
                         <div
                           key={`${snapshot.gameId}-${snapshot.season}-${row.player}`}

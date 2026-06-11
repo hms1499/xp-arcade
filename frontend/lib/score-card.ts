@@ -37,7 +37,7 @@ export function drawScoreCard(
   input: ScoreCardInput,
 ) {
   const game = GAMES[input.gameId];
-  const rarity = scoreRarity(input.score);
+  const rarity = scoreRarity(input.score, input.gameId);
   const accent = rarityColor(rarity);
   const bg = GAME_BG[input.gameId];
   const ctx = canvas.getContext("2d");

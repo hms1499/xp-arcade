@@ -105,7 +105,7 @@ export function SharedMintDialog({
     getTopTenForGame(gameId)
       .then((rows) => {
         if (cancelled) return;
-        setGoal(leaderboardGoal({ rows, score }));
+        setGoal(leaderboardGoal({ rows, score, gameId }));
       })
       .catch(() => {
         if (!cancelled) {

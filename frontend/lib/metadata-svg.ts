@@ -19,6 +19,7 @@ const GAME_BG: Record<string, string> = {
   Tetris: "#6b3a2a",
   "Pac-Man": "#1a1a2e",
   "XP Bricks": "#164e63",
+  Minesweeper: "#3a3a3a",
 };
 
 export function scoreSvg(o: {

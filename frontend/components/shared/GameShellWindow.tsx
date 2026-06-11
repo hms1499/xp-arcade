@@ -95,6 +95,7 @@ export function GameShellWindow({
   const goal = leaderboardGoal({
     rows: goalState.rows,
     playerBest: goalState.playerBest,
+    gameId,
   });
 
   return (

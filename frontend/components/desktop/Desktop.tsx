@@ -13,20 +13,22 @@ import {
   shortPlayer,
   type LeaderboardChange,
 } from "@/lib/leaderboard-showcase";
+import { formatScoreValue } from "@/lib/score-format";
 import type { TopEntry } from "@/lib/contract-calls";
 import { useToasts } from "@/state/toasts";
 
 const GAME_IDS = Object.keys(GAMES) as GameId[];
 
-function changeBody(change: LeaderboardChange): string {
+function changeBody(change: LeaderboardChange, gameId: GameId): string {
+  const fmt = (n: number) => formatScoreValue(gameId, n);
   if (change.kind === "new-leader") {
     const moved = change.previousRank ? `from #${change.previousRank}` : "from outside top-10";
-    return `${shortPlayer(change.player)} moved ${moved} to #1 with ${change.score}.`;
+    return `${shortPlayer(change.player)} moved ${moved} to #1 with ${fmt(change.score)}.`;
   }
   if (change.kind === "new-entry") {
-    return `${shortPlayer(change.player)} entered at #${change.rank} with ${change.score}.`;
+    return `${shortPlayer(change.player)} entered at #${change.rank} with ${fmt(change.score)}.`;
   }
-  return `${shortPlayer(change.player)} improved from ${change.previousScore} to ${change.score} at #${change.rank}.`;
+  return `${shortPlayer(change.player)} improved from ${fmt(change.previousScore)} to ${fmt(change.score)} at #${change.rank}.`;
 }
 
 export function Desktop({ children }: { children: React.ReactNode }) {
@@ -65,7 +67,7 @@ export function Desktop({ children }: { children: React.ReactNode }) {
           change.kind === "new-leader"
             ? `New ${game.label} leader`
             : `${game.label} top-10 update`,
-        body: changeBody(change),
+        body: changeBody(change, gameId),
         type: change.kind === "new-leader" ? "success" : "info",
       });
     }
@@ -189,7 +191,9 @@ function QuickPlay({
           <span style={{ color: "#555", lineHeight: 1.3 }}>
             {cutoff === null
               ? "Top-10 is open. Any minted score can enter."
-              : `Beat ${cutoff} points to pass the current #10.`}
+              : `Beat ${formatScoreValue(gameId, cutoff)}${
+                  gameId === "minesweeper" ? "" : " points"
+                } to pass the current #10.`}
           </span>
           <button
             type="button"
