@@ -4,7 +4,13 @@ let ctx: AudioContext | null = null;
 
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
-  if (!ctx) ctx = new AudioContext();
+  if (!ctx) {
+    try {
+      ctx = new AudioContext();
+    } catch {
+      return null;
+    }
+  }
   return ctx;
 }
 
