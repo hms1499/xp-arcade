@@ -10,6 +10,8 @@ import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
 import { PlayerStatsPanel } from "./PlayerStatsPanel";
 import { RarityBreakdown } from "./RarityBreakdown";
 import { AchievementsPanel } from "./AchievementsPanel";
+import { LevelBadge } from "./LevelBadge";
+import { computeLevel, type LevelInfo } from "@/lib/level";
 import { CopyAddressButton } from "./CopyAddressButton";
 import { useWallet } from "@/state/wallet";
 import { useWindows } from "@/state/window-manager";
@@ -114,6 +116,7 @@ export function PlayerProfileBody({
         totalMints={stats?.totalMints}
         bestScore={stats?.bestScore}
         topGame={stats ? topGameLabel(stats) : null}
+        levelInfo={stats ? computeLevel(stats) : null}
         onOpenMyNfts={
           walletAddress === address && !showBackToDesktop
             ? () => openWindow("mynfts")
@@ -288,6 +291,7 @@ function ProfileHeader({
   totalMints,
   bestScore,
   topGame,
+  levelInfo,
   onOpenMyNfts,
 }: {
   address: string;
@@ -295,6 +299,7 @@ function ProfileHeader({
   totalMints?: number;
   bestScore?: number;
   topGame: string | null;
+  levelInfo?: LevelInfo | null;
   onOpenMyNfts?: () => void;
 }) {
   return (
@@ -352,6 +357,7 @@ function ProfileHeader({
       <p className="text-[10px] font-mono text-gray-700 mb-2 break-all">
         {address}
       </p>
+      {levelInfo && <LevelBadge info={levelInfo} />}
       <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
         <ProfileChip label="NFTs" value={totalMints ?? "..."} />
         <ProfileChip label="Best" value={bestScore ?? "..."} />
