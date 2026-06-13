@@ -10,6 +10,7 @@ import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
 import { shortAddress } from "@/lib/stacks-address";
 import { stacks } from "@/lib/stacks";
 import { ShareActions } from "@/components/shared/ShareActions";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 const GAME_BADGE_BG: Record<string, string> = {
   snake: "#d4edda",
@@ -275,9 +276,20 @@ export function MyNftsWindow() {
         )}
         {error && <p className="text-xs text-red-600">⚠️ {error}</p>}
         {nfts?.length === 0 && (
-          <p className="text-sm text-gray-500">
-            No NFTs yet. Play a game and mint a score!
-          </p>
+          <EmptyState
+            emoji="🏆"
+            title="Your trophy case is empty"
+            body="Mint your first score to start your Score NFT collection."
+            actionLabel="▶ Play a game"
+            onAction={() => {
+              const stored =
+                typeof window !== "undefined"
+                  ? localStorage.getItem("xp-arcade:last-game")
+                  : null;
+              const id = (stored && stored in GAMES ? stored : "snake") as GameId;
+              useWindows.getState().open(`game-${id}`);
+            }}
+          />
         )}
         {nfts && nfts.length > 0 && visibleNfts?.length === 0 && (
           <div
