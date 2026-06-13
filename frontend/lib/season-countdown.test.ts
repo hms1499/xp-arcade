@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { deriveCountdown, isCountdownUrgent } from "./season-countdown";
-import type { Countdown } from "./season-countdown";
 
 const now = Date.parse("2026-06-08T00:00:00Z");
 
