@@ -1,6 +1,7 @@
 "use client";
 
 let ctx: AudioContext | null = null;
+let bootChimePlayed = false;
 
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -67,6 +68,26 @@ export function playSuccess() {
   tone(659, 0.08, "triangle", 0.12, 0.08);
   tone(784, 0.08, "triangle", 0.12, 0.16);
   tone(1046, 0.2, "triangle", 0.14, 0.24);
+}
+
+/** Windows-95-style startup chord swell (synthesized, no sample). */
+export function playBoot() {
+  // Rising, overlapping notes that bloom into a sustained major chord.
+  tone(523, 0.5, "triangle", 0.10, 0.0);  // C5
+  tone(659, 0.5, "triangle", 0.10, 0.08); // E5
+  tone(784, 0.5, "sine", 0.10, 0.16);     // G5
+  tone(1046, 0.7, "sine", 0.12, 0.24);    // C6 — sustained top note
+}
+
+/**
+ * Play the boot chime at most once per page session. Returns true if it played
+ * on this call, false if it was already played. Safe to call on every interaction.
+ */
+export function playBootChimeOnce(): boolean {
+  if (bootChimePlayed) return false;
+  bootChimePlayed = true;
+  playBoot();
+  return true;
 }
 
 /** Unlock AudioContext on first user interaction (required by browsers) */
