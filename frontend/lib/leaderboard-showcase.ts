@@ -238,3 +238,14 @@ export function scoreCardImage(entry: RankedEntry, gameName: string, gameId?: Ga
   });
   return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
 }
+
+/**
+ * Total prize pool across all games, in uStx. Ignores games whose pool is still
+ * unknown (null). Returns null only when every game's pool is unknown (loading).
+ */
+export function sumPrizePoolUstx(
+  pools: Record<GameId, number | null>,
+): number | null {
+  const vals = Object.values(pools).filter((v): v is number => v !== null);
+  return vals.length === 0 ? null : vals.reduce((a, b) => a + b, 0);
+}

@@ -6,7 +6,9 @@ import {
   scoreRarity,
   shortPlayer,
   summarizeLeaderboard,
+  sumPrizePoolUstx,
 } from "./leaderboard-showcase";
+import type { GameId } from "@/lib/game-registry";
 
 describe("leaderboard showcase helpers", () => {
   it("sorts rows descending and assigns ranks", () => {
@@ -113,5 +115,24 @@ describe("leaderboard showcase helpers", () => {
     expect(leaderboardGoal({ rows, score: 10 }).secondary).toBe(
       "Needs 82 more points to beat #10 (91).",
     );
+  });
+});
+
+// Keys are irrelevant to the sum; cast a plain object for the test.
+function pools(obj: Record<string, number | null>) {
+  return obj as Record<GameId, number | null>;
+}
+
+describe("sumPrizePoolUstx", () => {
+  it("sums non-null pools", () => {
+    expect(sumPrizePoolUstx(pools({ a: 1_000_000, b: 2_500_000 }))).toBe(3_500_000);
+  });
+
+  it("ignores null pools", () => {
+    expect(sumPrizePoolUstx(pools({ a: 1_000_000, b: null }))).toBe(1_000_000);
+  });
+
+  it("returns null when every pool is null", () => {
+    expect(sumPrizePoolUstx(pools({ a: null, b: null }))).toBe(null);
   });
 });
