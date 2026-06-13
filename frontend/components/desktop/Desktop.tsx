@@ -5,7 +5,7 @@ import { Taskbar } from "./Taskbar";
 import { DesktopWallpaper } from "./DesktopWallpaper";
 import { useWindows } from "@/state/window-manager";
 import { GAMES, type GameId } from "@/lib/game-registry";
-import { unlockAudio } from "@/lib/sounds";
+import { unlockAudio, playBootChimeOnce } from "@/lib/sounds";
 import { useLeaderboardShowcase } from "@/hooks/useLeaderboardShowcase";
 import { DesktopLeaderboardShowcase } from "./DesktopLeaderboardShowcase";
 import {
@@ -36,6 +36,11 @@ function changeBody(change: LeaderboardChange, gameId: GameId): string {
 
 export function Desktop({ children }: { children: React.ReactNode }) {
   const open = useWindows((s) => s.open);
+
+  const handleFirstInteraction = () => {
+    unlockAudio();        // resume the AudioContext (no-op once running)
+    playBootChimeOnce();  // play the chime at most once this session
+  };
   const leaderboard = useLeaderboardShowcase();
   const welcomeOpen = useWelcome((s) => s.isOpen);
   const openWelcome = useWelcome((s) => s.open);
@@ -94,8 +99,8 @@ export function Desktop({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="fixed inset-0"
-      onMouseDown={unlockAudio}
-      onTouchStart={unlockAudio}
+      onMouseDown={handleFirstInteraction}
+      onTouchStart={handleFirstInteraction}
       style={{ background: "#00030c" }}
     >
       <DesktopWallpaper />
