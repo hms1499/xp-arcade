@@ -6,6 +6,7 @@ import { AboutDialog } from "@/components/dialogs/AboutDialog";
 import { useIsOwner } from "@/lib/owner";
 import { GAMES } from "@/lib/game-registry";
 import { DESKTOP_THEMES, useDesktopTheme } from "@/state/desktop-theme";
+import { useWelcome } from "@/state/welcome";
 
 const menuItemBase: React.CSSProperties = {
   width: "100%",
@@ -173,6 +174,14 @@ export function StartMenu({
             }}
           />
 
+          <MenuItem
+            icon="👋"
+            label="Welcome"
+            onClick={() => {
+              useWelcome.getState().open();
+              onClose();
+            }}
+          />
           <MenuItem
             icon="ℹ️"
             label="About XP Arcade"
