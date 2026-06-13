@@ -16,6 +16,9 @@ import {
 import { formatScoreValue } from "@/lib/score-format";
 import type { TopEntry } from "@/lib/contract-calls";
 import { useToasts } from "@/state/toasts";
+import { WelcomeDialog } from "@/components/dialogs/WelcomeDialog";
+import { useWelcome } from "@/state/welcome";
+import { hasSeenWelcome, markWelcomeSeen } from "@/lib/welcome";
 
 const GAME_IDS = Object.keys(GAMES) as GameId[];
 
@@ -34,6 +37,19 @@ function changeBody(change: LeaderboardChange, gameId: GameId): string {
 export function Desktop({ children }: { children: React.ReactNode }) {
   const open = useWindows((s) => s.open);
   const leaderboard = useLeaderboardShowcase();
+  const welcomeOpen = useWelcome((s) => s.isOpen);
+  const openWelcome = useWelcome((s) => s.open);
+  const closeWelcome = useWelcome((s) => s.close);
+
+  useEffect(() => {
+    if (!hasSeenWelcome()) openWelcome();
+  }, [openWelcome]);
+
+  const dismissWelcome = () => {
+    markWelcomeSeen();
+    closeWelcome();
+  };
+
   const previousRowsRef = useRef<Record<GameId, TopEntry[]> | null>(null);
   const [lastGame, setLastGame] = useState<GameId | null>(() => {
     if (typeof window === "undefined") return null;
@@ -132,6 +148,15 @@ export function Desktop({ children }: { children: React.ReactNode }) {
         error={leaderboard.error}
       />
       {children}
+      {welcomeOpen && (
+        <WelcomeDialog
+          onPlay={() => {
+            dismissWelcome();
+            open(`game-${lastGame ?? "snake"}`);
+          }}
+          onClose={dismissWelcome}
+        />
+      )}
       <Taskbar leaderboardSummaries={leaderboard.summaries} />
     </div>
   );
