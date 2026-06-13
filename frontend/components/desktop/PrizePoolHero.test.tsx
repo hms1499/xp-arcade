@@ -29,6 +29,19 @@ describe("PrizePoolHero", () => {
     expect(html).toContain("across 5 games");
   });
 
+  it("shows the full sentence (no 'ends in') for a reached deadline", () => {
+    const reached: Countdown = {
+      state: "reached",
+      endsAt: new Date(),
+      endBlock: 100,
+    };
+    const html = renderToStaticMarkup(
+      <PrizePoolHero totalUstx={1_000_000} gameCount={5} countdown={reached} />,
+    );
+    expect(html).toContain("anyone can close the season");
+    expect(html).not.toContain("ends in");
+  });
+
   it("shows Loading… when the total is null", () => {
     const html = renderToStaticMarkup(
       <PrizePoolHero totalUstx={null} gameCount={5} countdown={liveFar} />,

@@ -40,10 +40,11 @@ export function PrizePoolHero({
           padding: "3px 6px",
         }}
       >
-        💰 Prize Pool (this season)
+        <span aria-hidden="true">💰</span> Prize Pool (this season)
       </div>
       <button
         type="button"
+        aria-label="Open High Scores"
         onMouseDown={(e) => e.stopPropagation()}
         onClick={() => open("highscore")}
         style={{
@@ -69,7 +70,8 @@ export function PrizePoolHero({
               color: urgent ? "#cc0000" : "#000080",
             }}
           >
-            ⏳ {countdown.state === "live" ? `ends in ${countdownText}` : countdownText}
+            <span aria-hidden="true">⏳</span>{" "}
+            {countdown.state === "live" ? `ends in ${countdownText}` : countdownText}
           </span>
         )}
       </button>
