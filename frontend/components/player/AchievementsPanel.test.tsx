@@ -24,4 +24,13 @@ describe("AchievementsPanel", () => {
     expect(earned.length).toBe(1);
     expect(locked.length).toBe(ACHIEVEMENTS.length - 1);
   });
+
+  it("exposes locked progress as an accessible progressbar", () => {
+    const stats = computePlayerStats([nft()]); // getting-started locked at 1/10
+    const html = renderToStaticMarkup(<AchievementsPanel stats={stats} />);
+    expect(html).toContain('role="progressbar"');
+    expect(html).toContain('aria-valuenow="1"');
+    expect(html).toContain('aria-valuemax="10"');
+    expect(html).toContain('aria-valuemin="0"');
+  });
 });

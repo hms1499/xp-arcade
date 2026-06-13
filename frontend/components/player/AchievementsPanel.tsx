@@ -52,10 +52,15 @@ export function AchievementsPanel({ stats }: { stats: PlayerStats }) {
                   {a.current}/{a.target}
                 </div>
                 <div
-                  aria-hidden
+                  role="progressbar"
+                  aria-label={`${a.label} progress`}
+                  aria-valuenow={a.current}
+                  aria-valuemin={0}
+                  aria-valuemax={a.target}
                   style={{ height: 3, background: "#c0c0c0", marginTop: 2 }}
                 >
                   <div
+                    aria-hidden
                     style={{
                       height: "100%",
                       width: `${(a.current / a.target) * 100}%`,
