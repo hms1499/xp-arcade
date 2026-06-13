@@ -9,6 +9,7 @@ import { computePlayerStats, ustxToStx } from "@/lib/player-stats";
 import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
 import { PlayerStatsPanel } from "./PlayerStatsPanel";
 import { RarityBreakdown } from "./RarityBreakdown";
+import { AchievementsPanel } from "./AchievementsPanel";
 import { CopyAddressButton } from "./CopyAddressButton";
 import { useWallet } from "@/state/wallet";
 import { useWindows } from "@/state/window-manager";
@@ -125,6 +126,7 @@ export function PlayerProfileBody({
           <PlayerStatsPanel stats={filteredStats ?? stats} />
           <GameBreakdown stats={stats} active={filter} onSelect={setFilter} />
           <RarityBreakdown counts={(filteredStats ?? stats).rarityCounts} />
+          <AchievementsPanel stats={stats} />
           {featuredNfts && featuredNfts.length > 0 && filter === "all" && (
             <FeaturedNfts nfts={featuredNfts} />
           )}
