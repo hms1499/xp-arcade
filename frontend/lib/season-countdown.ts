@@ -113,6 +113,15 @@ export function useSeasonCountdown(gameId: GameId): Countdown {
   return deriveCountdown(source, now);
 }
 
+/** True when the season deadline warrants a red, attention-grabbing treatment. */
+export function isCountdownUrgent(c: Countdown): boolean {
+  return (
+    c.state === "reached" ||
+    c.state === "iso-expired" ||
+    (c.state === "live" && c.days === 0)
+  );
+}
+
 export function formatCountdown(c: Countdown): string {
   if (c.state === "loading" || c.state === "unset") return "";
   if (c.state === "iso-expired") return "Season ended — awaiting owner end-season";

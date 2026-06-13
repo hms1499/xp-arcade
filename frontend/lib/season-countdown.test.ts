@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { deriveCountdown } from "./season-countdown";
+import { deriveCountdown, isCountdownUrgent } from "./season-countdown";
+import type { Countdown } from "./season-countdown";
 
 const now = Date.parse("2026-06-08T00:00:00Z");
 
@@ -55,5 +56,48 @@ describe("deriveCountdown", () => {
     );
     expect(c.state).toBe("live");
     if (c.state === "live") expect(c.days).toBe(1);
+  });
+});
+
+describe("isCountdownUrgent", () => {
+  it("is false for a multi-day live countdown", () => {
+    expect(
+      isCountdownUrgent({
+        state: "live",
+        endsAt: new Date(),
+        days: 3,
+        hours: 0,
+        minutes: 0,
+        seconds: 0,
+      }),
+    ).toBe(false);
+  });
+
+  it("is true for a same-day live countdown", () => {
+    expect(
+      isCountdownUrgent({
+        state: "live",
+        endsAt: new Date(),
+        days: 0,
+        hours: 5,
+        minutes: 0,
+        seconds: 0,
+      }),
+    ).toBe(true);
+  });
+
+  it("is true when the deadline is reached", () => {
+    expect(
+      isCountdownUrgent({ state: "reached", endsAt: new Date(), endBlock: 100 }),
+    ).toBe(true);
+  });
+
+  it("is true when the iso deadline expired", () => {
+    expect(isCountdownUrgent({ state: "iso-expired", endsAt: new Date() })).toBe(true);
+  });
+
+  it("is false while loading or unset", () => {
+    expect(isCountdownUrgent({ state: "loading" })).toBe(false);
+    expect(isCountdownUrgent({ state: "unset" })).toBe(false);
   });
 });
