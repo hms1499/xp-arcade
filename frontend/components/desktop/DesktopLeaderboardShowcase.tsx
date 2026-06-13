@@ -5,12 +5,14 @@ import { GAMES, type GameId } from "@/lib/game-registry";
 import {
   scoreCardImage,
   shortPlayer,
+  sumPrizePoolUstx,
   type LeaderboardSummary,
   type RankedEntry,
 } from "@/lib/leaderboard-showcase";
-import { formatCountdown, useSeasonCountdown } from "@/lib/season-countdown";
+import { useSeasonCountdown } from "@/lib/season-countdown";
 import { formatScoreValue } from "@/lib/score-format";
 import { useWindows } from "@/state/window-manager";
+import { PrizePoolHero } from "./PrizePoolHero";
 
 const GAME_IDS = Object.keys(GAMES) as GameId[];
 
@@ -97,6 +99,11 @@ export function DesktopLeaderboardShowcase({
         pointerEvents: "auto",
       }}
     >
+      <PrizePoolHero
+        totalUstx={sumPrizePoolUstx(poolsByGame)}
+        gameCount={GAME_IDS.length}
+        countdown={countdown}
+      />
       <section style={panelStyle()}>
         <PanelTitle>
           <span>🏆 Hall of Fame</span>
@@ -153,28 +160,6 @@ export function DesktopLeaderboardShowcase({
           <span>⏳ Season Race</span>
         </PanelTitle>
         <div style={{ padding: 7, display: "grid", gap: 6 }}>
-          <div
-            style={{
-              border: "2px inset #dfdfdf",
-              background: "#ffffff",
-              padding: 6,
-              fontFamily: "monospace",
-              fontSize: 12,
-              color:
-                countdown.state === "iso-expired" || countdown.state === "reached"
-                  ? "#cc0000"
-                  : "#000080",
-              textAlign: "center",
-            }}
-          >
-            {countdown.state === "loading"
-              ? "Loading deadline…"
-              : countdown.state === "unset"
-                ? "No display deadline set"
-                : countdown.state === "reached"
-                  ? formatCountdown(countdown)
-                  : `Soft deadline ${formatCountdown(countdown)}`}
-          </div>
           {GAME_IDS.map((gameId) => {
             const game = GAMES[gameId];
             const cutoff = summaries[gameId].cutoff;
