@@ -1,6 +1,6 @@
 # Handoff — XP Arcade on Stacks
 
-**Status as of 2026-06-10:** Single registry contract **`xp-arcade-v4` deployed to mainnet** (block 8209345, Clarity 3). All 4 games registered on-chain (verified). Trustless pool + tie-fair atomic self-claim + burn-block claim window + permissionless `finalize-season` live. Production metadata token #1 was verified on 2026-06-10 and resolves a Pac-Man score with an inline SVG. The latest frontend hardening adds per-game countdowns, bounded API/transaction polling, E2E CI, privacy-safe telemetry, and scheduled production health checks. Production deploy of the latest `main` (`d7d8abf`) was verified on 2026-06-11: `/api/health` reports mainnet + `xp-arcade-v4` and `npm run health:production` passes 7/7. **Remaining: complete the live-wallet smoke test.**
+**Status as of 2026-06-10:** Single registry contract **`xp-arcade-v4` deployed to mainnet** (block 8209345, Clarity 3). All 4 games registered on-chain (verified). Trustless pool + tie-fair atomic self-claim + burn-block claim window + permissionless `finalize-season` live. Production metadata token #1 was verified on 2026-06-10 and resolves a Pac-Man score with an inline SVG. The latest frontend hardening adds per-game countdowns, bounded API/transaction polling, E2E CI, privacy-safe telemetry, and scheduled production health checks. Production deploy of the latest `main` (`d7d8abf`) was verified on 2026-06-11: `/api/health` reports mainnet + `xp-arcade-v4` and `npm run health:production` passes 7/7. A read-only **live-wallet smoke-test harness** is now in place (`frontend/scripts/smoke-snapshot.mjs` + `docs/superpowers/checklists/2026-06-13-live-wallet-smoke-test.md`), verified against live mainnet reads. **Remaining: a human runs the mint-path smoke test with a real wallet** (follow the checklist; record txid + date here when green).
 
 ---
 
@@ -85,6 +85,12 @@ Contract suite 139 ✓; frontend 142 ✓ · tsc clean · build ✓.
 ### 2. Live-wallet smoke test
 
 Walk through with the **owner wallet** and a **second non-owner wallet** on mainnet. The pool is trustless now — payouts are **self-claimed**, not owner-sent.
+
+> **Tooling:** for the **mint path**, use the step-by-step checklist
+> `docs/superpowers/checklists/2026-06-13-live-wallet-smoke-test.md` with the
+> read-only snapshot script (`npm run smoke:snapshot -- <SP...addr> <game> [tokenId]`)
+> to capture before/after on-chain state and assert the deltas. The manual UI
+> walkthrough below complements it (UI-level checks the script can't see).
 
 **As non-owner player:**
 - [ ] Boot → desktop, taskbar + Start menu load
