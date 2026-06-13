@@ -22,6 +22,7 @@ export function WelcomeDialog({
     <div
       className="window"
       role="dialog"
+      aria-modal="true"
       aria-label="Welcome to XP Arcade"
       style={{
         position: "fixed",
@@ -35,7 +36,7 @@ export function WelcomeDialog({
       <div className="title-bar">
         <div className="title-bar-text">🎮 Welcome to XP Arcade</div>
         <div className="title-bar-controls">
-          <button aria-label="Close" onClick={onClose} />
+          <button type="button" aria-label="Close" onClick={onClose} />
         </div>
       </div>
       <div className="window-body" style={{ padding: 16 }}>
