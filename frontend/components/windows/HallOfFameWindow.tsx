@@ -272,10 +272,12 @@ export function HallOfFameWindow() {
                     }}
                   >
                     {formatStx(snapshot.totalUstx)}
-                    <SeasonShareActions
-                      gameId={snapshot.gameId}
-                      season={snapshot.season}
-                    />
+                    {snapshot.rows.length > 0 && (
+                      <SeasonShareActions
+                        gameId={snapshot.gameId}
+                        season={snapshot.season}
+                      />
+                    )}
                   </span>
                 </header>
                 {ranked.length === 0 ? (
