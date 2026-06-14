@@ -6,6 +6,8 @@ import {
   shareTitle,
   shareDescription,
   resolveMintedTokenId,
+  seasonShareUrl,
+  xSeasonIntentUrl,
 } from "./share";
 
 vi.mock("./http", () => ({ fetchJson: vi.fn() }));
@@ -77,5 +79,26 @@ describe("resolveMintedTokenId", () => {
   it("returns null when the API call fails", async () => {
     mockFetchJson.mockRejectedValueOnce(new Error("boom"));
     expect(await resolveMintedTokenId("0xabc", "snake")).toBeNull();
+  });
+});
+
+describe("seasonShareUrl", () => {
+  it("links to the season share page using the game slug", () => {
+    expect(seasonShareUrl("snake", 1)).toBe(
+      "http://localhost:3000/share/season/snake/1",
+    );
+  });
+});
+
+describe("xSeasonIntentUrl", () => {
+  it("builds an X intent for a season leaderboard", () => {
+    const u = new URL(xSeasonIntentUrl("pacman", 2));
+    expect(u.origin + u.pathname).toBe("https://x.com/intent/post");
+    expect(u.searchParams.get("text")).toBe(
+      "👾 Pac-Man Season 2 Hall of Fame on XP Arcade 🕹️",
+    );
+    expect(u.searchParams.get("url")).toBe(
+      "http://localhost:3000/share/season/pacman/2",
+    );
   });
 });

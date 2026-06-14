@@ -65,3 +65,17 @@ export async function resolveMintedTokenId(
   if (!repr || !/^u\d+$/.test(repr)) return null;
   return Number(repr.slice(1));
 }
+
+export function seasonShareUrl(gameId: GameId, season: number): string {
+  return `${stacks.appUrl}/share/season/${gameId}/${season}`;
+}
+
+export function xSeasonIntentUrl(gameId: GameId, season: number): string {
+  const u = new URL("https://x.com/intent/post");
+  u.searchParams.set(
+    "text",
+    `${GAMES[gameId].emoji} ${GAMES[gameId].label} Season ${season} Hall of Fame on XP Arcade 🕹️`,
+  );
+  u.searchParams.set("url", seasonShareUrl(gameId, season));
+  return u.toString();
+}
