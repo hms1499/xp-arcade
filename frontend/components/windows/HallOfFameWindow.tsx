@@ -125,14 +125,23 @@ export function HallOfFameWindow() {
     );
   }, [activeGame, state.snapshots]);
 
-  if (!w) return null;
+  const heroes = useMemo(() => {
+    const byGame = new Map<GameId, SeasonSnapshot>();
+    for (const snap of snapshots) {
+      if (snap.rows.length === 0) continue;
+      const existing = byGame.get(snap.gameId);
+      const better =
+        !existing ||
+        (snap.status === "current" && existing.status !== "current") ||
+        (snap.status === existing.status && snap.season > existing.season);
+      if (better) byGame.set(snap.gameId, snap);
+    }
+    return GAME_IDS.map((id) => byGame.get(id))
+      .filter((snap): snap is SeasonSnapshot => Boolean(snap))
+      .map((snap) => ({ snapshot: snap, leader: rankRows(snap.rows)[0] }));
+  }, [snapshots]);
 
-  const leaders = snapshots
-    .map((snapshot) => {
-      const leader = rankRows(snapshot.rows)[0];
-      return leader ? { snapshot, leader } : null;
-    })
-    .filter((entry): entry is { snapshot: SeasonSnapshot; leader: TopEntry & { rank: number } } => entry !== null);
+  if (!w) return null;
 
   return (
     <Window id={w.id} title="🎖️ Hall of Fame" width={560}>
@@ -190,7 +199,7 @@ export function HallOfFameWindow() {
             marginBottom: 10,
           }}
         >
-          {leaders.slice(0, 3).map(({ snapshot, leader }) => {
+          {heroes.map(({ snapshot, leader }) => {
             const game = GAMES[snapshot.gameId];
             const rarity = scoreRarity(leader.score, snapshot.gameId);
             return (
