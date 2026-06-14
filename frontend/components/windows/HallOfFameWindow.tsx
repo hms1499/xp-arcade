@@ -14,6 +14,7 @@ import { rankRows, scoreRarity, shortPlayer } from "@/lib/leaderboard-showcase";
 import { rarityColor } from "@/lib/metadata-svg";
 import { SeasonShareActions } from "@/components/shared/SeasonShareActions";
 import { useWallet } from "@/state/wallet";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 type SeasonSnapshot = {
   gameId: GameId;
@@ -162,7 +163,18 @@ export function HallOfFameWindow() {
         </div>
 
         {state.status === "loading" && (
-          <p style={{ color: "#555", marginBottom: 8 }}>Loading season records...</p>
+          <div style={{ display: "grid", gap: 6, marginBottom: 8 }} aria-label="Loading season records">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                style={{
+                  height: 18,
+                  background: "#e4e4dc",
+                  border: "1px solid #d0d0c8",
+                }}
+              />
+            ))}
+          </div>
         )}
         {state.error && (
           <p className="text-red-600" style={{ marginBottom: 8 }}>
@@ -326,9 +338,11 @@ export function HallOfFameWindow() {
         </div>
 
         {state.status === "ready" && snapshots.length === 0 && (
-          <p style={{ color: "#777", textAlign: "center", padding: 12 }}>
-            No season records are available yet.
-          </p>
+          <EmptyState
+            emoji="🏆"
+            title="No season records yet"
+            body="Play a game and mint a score to put the first name on the board."
+          />
         )}
       </div>
     </Window>
