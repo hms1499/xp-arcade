@@ -13,6 +13,7 @@ import { formatScoreValue } from "@/lib/score-format";
 import { rankRows, scoreRarity, shortPlayer } from "@/lib/leaderboard-showcase";
 import { rarityColor } from "@/lib/metadata-svg";
 import { SeasonShareActions } from "@/components/shared/SeasonShareActions";
+import { useWallet } from "@/state/wallet";
 
 type SeasonSnapshot = {
   gameId: GameId;
@@ -88,6 +89,7 @@ export function HallOfFameWindow() {
     error: null,
   });
   const [activeGame, setActiveGame] = useState<GameId | "all">("all");
+  const address = useWallet((s) => s.address);
 
   useEffect(() => {
     if (!w) return;
@@ -273,7 +275,12 @@ export function HallOfFameWindow() {
                             alignItems: "center",
                             padding: "4px 6px",
                             borderTop: row.rank === 1 ? "none" : "1px solid #eee",
-                            background: row.rank === 1 ? "#fff8d6" : "#fff",
+                            background:
+                              row.player === address
+                                ? "#d7e9ff"
+                                : row.rank === 1
+                                  ? "#fff8d6"
+                                  : "#fff",
                           }}
                         >
                           <b>#{row.rank}</b>
@@ -296,6 +303,18 @@ export function HallOfFameWindow() {
                           <span style={{ color: rarityColor(rarity), textAlign: "right" }}>
                             {rarity}
                           </span>
+                          {row.player === address && (
+                            <span
+                              style={{
+                                gridColumn: "1 / -1",
+                                fontSize: 9,
+                                fontWeight: "bold",
+                                color: "#003a8c",
+                              }}
+                            >
+                              ★ YOU
+                            </span>
+                          )}
                         </div>
                       );
                     })}
