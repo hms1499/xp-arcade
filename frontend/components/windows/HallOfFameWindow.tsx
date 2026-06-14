@@ -12,6 +12,7 @@ import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
 import { formatScoreValue } from "@/lib/score-format";
 import { rankRows, scoreRarity, shortPlayer } from "@/lib/leaderboard-showcase";
 import { rarityColor } from "@/lib/metadata-svg";
+import { SeasonShareActions } from "@/components/shared/SeasonShareActions";
 
 type SeasonSnapshot = {
   gameId: GameId;
@@ -238,8 +239,20 @@ export function HallOfFameWindow() {
                   <span>
                     {game.emoji} {game.label} · {seasonLabel(snapshot)}
                   </span>
-                  <span style={{ color: "#555", fontWeight: "normal" }}>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      color: "#555",
+                      fontWeight: "normal",
+                    }}
+                  >
                     {formatStx(snapshot.totalUstx)}
+                    <SeasonShareActions
+                      gameId={snapshot.gameId}
+                      season={snapshot.season}
+                    />
                   </span>
                 </header>
                 {ranked.length === 0 ? (
