@@ -53,8 +53,38 @@ if (!gameId) {
   process.exit(1);
 }
 
-function fetchWithTimeout(input, init = {}) {
-  return fetch(input, { ...init, signal: AbortSignal.timeout(10_000) });
+const MAX_RETRIES = 5;
+const BASE_DELAY_MS = 800;
+const MAX_DELAY_MS = 8_000;
+const MAX_RETRY_AFTER_MS = 60_000;
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Wrap fetch with a per-request timeout plus retry/backoff on HTTP 429.
+// Hiro enforces a per-minute quota, and this script fires ~9 reads at once,
+// so a burst can trip the limit. We honour Retry-After when present, else
+// fall back to exponential backoff with jitter. Every read in this script
+// goes through here (read-only calls, stxBalance, metadata), so the retry
+// covers all of them.
+async function fetchWithTimeout(input, init = {}, attempt = 0) {
+  const res = await fetch(input, {
+    ...init,
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (res.status === 429 && attempt < MAX_RETRIES) {
+    const retryAfter = Number(res.headers.get("retry-after"));
+    const waitMs =
+      Number.isFinite(retryAfter) && retryAfter > 0
+        ? Math.min(retryAfter * 1000, MAX_RETRY_AFTER_MS)
+        : Math.min(BASE_DELAY_MS * 2 ** attempt, MAX_DELAY_MS) +
+          Math.floor(Math.random() * 250);
+    console.error(
+      `  (rate-limited, retry ${attempt + 1}/${MAX_RETRIES} in ${waitMs}ms)`,
+    );
+    await sleep(waitMs);
+    return fetchWithTimeout(input, init, attempt + 1);
+  }
+  return res;
 }
 
 // cvToValue in this @stacks/transactions version returns nested { type, value }
