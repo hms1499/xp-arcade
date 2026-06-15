@@ -1,13 +1,19 @@
 import { describe, it, expect } from "vitest";
-import { todayKey } from "./daily-challenge";
-import { dailyGame } from "./daily-challenge";
+import {
+  todayKey,
+  dailyGame,
+  DAILY_TARGETS,
+  dailyChallenge,
+  isYesterday,
+  applyCompletion,
+  type DailyChallengeState,
+  viewStreak,
+  meetsDailyTarget,
+  loadDailyState,
+  saveDailyState,
+  DAILY_STORAGE_KEY,
+} from "./daily-challenge";
 import { GAME_IDS } from "./game-registry";
-import { DAILY_TARGETS, dailyChallenge } from "./daily-challenge";
-import { isYesterday } from "./daily-challenge";
-import { applyCompletion, type DailyChallengeState } from "./daily-challenge";
-import { viewStreak } from "./daily-challenge";
-import { meetsDailyTarget } from "./daily-challenge";
-import { loadDailyState, saveDailyState, DAILY_STORAGE_KEY } from "./daily-challenge";
 
 describe("todayKey", () => {
   it("formats a date as local YYYY-MM-DD with zero padding", () => {
