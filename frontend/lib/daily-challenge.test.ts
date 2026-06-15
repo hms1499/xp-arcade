@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { todayKey } from "./daily-challenge";
 import { dailyGame } from "./daily-challenge";
 import { GAME_IDS } from "./game-registry";
+import { DAILY_TARGETS, dailyChallenge } from "./daily-challenge";
 
 describe("todayKey", () => {
   it("formats a date as local YYYY-MM-DD with zero padding", () => {
@@ -27,5 +28,24 @@ describe("dailyGame", () => {
       seen.add(dailyGame(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`));
     }
     for (const id of GAME_IDS) expect(seen.has(id)).toBe(true);
+  });
+});
+
+describe("DAILY_TARGETS / dailyChallenge", () => {
+  it("has a target for every registered game", () => {
+    for (const id of GAME_IDS) {
+      expect(typeof DAILY_TARGETS[id]).toBe("number");
+      expect(DAILY_TARGETS[id]).toBeGreaterThan(0);
+    }
+  });
+
+  it("minesweeper target encodes a 180s clear", () => {
+    expect(DAILY_TARGETS.minesweeper).toBe(9819); // 9999 - 180
+  });
+
+  it("combines today's game and its target", () => {
+    const c = dailyChallenge("2026-06-15");
+    expect(c.gameId).toBe(dailyGame("2026-06-15"));
+    expect(c.target).toBe(DAILY_TARGETS[c.gameId]);
   });
 });

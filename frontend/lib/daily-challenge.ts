@@ -22,3 +22,20 @@ function hashDayKey(key: string): number {
 export function dailyGame(dayKey: string): GameId {
   return GAME_IDS[hashDayKey(dayKey) % GAME_IDS.length];
 }
+
+/** Raw on-chain score targets per game. Tuned below score-risk practicalHigh,
+ *  above casual. One table → easy to retune. Minesweeper = 9999 - 180s. */
+export const DAILY_TARGETS: Record<GameId, number> = {
+  snake: 150,
+  tetris: 180,
+  pacman: 180,
+  breakout: 200,
+  minesweeper: 9819,
+};
+
+export type DailyChallenge = { gameId: GameId; target: number };
+
+export function dailyChallenge(dayKey: string): DailyChallenge {
+  const gameId = dailyGame(dayKey);
+  return { gameId, target: DAILY_TARGETS[gameId] };
+}
