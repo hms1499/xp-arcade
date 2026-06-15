@@ -9,11 +9,12 @@ import { formatScoreValue } from "@/lib/score-format";
 export function DailyChallengeWidget() {
   const open = useWindows((s) => s.open);
   const daily = useDailyChallenge();
+  const hydrate = useDailyChallenge((s) => s.hydrate);
 
   // Load persisted streak after mount (avoids SSR hydration mismatch).
   useEffect(() => {
-    daily.hydrate();
-  }, [daily.hydrate]);
+    hydrate();
+  }, [hydrate]);
 
   const day = todayKey();
   const { gameId, target } = dailyChallenge(day);
