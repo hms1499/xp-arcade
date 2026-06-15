@@ -6,6 +6,7 @@ import { DAILY_TARGETS, dailyChallenge } from "./daily-challenge";
 import { isYesterday } from "./daily-challenge";
 import { applyCompletion, type DailyChallengeState } from "./daily-challenge";
 import { viewStreak } from "./daily-challenge";
+import { meetsDailyTarget } from "./daily-challenge";
 
 describe("todayKey", () => {
   it("formats a date as local YYYY-MM-DD with zero padding", () => {
@@ -127,5 +128,16 @@ describe("viewStreak", () => {
       bestStreak: 5,
       completedToday: false,
     });
+  });
+});
+
+describe("meetsDailyTarget", () => {
+  it("true only for today's game at or above its target", () => {
+    const day = "2026-06-15";
+    const { gameId, target } = dailyChallenge(day);
+    const other = GAME_IDS.find((g) => g !== gameId)!;
+    expect(meetsDailyTarget(gameId, target, day)).toBe(true);
+    expect(meetsDailyTarget(gameId, target - 1, day)).toBe(false);
+    expect(meetsDailyTarget(other, 999_999, day)).toBe(false); // wrong game
   });
 });

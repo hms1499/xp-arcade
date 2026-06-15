@@ -93,3 +93,9 @@ export function viewStreak(state: DailyChallengeState, today: string): StreakVie
     completedToday,
   };
 }
+
+/** Did this game-over result satisfy today's challenge? */
+export function meetsDailyTarget(gameId: GameId, score: number, dayKey: string): boolean {
+  const c = dailyChallenge(dayKey);
+  return gameId === c.gameId && score >= c.target;
+}
