@@ -41,6 +41,16 @@ To check live on-chain state, query the contract via Hiro Explorer or `clarinet 
 
 ## To-do for next session
 
+### Daily Challenge — shipped client-side (2026-06-15)
+
+Desktop widget spotlights one of the 5 games per day with a fixed target
+(`lib/daily-challenge.ts`). Beating the target in a play session (no wallet/mint)
+advances a strict streak (miss = reset; best-streak preserved). Streak milestones
+(7/30/100) earn badges in the achievements panel. State persists in localStorage
+(`xp-arcade:daily`). No contract change. `tsc` clean · tests ✓ · build ✓.
+
+- [ ] Optional: retune `DAILY_TARGETS` after observing real scores.
+
 ### Minesweeper (game id 5) — LIVE on mainnet (registered 2026-06-14)
 
 Fifth game implemented on `main`: pure engine + Win95 board + window wired to the

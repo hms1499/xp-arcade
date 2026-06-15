@@ -79,3 +79,23 @@ describe("evaluateAchievements", () => {
     expect(earnedCount(evalFor(mints(1)))).toBe(1);
   });
 });
+
+describe("streak milestone achievements", () => {
+  const zero = computePlayerStats([]);
+
+  it("earns streak badges at 7 / 30 / 100 best-streak", () => {
+    const list = evaluateAchievements(zero, { bestStreak: 100 });
+    const ids = list.filter((a) => a.earned).map((a) => a.id);
+    expect(ids).toEqual(expect.arrayContaining(["streak-7", "streak-30", "streak-100"]));
+  });
+
+  it("leaves streak badges unearned below their target and when extra omitted", () => {
+    const some = evaluateAchievements(zero, { bestStreak: 10 });
+    const byId = Object.fromEntries(some.map((a) => [a.id, a]));
+    expect(byId["streak-7"].earned).toBe(true);
+    expect(byId["streak-30"].earned).toBe(false);
+
+    const none = evaluateAchievements(zero);
+    expect(none.find((a) => a.id === "streak-7")!.earned).toBe(false);
+  });
+});
