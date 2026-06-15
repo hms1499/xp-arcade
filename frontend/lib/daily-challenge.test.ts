@@ -5,6 +5,7 @@ import { GAME_IDS } from "./game-registry";
 import { DAILY_TARGETS, dailyChallenge } from "./daily-challenge";
 import { isYesterday } from "./daily-challenge";
 import { applyCompletion, type DailyChallengeState } from "./daily-challenge";
+import { viewStreak } from "./daily-challenge";
 
 describe("todayKey", () => {
   it("formats a date as local YYYY-MM-DD with zero padding", () => {
@@ -97,5 +98,34 @@ describe("applyCompletion", () => {
     const once = applyCompletion(EMPTY, "2026-06-15");
     const twice = applyCompletion(once, "2026-06-15");
     expect(twice).toEqual(once);
+  });
+});
+
+describe("viewStreak", () => {
+  it("shows the live streak when last completion is today", () => {
+    const s = applyCompletion(EMPTY, "2026-06-15");
+    expect(viewStreak(s, "2026-06-15")).toEqual({
+      currentStreak: 1,
+      bestStreak: 1,
+      completedToday: true,
+    });
+  });
+
+  it("keeps the streak alive when last completion was yesterday", () => {
+    const s = { lastCompletedDate: "2026-06-14", currentStreak: 3, bestStreak: 5 };
+    expect(viewStreak(s, "2026-06-15")).toEqual({
+      currentStreak: 3,
+      bestStreak: 5,
+      completedToday: false,
+    });
+  });
+
+  it("decays a stale streak to 0 but preserves bestStreak", () => {
+    const s = { lastCompletedDate: "2026-06-10", currentStreak: 3, bestStreak: 5 };
+    expect(viewStreak(s, "2026-06-15")).toEqual({
+      currentStreak: 0,
+      bestStreak: 5,
+      completedToday: false,
+    });
   });
 });

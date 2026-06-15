@@ -74,3 +74,22 @@ export function applyCompletion(
     bestStreak: Math.max(state.bestStreak, currentStreak),
   };
 }
+
+export type StreakView = {
+  currentStreak: number;
+  bestStreak: number;
+  completedToday: boolean;
+};
+
+/** Derived view for rendering: a streak older than yesterday reads as broken. */
+export function viewStreak(state: DailyChallengeState, today: string): StreakView {
+  const completedToday = state.lastCompletedDate === today;
+  const alive =
+    completedToday ||
+    (state.lastCompletedDate != null && isYesterday(state.lastCompletedDate, today));
+  return {
+    currentStreak: alive ? state.currentStreak : 0,
+    bestStreak: state.bestStreak,
+    completedToday,
+  };
+}
