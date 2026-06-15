@@ -4,6 +4,7 @@ import { dailyGame } from "./daily-challenge";
 import { GAME_IDS } from "./game-registry";
 import { DAILY_TARGETS, dailyChallenge } from "./daily-challenge";
 import { isYesterday } from "./daily-challenge";
+import { applyCompletion, type DailyChallengeState } from "./daily-challenge";
 
 describe("todayKey", () => {
   it("formats a date as local YYYY-MM-DD with zero padding", () => {
@@ -62,5 +63,39 @@ describe("isYesterday", () => {
     expect(isYesterday("2026-06-15", "2026-06-15")).toBe(false);
     expect(isYesterday("2026-06-13", "2026-06-15")).toBe(false);
     expect(isYesterday("2026-06-16", "2026-06-15")).toBe(false);
+  });
+});
+
+const EMPTY: DailyChallengeState = {
+  lastCompletedDate: null,
+  currentStreak: 0,
+  bestStreak: 0,
+};
+
+describe("applyCompletion", () => {
+  it("starts a streak at 1 on first ever completion", () => {
+    const s = applyCompletion(EMPTY, "2026-06-15");
+    expect(s).toEqual({ lastCompletedDate: "2026-06-15", currentStreak: 1, bestStreak: 1 });
+  });
+
+  it("increments on a consecutive day", () => {
+    const day1 = applyCompletion(EMPTY, "2026-06-14");
+    const day2 = applyCompletion(day1, "2026-06-15");
+    expect(day2.currentStreak).toBe(2);
+    expect(day2.bestStreak).toBe(2);
+  });
+
+  it("resets to 1 after a gap but keeps bestStreak", () => {
+    let s = applyCompletion(EMPTY, "2026-06-10");
+    s = applyCompletion(s, "2026-06-11"); // streak 2, best 2
+    s = applyCompletion(s, "2026-06-15"); // gap -> reset to 1
+    expect(s.currentStreak).toBe(1);
+    expect(s.bestStreak).toBe(2);
+  });
+
+  it("is idempotent for the same day", () => {
+    const once = applyCompletion(EMPTY, "2026-06-15");
+    const twice = applyCompletion(once, "2026-06-15");
+    expect(twice).toEqual(once);
   });
 });

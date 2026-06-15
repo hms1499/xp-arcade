@@ -52,3 +52,25 @@ const ONE_DAY_MS = 86_400_000;
 export function isYesterday(prev: string, today: string): boolean {
   return dayKeyToMs(today) - dayKeyToMs(prev) === ONE_DAY_MS;
 }
+
+export type DailyChallengeState = {
+  lastCompletedDate: string | null; // YYYY-MM-DD of last completed day
+  currentStreak: number;
+  bestStreak: number;
+};
+
+/** Record a completion for `today`. Idempotent for a repeated same-day call. */
+export function applyCompletion(
+  state: DailyChallengeState,
+  today: string,
+): DailyChallengeState {
+  if (state.lastCompletedDate === today) return state;
+  const continues =
+    state.lastCompletedDate != null && isYesterday(state.lastCompletedDate, today);
+  const currentStreak = continues ? state.currentStreak + 1 : 1;
+  return {
+    lastCompletedDate: today,
+    currentStreak,
+    bestStreak: Math.max(state.bestStreak, currentStreak),
+  };
+}
