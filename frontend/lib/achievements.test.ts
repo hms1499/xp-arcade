@@ -80,11 +80,6 @@ describe("evaluateAchievements", () => {
   });
 });
 
-import { evaluateAchievements } from "./achievements";
-// Reuse the existing test's stats factory if present; otherwise build a minimal
-// PlayerStats via computePlayerStats([]) (an empty NFT list = all-zero stats).
-import { computePlayerStats } from "./player-stats";
-
 describe("streak milestone achievements", () => {
   const zero = computePlayerStats([]);
 
