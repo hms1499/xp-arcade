@@ -4,6 +4,7 @@ import { type GameId } from "@/lib/game-registry";
 import { getTopTenForGame } from "@/lib/contract-calls";
 import { useMintTx } from "@/state/mint-tx";
 import { useSessionStats } from "@/state/session-stats";
+import { useDailyChallenge } from "@/state/daily-challenge";
 import { assessScoreRisk, type ScoreRiskReport } from "@/lib/score-risk";
 
 export function useGameSession(gameId: GameId) {
@@ -34,6 +35,7 @@ export function useGameSession(gameId: GameId) {
       setShowMint(true);
       setRiskReport(assessScoreRisk({ gameId, score: s, durationMs }));
       useSessionStats.getState().recordResult(gameId, s);
+      useDailyChallenge.getState().recordPlay(gameId, s);
       try {
         const top = await getTopTenForGame(gameId);
         const min =
