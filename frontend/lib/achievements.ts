@@ -75,11 +75,41 @@ export const ACHIEVEMENTS: Achievement[] = [
     target: 5,
     progress: (s) => s.seasonsPlayed,
   },
+  {
+    id: "streak-7",
+    label: "Week Warrior",
+    icon: "🔥",
+    description: "Reach a 7-day challenge streak",
+    target: 7,
+    progress: () => 0,
+  },
+  {
+    id: "streak-30",
+    label: "Monthly Master",
+    icon: "📆",
+    description: "Reach a 30-day challenge streak",
+    target: 30,
+    progress: () => 0,
+  },
+  {
+    id: "streak-100",
+    label: "Century Streak",
+    icon: "💎",
+    description: "Reach a 100-day challenge streak",
+    target: 100,
+    progress: () => 0,
+  },
 ];
 
-export function evaluateAchievements(s: PlayerStats): EvaluatedAchievement[] {
+const STREAK_IDS = new Set(["streak-7", "streak-30", "streak-100"]);
+
+export function evaluateAchievements(
+  s: PlayerStats,
+  extra?: { bestStreak?: number },
+): EvaluatedAchievement[] {
+  const bestStreak = extra?.bestStreak ?? 0;
   return ACHIEVEMENTS.map((a) => {
-    const raw = a.progress(s);
+    const raw = STREAK_IDS.has(a.id) ? bestStreak : a.progress(s);
     return { ...a, earned: raw >= a.target, current: Math.min(raw, a.target) };
   });
 }
