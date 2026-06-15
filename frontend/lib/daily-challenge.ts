@@ -99,3 +99,37 @@ export function meetsDailyTarget(gameId: GameId, score: number, dayKey: string):
   const c = dailyChallenge(dayKey);
   return gameId === c.gameId && score >= c.target;
 }
+
+export const DAILY_STORAGE_KEY = "xp-arcade:daily";
+
+const DEFAULT_STATE: DailyChallengeState = {
+  lastCompletedDate: null,
+  currentStreak: 0,
+  bestStreak: 0,
+};
+
+export function loadDailyState(): DailyChallengeState {
+  if (typeof window === "undefined") return { ...DEFAULT_STATE };
+  try {
+    const raw = window.localStorage.getItem(DAILY_STORAGE_KEY);
+    if (!raw) return { ...DEFAULT_STATE };
+    const parsed = JSON.parse(raw) as Partial<DailyChallengeState>;
+    return {
+      lastCompletedDate:
+        typeof parsed.lastCompletedDate === "string" ? parsed.lastCompletedDate : null,
+      currentStreak: Number.isFinite(parsed.currentStreak) ? Number(parsed.currentStreak) : 0,
+      bestStreak: Number.isFinite(parsed.bestStreak) ? Number(parsed.bestStreak) : 0,
+    };
+  } catch {
+    return { ...DEFAULT_STATE };
+  }
+}
+
+export function saveDailyState(state: DailyChallengeState): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(DAILY_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    /* storage blocked → no-op */
+  }
+}

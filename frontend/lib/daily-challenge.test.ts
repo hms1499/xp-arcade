@@ -7,6 +7,7 @@ import { isYesterday } from "./daily-challenge";
 import { applyCompletion, type DailyChallengeState } from "./daily-challenge";
 import { viewStreak } from "./daily-challenge";
 import { meetsDailyTarget } from "./daily-challenge";
+import { loadDailyState, saveDailyState, DAILY_STORAGE_KEY } from "./daily-challenge";
 
 describe("todayKey", () => {
   it("formats a date as local YYYY-MM-DD with zero padding", () => {
@@ -139,5 +140,31 @@ describe("meetsDailyTarget", () => {
     expect(meetsDailyTarget(gameId, target, day)).toBe(true);
     expect(meetsDailyTarget(gameId, target - 1, day)).toBe(false);
     expect(meetsDailyTarget(other, 999_999, day)).toBe(false); // wrong game
+  });
+});
+
+describe("load/save daily state", () => {
+  it("round-trips through localStorage", () => {
+    localStorage.removeItem(DAILY_STORAGE_KEY);
+    expect(loadDailyState()).toEqual({
+      lastCompletedDate: null,
+      currentStreak: 0,
+      bestStreak: 0,
+    });
+    saveDailyState({ lastCompletedDate: "2026-06-15", currentStreak: 2, bestStreak: 4 });
+    expect(loadDailyState()).toEqual({
+      lastCompletedDate: "2026-06-15",
+      currentStreak: 2,
+      bestStreak: 4,
+    });
+  });
+
+  it("returns the safe default on malformed storage", () => {
+    localStorage.setItem(DAILY_STORAGE_KEY, "not json");
+    expect(loadDailyState()).toEqual({
+      lastCompletedDate: null,
+      currentStreak: 0,
+      bestStreak: 0,
+    });
   });
 });
