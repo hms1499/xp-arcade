@@ -73,6 +73,13 @@ describe("isYesterday", () => {
     expect(isYesterday("2026-06-13", "2026-06-15")).toBe(false);
     expect(isYesterday("2026-06-16", "2026-06-15")).toBe(false);
   });
+
+  it("holds across DST transitions (23h / 25h local days)", () => {
+    // US spring-forward (23h day) and fall-back (25h day) in 2026.
+    // A ms-difference check would wrongly return false on these boundaries.
+    expect(isYesterday("2026-03-08", "2026-03-09")).toBe(true); // spring forward
+    expect(isYesterday("2026-11-01", "2026-11-02")).toBe(true); // fall back
+  });
 });
 
 const EMPTY: DailyChallengeState = {

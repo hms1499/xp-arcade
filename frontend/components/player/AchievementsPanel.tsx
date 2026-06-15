@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import type { PlayerStats } from "@/lib/player-stats";
 import { evaluateAchievements, earnedCount } from "@/lib/achievements";
 import { useDailyChallenge } from "@/state/daily-challenge";
@@ -7,6 +8,14 @@ import { viewStreak, todayKey } from "@/lib/daily-challenge";
 
 export function AchievementsPanel({ stats }: { stats: PlayerStats }) {
   const daily = useDailyChallenge();
+  const hydrate = useDailyChallenge((s) => s.hydrate);
+
+  // Load persisted streak so badges are correct even if the desktop widget
+  // (which also hydrates) isn't mounted. hydrate() is idempotent.
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
+
   const { bestStreak } = viewStreak(daily, todayKey());
   const list = evaluateAchievements(stats, { bestStreak });
   const earned = earnedCount(list);

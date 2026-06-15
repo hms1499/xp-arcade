@@ -1,3 +1,5 @@
+// WARNING: GAME_IDS order is part of the daily schedule — reordering or inserting
+// a game shifts which game is spotlighted on every past/future day.
 import { GAME_IDS, type GameId } from "./game-registry";
 
 /** Local-date day key, e.g. "2026-06-15". Local (not UTC) so a player's day
@@ -40,17 +42,14 @@ export function dailyChallenge(dayKey: string): DailyChallenge {
   return { gameId, target: DAILY_TARGETS[gameId] };
 }
 
-/** Parse a "YYYY-MM-DD" key to a local-midnight epoch (ms). */
-function dayKeyToMs(key: string): number {
-  const [y, m, d] = key.split("-").map(Number);
-  return new Date(y, m - 1, d).getTime();
-}
-
-const ONE_DAY_MS = 86_400_000;
-
-/** True when `prev` is exactly the calendar day before `today`. */
+/** True when `prev` is exactly the calendar day before `today`. Uses calendar
+ *  arithmetic (add one day, compare keys) rather than a millisecond difference,
+ *  so it is correct across DST transitions where a local day is 23h or 25h. */
 export function isYesterday(prev: string, today: string): boolean {
-  return dayKeyToMs(today) - dayKeyToMs(prev) === ONE_DAY_MS;
+  const [py, pm, pd] = prev.split("-").map(Number);
+  // JS Date normalizes month/year rollovers (e.g. Dec 31 + 1 → Jan 1).
+  const dayAfterPrev = new Date(py, pm - 1, pd + 1);
+  return todayKey(dayAfterPrev) === today;
 }
 
 export type DailyChallengeState = {
