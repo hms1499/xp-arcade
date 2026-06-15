@@ -13,6 +13,7 @@ import { useSeasonCountdown } from "@/lib/season-countdown";
 import { formatScoreValue } from "@/lib/score-format";
 import { useWindows } from "@/state/window-manager";
 import { PrizePoolHero } from "./PrizePoolHero";
+import { DailyChallengeWidget } from "./DailyChallengeWidget";
 
 const GAME_IDS = Object.keys(GAMES) as GameId[];
 
@@ -104,6 +105,7 @@ export function DesktopLeaderboardShowcase({
         gameCount={GAME_IDS.length}
         countdown={countdown}
       />
+      <DailyChallengeWidget />
       <section style={panelStyle()}>
         <PanelTitle>
           <span>🏆 Hall of Fame</span>
