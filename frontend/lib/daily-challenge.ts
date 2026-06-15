@@ -39,3 +39,16 @@ export function dailyChallenge(dayKey: string): DailyChallenge {
   const gameId = dailyGame(dayKey);
   return { gameId, target: DAILY_TARGETS[gameId] };
 }
+
+/** Parse a "YYYY-MM-DD" key to a local-midnight epoch (ms). */
+function dayKeyToMs(key: string): number {
+  const [y, m, d] = key.split("-").map(Number);
+  return new Date(y, m - 1, d).getTime();
+}
+
+const ONE_DAY_MS = 86_400_000;
+
+/** True when `prev` is exactly the calendar day before `today`. */
+export function isYesterday(prev: string, today: string): boolean {
+  return dayKeyToMs(today) - dayKeyToMs(prev) === ONE_DAY_MS;
+}

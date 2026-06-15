@@ -3,6 +3,7 @@ import { todayKey } from "./daily-challenge";
 import { dailyGame } from "./daily-challenge";
 import { GAME_IDS } from "./game-registry";
 import { DAILY_TARGETS, dailyChallenge } from "./daily-challenge";
+import { isYesterday } from "./daily-challenge";
 
 describe("todayKey", () => {
   it("formats a date as local YYYY-MM-DD with zero padding", () => {
@@ -47,5 +48,19 @@ describe("DAILY_TARGETS / dailyChallenge", () => {
     const c = dailyChallenge("2026-06-15");
     expect(c.gameId).toBe(dailyGame("2026-06-15"));
     expect(c.target).toBe(DAILY_TARGETS[c.gameId]);
+  });
+});
+
+describe("isYesterday", () => {
+  it("true when prev is the calendar day before today", () => {
+    expect(isYesterday("2026-06-14", "2026-06-15")).toBe(true);
+    expect(isYesterday("2026-02-28", "2026-03-01")).toBe(true); // month boundary
+    expect(isYesterday("2025-12-31", "2026-01-01")).toBe(true); // year boundary
+  });
+
+  it("false for same day, gaps, or future", () => {
+    expect(isYesterday("2026-06-15", "2026-06-15")).toBe(false);
+    expect(isYesterday("2026-06-13", "2026-06-15")).toBe(false);
+    expect(isYesterday("2026-06-16", "2026-06-15")).toBe(false);
   });
 });
