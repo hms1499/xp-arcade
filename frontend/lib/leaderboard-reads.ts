@@ -6,6 +6,7 @@ import {
 import { stacks } from "./stacks";
 import { unwrap } from "./cv-unwrap";
 import { GAMES, onchainIdFor, type GameId } from "./game-registry";
+import { retryWithBackoff } from "./retry";
 
 export type TopEntry = { player: string; score: number };
 
@@ -58,4 +59,47 @@ export async function getPrizePoolBalanceForGame(gameId: GameId): Promise<number
     senderAddress: GAMES[gameId].contractAddress,
   });
   return Number(unwrap(cvToValue(res)));
+}
+
+export type GameLeaderboard = {
+  topTen: TopEntry[];
+  currentSeason: number | null;
+  prizePool: number | null;
+  seasonEndBlock: number | null;
+};
+
+export type Readers = {
+  topTen: (g: GameId) => Promise<TopEntry[]>;
+  currentSeason: (g: GameId) => Promise<number>;
+  prizePool: (g: GameId) => Promise<number>;
+  seasonEndBlock: (g: GameId) => Promise<number>;
+};
+
+const defaultReaders: Readers = {
+  topTen: getTopTenForGame,
+  currentSeason: getCurrentSeasonForGame,
+  prizePool: getPrizePoolBalanceForGame,
+  seasonEndBlock: getSeasonEndBlockForGame,
+};
+
+async function safeRead<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await retryWithBackoff(fn);
+  } catch {
+    return fallback;
+  }
+}
+
+/** Read one game's leaderboard fields; a failed field falls back, never throws. */
+export async function readGameLeaderboard(
+  gameId: GameId,
+  readers: Readers = defaultReaders,
+): Promise<GameLeaderboard> {
+  const [topTen, currentSeason, prizePool, seasonEndBlock] = await Promise.all([
+    safeRead<TopEntry[]>(() => readers.topTen(gameId), []),
+    safeRead<number | null>(() => readers.currentSeason(gameId), null),
+    safeRead<number | null>(() => readers.prizePool(gameId), null),
+    safeRead<number | null>(() => readers.seasonEndBlock(gameId), null),
+  ]);
+  return { topTen, currentSeason, prizePool, seasonEndBlock };
 }
