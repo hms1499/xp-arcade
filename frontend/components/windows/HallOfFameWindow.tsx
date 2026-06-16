@@ -3,11 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Window } from "@/components/windows/Window";
 import { useWindows } from "@/state/window-manager";
 import {
-  getCurrentSeasonForGame,
   getSeasonPrizeForGame,
-  getTopTenForGame,
   type TopEntry,
 } from "@/lib/contract-calls";
+import { fetchLeaderboardSnapshot } from "@/lib/leaderboard-snapshot";
 import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
 import { formatScoreValue } from "@/lib/score-format";
 import { rankRows, scoreRarity, shortPlayer } from "@/lib/leaderboard-showcase";
@@ -41,10 +40,12 @@ function seasonLabel(snapshot: SeasonSnapshot): string {
 }
 
 async function loadHallOfFame(): Promise<SeasonSnapshot[]> {
+  const snapshot = await fetchLeaderboardSnapshot();
   const byGame = await Promise.all(
     GAME_IDS.map(async (gameId) => {
-      const currentSeason = await getCurrentSeasonForGame(gameId);
-      const liveRows = await getTopTenForGame(gameId);
+      const game = snapshot.games[gameId];
+      const currentSeason = game?.currentSeason ?? 0;
+      const liveRows = game?.topTen ?? [];
       const closedSeasonIds = Array.from(
         { length: Math.max(0, currentSeason - 1) },
         (_, index) => currentSeason - 1 - index,

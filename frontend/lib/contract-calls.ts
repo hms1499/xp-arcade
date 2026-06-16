@@ -11,21 +11,32 @@ import {
 import { stacks } from "./stacks";
 import { unwrap } from "./cv-unwrap";
 import { GAMES, onchainIdFor, type GameId } from "./game-registry";
+import {
+  gameBase,
+  getTopTenForGame,
+  getCurrentSeasonForGame,
+  getSeasonEndBlockForGame,
+  getPrizePoolBalanceForGame,
+  type TopEntry,
+} from "./leaderboard-reads";
+
+import { cachedRead } from "./read-cache";
+
+export {
+  getTopTenForGame,
+  getCurrentSeasonForGame,
+  getSeasonEndBlockForGame,
+  getPrizePoolBalanceForGame,
+  type TopEntry,
+};
+
+const READ_TTL_MS = 30_000;
 
 const base = {
   network: stacks.network,
   contractAddress: stacks.contractAddress,
   contractName: stacks.contractName,
 } as const;
-
-function gameBase(gameId: GameId) {
-  const g = GAMES[gameId];
-  return {
-    network: stacks.network,
-    contractAddress: g.contractAddress,
-    contractName: g.contractName,
-  };
-}
 
 export async function mintScoreForGame(
   gameId: GameId,
@@ -46,69 +57,32 @@ export async function mintScoreForGame(
   });
 }
 
-export async function getTopTenForGame(gameId: GameId): Promise<TopEntry[]> {
-  const res = await fetchCallReadOnlyFunction({
-    ...gameBase(gameId),
-    functionName: "get-top-ten",
-    functionArgs: [uintCV(onchainIdFor(gameId))],
-    senderAddress: GAMES[gameId].contractAddress,
-  });
-  const v = unwrap<Array<{ player: string; score: string }>>(cvToValue(res));
-  return v.map((e) => ({ player: String(e.player), score: Number(e.score) }));
-}
-
 export async function getBestScoreForGame(gameId: GameId, addr: string) {
-  const res = await fetchCallReadOnlyFunction({
-    ...gameBase(gameId),
-    functionName: "get-best-score",
-    functionArgs: [uintCV(onchainIdFor(gameId)), principalCV(addr)],
-    senderAddress: addr,
+  return cachedRead(`best:${gameId}:${addr}`, READ_TTL_MS, async () => {
+    const res = await fetchCallReadOnlyFunction({
+      ...gameBase(gameId),
+      functionName: "get-best-score",
+      functionArgs: [uintCV(onchainIdFor(gameId)), principalCV(addr)],
+      senderAddress: addr,
+    });
+    const v = unwrap<null | { score: string; "token-id": string }>(cvToValue(res));
+    return v ? { score: Number(v.score), tokenId: Number(v["token-id"]) } : null;
   });
-  const v = unwrap<null | { score: string; "token-id": string }>(cvToValue(res));
-  return v ? { score: Number(v.score), tokenId: Number(v["token-id"]) } : null;
 }
 
 export async function getMintsRemaining(
   gameId: GameId,
   player: string,
 ): Promise<number> {
-  const res = await fetchCallReadOnlyFunction({
-    ...gameBase(gameId),
-    functionName: "get-mints-remaining",
-    functionArgs: [uintCV(onchainIdFor(gameId)), principalCV(player)],
-    senderAddress: player,
+  return cachedRead(`mints:${gameId}:${player}`, READ_TTL_MS, async () => {
+    const res = await fetchCallReadOnlyFunction({
+      ...gameBase(gameId),
+      functionName: "get-mints-remaining",
+      functionArgs: [uintCV(onchainIdFor(gameId)), principalCV(player)],
+      senderAddress: player,
+    });
+    return Number(unwrap(cvToValue(res)));
   });
-  return Number(unwrap(cvToValue(res)));
-}
-
-export async function getCurrentSeasonForGame(gameId: GameId): Promise<number> {
-  const res = await fetchCallReadOnlyFunction({
-    ...gameBase(gameId),
-    functionName: "get-current-season",
-    functionArgs: [uintCV(onchainIdFor(gameId))],
-    senderAddress: GAMES[gameId].contractAddress,
-  });
-  return Number(unwrap(cvToValue(res)));
-}
-
-export async function getSeasonEndBlockForGame(gameId: GameId): Promise<number> {
-  const res = await fetchCallReadOnlyFunction({
-    ...gameBase(gameId),
-    functionName: "get-season-end-block",
-    functionArgs: [uintCV(onchainIdFor(gameId))],
-    senderAddress: GAMES[gameId].contractAddress,
-  });
-  return Number(unwrap(cvToValue(res)));
-}
-
-export async function getPrizePoolBalanceForGame(gameId: GameId): Promise<number> {
-  const res = await fetchCallReadOnlyFunction({
-    ...gameBase(gameId),
-    functionName: "get-prize-pool-balance",
-    functionArgs: [uintCV(onchainIdFor(gameId))],
-    senderAddress: GAMES[gameId].contractAddress,
-  });
-  return Number(unwrap(cvToValue(res)));
 }
 
 export async function getSeasonPrizeForGame(
@@ -137,13 +111,15 @@ export async function getClaimableAmount(
   season: number,
   address: string,
 ): Promise<number> {
-  const res = await fetchCallReadOnlyFunction({
-    ...gameBase(gameId),
-    functionName: "get-claimable-amount",
-    functionArgs: [uintCV(onchainIdFor(gameId)), uintCV(season), principalCV(address)],
-    senderAddress: GAMES[gameId].contractAddress,
+  return cachedRead(`claimable:${gameId}:${season}:${address}`, READ_TTL_MS, async () => {
+    const res = await fetchCallReadOnlyFunction({
+      ...gameBase(gameId),
+      functionName: "get-claimable-amount",
+      functionArgs: [uintCV(onchainIdFor(gameId)), uintCV(season), principalCV(address)],
+      senderAddress: GAMES[gameId].contractAddress,
+    });
+    return Number(unwrap(cvToValue(res)));
   });
-  return Number(unwrap(cvToValue(res)));
 }
 
 export async function isClaimOpen(gameId: GameId, season: number): Promise<boolean> {
@@ -161,13 +137,15 @@ export async function hasClaimedPrizeForGame(
   player: string,
   season: number,
 ): Promise<boolean> {
-  const res = await fetchCallReadOnlyFunction({
-    ...gameBase(gameId),
-    functionName: "has-claimed-prize",
-    functionArgs: [principalCV(player), uintCV(onchainIdFor(gameId)), uintCV(season)],
-    senderAddress: player,
+  return cachedRead(`claimed:${gameId}:${season}:${player}`, READ_TTL_MS, async () => {
+    const res = await fetchCallReadOnlyFunction({
+      ...gameBase(gameId),
+      functionName: "has-claimed-prize",
+      functionArgs: [principalCV(player), uintCV(onchainIdFor(gameId)), uintCV(season)],
+      senderAddress: player,
+    });
+    return Boolean(cvToValue(res));
   });
-  return Boolean(cvToValue(res));
 }
 
 export async function endSeasonForGame(gameId: GameId): Promise<string> {
@@ -202,8 +180,6 @@ export async function claimPrizeV3(
     });
   });
 }
-
-export type TopEntry = { player: string; score: number };
 
 export async function getLastTokenId(): Promise<number> {
   const res = await fetchCallReadOnlyFunction({

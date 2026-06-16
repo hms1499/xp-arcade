@@ -1,12 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  getCurrentSeasonForGame,
-  getPrizePoolBalanceForGame,
-  getTopTenForGame,
-  type TopEntry,
-} from "@/lib/contract-calls";
+import { type TopEntry } from "@/lib/contract-calls";
+import { fetchLeaderboardSnapshot } from "@/lib/leaderboard-snapshot";
 import { GAME_IDS, type GameId } from "@/lib/game-registry";
 import { summarizeLeaderboard, type LeaderboardSummary } from "@/lib/leaderboard-showcase";
 
@@ -52,32 +48,22 @@ export function useLeaderboardShowcase() {
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    const [rowEntries, seasonEntries, poolEntries] = await Promise.all([
-      Promise.all(
-        GAME_IDS.map(
-          async (gameId) =>
-            [gameId, await getTopTenForGame(gameId).catch(() => null)] as const,
-        ),
-      ),
-      Promise.all(
-        GAME_IDS.map(
-          async (gameId) =>
-            [
-              gameId,
-              await getCurrentSeasonForGame(gameId).catch(() => null),
-            ] as const,
-        ),
-      ),
-      Promise.all(
-        GAME_IDS.map(
-          async (gameId) =>
-            [
-              gameId,
-              await getPrizePoolBalanceForGame(gameId).catch(() => null),
-            ] as const,
-        ),
-      ),
-    ] as const);
+    let snapshot;
+    try {
+      snapshot = await fetchLeaderboardSnapshot();
+    } catch {
+      setError("Leaderboard refresh failed");
+      return;
+    }
+    const rowEntries = GAME_IDS.map(
+      (gameId) => [gameId, snapshot.games[gameId]?.topTen ?? null] as const,
+    );
+    const seasonEntries = GAME_IDS.map(
+      (gameId) => [gameId, snapshot.games[gameId]?.currentSeason ?? null] as const,
+    );
+    const poolEntries = GAME_IDS.map(
+      (gameId) => [gameId, snapshot.games[gameId]?.prizePool ?? null] as const,
+    );
 
     setRowsByGame((prev) => mergeWithFallback(prev, rowEntries));
     setSeasonsByGame((prev) => mergeWithFallback(prev, seasonEntries));

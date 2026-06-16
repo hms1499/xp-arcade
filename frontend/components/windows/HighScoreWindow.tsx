@@ -5,13 +5,11 @@ import { useWallet } from "@/state/wallet";
 import { Window } from "@/components/windows/Window";
 import {
   getBestScoreForGame,
-  getCurrentSeasonForGame,
-  getPrizePoolBalanceForGame,
-  getTopTenForGame,
   claimPrizeV3,
   endSeasonForGame,
   type TopEntry,
 } from "@/lib/contract-calls";
+import { fetchLeaderboardSnapshot } from "@/lib/leaderboard-snapshot";
 import { findClaimablePrizes, classifyClaimTx, type Claim } from "@/lib/claimable-prizes";
 import { watchTx } from "@/lib/tx-tracker";
 import { useToasts } from "@/state/toasts";
@@ -88,16 +86,18 @@ function LeaderboardTab({
 
     function load() {
       Promise.all([
-        getTopTenForGame(gameId),
-        getCurrentSeasonForGame(gameId).catch(() => null),
+        fetchLeaderboardSnapshot(),
         address
           ? getBestScoreForGame(gameId, address)
               .then((best) => best?.score ?? 0)
               .catch(() => null)
           : Promise.resolve(null),
-        getPrizePoolBalanceForGame(gameId).catch(() => null),
       ])
-        .then(([data, season, playerBest, poolUstx]) => {
+        .then(([snap, playerBest]) => {
+          const game = snap.games[gameId];
+          const data = game?.topTen ?? [];
+          const season = game?.currentSeason ?? null;
+          const poolUstx = game?.prizePool ?? null;
           const sorted = [...data].sort((a, b) => b.score - a.score);
           const previousSnapshot = loadSnapshot(gameId);
           saveSnapshot(gameId, sorted);

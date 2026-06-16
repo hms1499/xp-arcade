@@ -41,6 +41,18 @@ To check live on-chain state, query the contract via Hiro Explorer or `clarinet 
 
 ## To-do for next session
 
+### Leaderboard proxy + cache — shipped client-side (2026-06-15)
+
+Shared leaderboard reads (top-ten/current-season/prize-pool/season-end-block for
+all 5 games) now come from one cached route `GET /api/leaderboard`
+(`lib/leaderboard-cache.ts`, in-memory TTL ~30s + single-flight + serve-stale;
+CDN `s-maxage=30`). The desktop showcase's 15-call burst collapses to one cached
+GET. Wallet-specific reads stay client-direct but go through `cachedRead`
+(`lib/read-cache.ts`: dedupe + ~30s TTL + `retryWithBackoff` on 429). No Hiro API
+key, no contract change. Fixes the High Scores / desktop 429s.
+
+- [ ] Optional: tune TTLs or add Vercel Runtime Cache if multi-region misses show up.
+
 ### Daily Challenge — shipped client-side (2026-06-15)
 
 Desktop widget spotlights one of the 5 games per day with a fixed target
