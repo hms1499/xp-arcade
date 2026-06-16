@@ -76,6 +76,37 @@ async function mockClaimReads(page: Page) {
   });
 }
 
+// The High Scores window reads its rows + current season from the cached
+// GET /api/leaderboard route (not direct call-read), so the test must mock it.
+// Snake is the default tab: PLAYER_A ranks #1, season 2 -> season 1 is closed.
+async function mockLeaderboardRoute(page: Page) {
+  const emptyGame = { topTen: [], currentSeason: 2, prizePool: 0, seasonEndBlock: null };
+  const body = {
+    updatedAt: new Date().toISOString(),
+    games: {
+      snake: {
+        topTen: [
+          { player: PLAYER_A, score: 1500 },
+          { player: PLAYER_B, score: 420 },
+        ],
+        currentSeason: 2,
+        prizePool: 0,
+        seasonEndBlock: null,
+      },
+      tetris: emptyGame,
+      pacman: emptyGame,
+      breakout: emptyGame,
+      minesweeper: emptyGame,
+    },
+  };
+  await page.route("**/api/leaderboard", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify(body),
+    });
+  });
+}
+
 function highScoreWindow(page: Page) {
   return page.locator(".window", {
     has: page.locator(".title-bar-text", { hasText: "High Scores" }),
@@ -85,6 +116,7 @@ function highScoreWindow(page: Page) {
 test("a top-ten player sees a claim button for an unclaimed closed season", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await mockClaimReads(page);
+  await mockLeaderboardRoute(page);
   await bootFast(page, PLAYER_A);
 
   await page.getByRole("button", { name: /High Scores/i }).first().dblclick();
@@ -120,6 +152,7 @@ test("no claim button is shown once the player has claimed the season", async ({
       body: JSON.stringify(readonlyResponse(byFn[fn] ?? noneCV())),
     });
   });
+  await mockLeaderboardRoute(page);
   await bootFast(page, PLAYER_A);
 
   await page.getByRole("button", { name: /High Scores/i }).first().dblclick();
