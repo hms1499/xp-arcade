@@ -1,6 +1,16 @@
-import { describe, expect, it } from "vitest";
-import type { GameId } from "@/lib/game-registry";
+import { describe, expect, it, vi } from "vitest";
+import { GAME_IDS, type GameId } from "@/lib/game-registry";
 import { mergeWithFallback } from "./useLeaderboardShowcase";
+
+vi.mock("@/lib/leaderboard-snapshot", () => ({
+  fetchLeaderboardSnapshot: vi.fn().mockResolvedValue({
+    updatedAt: new Date().toISOString(),
+    games: GAME_IDS.reduce((acc, g) => {
+      acc[g] = { topTen: [{ player: "SP1", score: 7 }], currentSeason: 2, prizePool: 100, seasonEndBlock: 9 };
+      return acc;
+    }, {} as Record<string, unknown>),
+  }),
+}));
 
 describe("mergeWithFallback", () => {
   it("updates games with a fresh value", () => {
