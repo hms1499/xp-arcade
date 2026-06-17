@@ -1,7 +1,7 @@
 "use client";
 
 const STEPS: { n: number; emoji: string; label: string; body: string }[] = [
-  { n: 1, emoji: "🎯", label: "PLAY", body: "5 retro games" },
+  { n: 1, emoji: "🎯", label: "PLAY", body: "6 retro games" },
   { n: 2, emoji: "💾", label: "MINT", body: "your score as a Score NFT" },
   {
     n: 3,
