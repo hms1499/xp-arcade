@@ -22,3 +22,10 @@ describe("score-format", () => {
     expect(formatScoreValue("minesweeper", 0)).toBe("9999s");
   });
 });
+
+describe("score-format solitaire", () => {
+  it("phrases solitaire scores as a win time", () => {
+    expect(formatScore("solitaire", 6000)).toBe("Won in 120s");
+    expect(formatScoreValue("solitaire", 6000)).toBe("120s");
+  });
+});
