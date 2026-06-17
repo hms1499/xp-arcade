@@ -1,0 +1,35 @@
+id: 0
+name: XP Arcade v4 register Solitaire (mainnet)
+network: mainnet
+stacks-node: https://api.hiro.so
+bitcoin-node: http://blockstack:blockstacksystem@bitcoin.blockstack.com:8332
+# PERMANENT, owner-only. Run with the deployer wallet:
+#   clarinet deployments apply -p contract/deployments/xp-arcade-v4-register-solitaire.mainnet-plan.yaml --no-dashboard
+# Never use -c on mainnet (it recomputes the fee). register-game freezes
+# fee (u20000) + rarity thresholds (u2400 rare / u4000 epic / u6000 legend)
+# forever. Confirm the season-end block below is still the current shared H
+# used by games 1-5 before running; if the season rolled, use the live value.
+plan:
+  batches:
+  - id: 0
+    transactions:
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: register-game
+      parameters:
+      - u6
+      - '"Solitaire"'
+      - u20000
+      - u2400
+      - u4000
+      - u6000
+      cost: 20000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: set-season-end-block
+      parameters:
+      - u6
+      - u8470355
+      cost: 10000
