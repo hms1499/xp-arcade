@@ -17,12 +17,16 @@ const GAME_BADGE_BG: Record<string, string> = {
   tetris: "#d1ecf1",
   pacman: "#fff3cd",
   breakout: "#e0f2fe",
+  minesweeper: "#e2e3e5",
+  solitaire: "#d4f4dd",
 };
 const GAME_BADGE_COLOR: Record<string, string> = {
   snake: "#155724",
   tetris: "#0c5460",
   pacman: "#856404",
   breakout: "#075985",
+  minesweeper: "#383d41",
+  solitaire: "#0a5c2e",
 };
 
 type NftLoadState = {
