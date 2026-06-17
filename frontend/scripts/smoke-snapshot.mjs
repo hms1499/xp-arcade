@@ -8,7 +8,7 @@
 // Usage:
 //   node scripts/smoke-snapshot.mjs <stx-address> [game] [tokenId]
 //     <stx-address>  wallet you will mint from (required)
-//     [game]         snake|tetris|pacman|bricks|minesweeper (default: snake)
+//     [game]         snake|tetris|pacman|bricks|minesweeper|solitaire (default: snake)
 //     [tokenId]      optional: also resolve owner + metadata for this token id
 //
 // This script never signs or broadcasts anything. It only reads.
@@ -35,6 +35,7 @@ const GAME_IDS = {
   pacman: 3,
   bricks: 4,
   minesweeper: 5,
+  solitaire: 6,
 };
 
 const [address, gameArg = "snake", tokenIdArg] = process.argv.slice(2);

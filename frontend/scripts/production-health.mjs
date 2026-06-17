@@ -19,6 +19,8 @@ const GAMES = [
   ["tetris", 2],
   ["pacman", 3],
   ["bricks", 4],
+  ["minesweeper", 5],
+  ["solitaire", 6],
 ];
 
 function fetchWithTimeout(input, init = {}) {
