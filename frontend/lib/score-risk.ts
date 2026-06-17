@@ -58,6 +58,13 @@ const PROFILES: Record<GameId, RiskProfile> = {
     fastScore: 9_980,
     minDurationMs: 20_000,
   },
+  solitaire: {
+    practicalHigh: 9_990,
+    extreme: 9_999,
+    maxPerMinute: 1_000_000,
+    fastScore: 9_999,
+    minDurationMs: 30_000,
+  },
 };
 
 export function assessScoreRisk(input: ScoreRiskInput): ScoreRiskReport {

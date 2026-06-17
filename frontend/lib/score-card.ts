@@ -12,6 +12,7 @@ export const GAME_BG: Record<GameId, string> = {
   pacman: "#1a1a2e",
   breakout: "#164e63",
   minesweeper: "#3a3a3a",
+  solitaire: "#0a5c2e",
 };
 
 export type ScoreCardInput = {

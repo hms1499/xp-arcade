@@ -33,6 +33,7 @@ export const DAILY_TARGETS: Record<GameId, number> = {
   pacman: 180,
   breakout: 200,
   minesweeper: 9819,
+  solitaire: 4000,
 };
 
 export type DailyChallenge = { gameId: GameId; target: number };

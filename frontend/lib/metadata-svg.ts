@@ -20,6 +20,7 @@ const GAME_BG: Record<string, string> = {
   "Pac-Man": "#1a1a2e",
   "XP Bricks": "#164e63",
   Minesweeper: "#3a3a3a",
+  Solitaire: "#0a5c2e",
 };
 
 export function scoreSvg(o: {
