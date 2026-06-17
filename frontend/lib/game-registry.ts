@@ -1,4 +1,4 @@
-export type GameId = "snake" | "tetris" | "pacman" | "breakout" | "minesweeper";
+export type GameId = "snake" | "tetris" | "pacman" | "breakout" | "minesweeper" | "solitaire";
 export type NetworkName = "mainnet" | "testnet";
 
 export interface GameDef {
@@ -27,16 +27,17 @@ const GAME_METADATA: Record<
   pacman:   { id: "pacman",   label: "Pac-Man",   emoji: "👾", onchainId: 3, mintFeeUstx: BigInt(20_000), metaSegment: "pacman",   nftAssetName: "xp-score" },
   breakout: { id: "breakout", label: "XP Bricks", emoji: "🏓", onchainId: 4, mintFeeUstx: BigInt(20_000), metaSegment: "breakout", nftAssetName: "xp-score" },
   minesweeper: { id: "minesweeper", label: "Minesweeper", emoji: "💣", onchainId: 5, mintFeeUstx: BigInt(20_000), metaSegment: "mines", nftAssetName: "xp-score" },
+  solitaire: { id: "solitaire", label: "Solitaire", emoji: "🃏", onchainId: 6, mintFeeUstx: BigInt(20_000), metaSegment: "solitaire", nftAssetName: "xp-score" },
 };
 
 const SHARED_V4: GameConfig = { contractAddress: MAINNET_DEPLOYER, contractName: V4_CONTRACT_NAME };
 
 const GAME_CONTRACTS: Record<NetworkName, Record<GameId, GameConfig>> = {
-  mainnet: { snake: SHARED_V4, tetris: SHARED_V4, pacman: SHARED_V4, breakout: SHARED_V4, minesweeper: SHARED_V4 },
-  testnet: { snake: SHARED_V4, tetris: SHARED_V4, pacman: SHARED_V4, breakout: SHARED_V4, minesweeper: SHARED_V4 },
+  mainnet: { snake: SHARED_V4, tetris: SHARED_V4, pacman: SHARED_V4, breakout: SHARED_V4, minesweeper: SHARED_V4, solitaire: SHARED_V4 },
+  testnet: { snake: SHARED_V4, tetris: SHARED_V4, pacman: SHARED_V4, breakout: SHARED_V4, minesweeper: SHARED_V4, solitaire: SHARED_V4 },
 };
 
-export const GAME_IDS: GameId[] = ["snake", "tetris", "pacman", "breakout", "minesweeper"];
+export const GAME_IDS: GameId[] = ["snake", "tetris", "pacman", "breakout", "minesweeper", "solitaire"];
 
 export function parseRegistryNetwork(value: string | undefined): NetworkName {
   if (value === "mainnet" || value === "testnet") return value;
@@ -52,6 +53,7 @@ function buildGameRegistry(networkName: NetworkName): Record<GameId, GameDef> {
     pacman: { ...GAME_METADATA.pacman, ...contracts.pacman },
     breakout: { ...GAME_METADATA.breakout, ...contracts.breakout },
     minesweeper: { ...GAME_METADATA.minesweeper, ...contracts.minesweeper },
+    solitaire: { ...GAME_METADATA.solitaire, ...contracts.solitaire },
   });
 }
 

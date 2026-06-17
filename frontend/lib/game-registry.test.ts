@@ -90,6 +90,16 @@ describe("game-registry", () => {
     expect(GAMES.minesweeper.metaSegment).toBe("mines");
   });
 
+  it("registers solitaire as game id 6", () => {
+    expect(GAME_IDS).toContain("solitaire");
+    expect(GAMES.solitaire.onchainId).toBe(6);
+    expect(GAMES.solitaire.label).toBe("Solitaire");
+    expect(GAMES.solitaire.mintFeeUstx).toBe(BigInt(20_000));
+    expect(GAMES.solitaire.metaSegment).toBe("solitaire");
+    expect(GAMES.solitaire.nftAssetName).toBe("xp-score");
+    expect(GAMES.solitaire.contractName).toBe("xp-arcade-v4");
+  });
+
   it("exposes the shared v4 contract id as primary", () => {
     expect(expectedPrimaryContractId()).toBe(
       "SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4",
