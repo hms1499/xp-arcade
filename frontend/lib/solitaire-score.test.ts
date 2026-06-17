@@ -27,4 +27,9 @@ describe("solitaire-score", () => {
     expect(solitaireSeconds(6000)).toBe(120);
     expect(solitaireSeconds(4000)).toBe(180);
   });
+
+  it("treats a non-positive score (no win yet) as 0s, not 720000s", () => {
+    expect(solitaireSeconds(0)).toBe(0);
+    expect(solitaireSeconds(-5)).toBe(0);
+  });
 });

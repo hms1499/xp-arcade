@@ -7,8 +7,11 @@ export function solitaireScore(winSeconds: number): number {
   return Math.min(9999, Math.max(0, Math.round(SOLITAIRE_BONUS_K / seconds)));
 }
 
-/** Inverse of solitaireScore: stored score -> displayed win time (seconds). */
+/** Inverse of solitaireScore: stored score -> displayed win time (seconds).
+ *  A non-positive score means "no win yet" (the in-progress sentinel) -> 0s,
+ *  not 720000s. */
 export function solitaireSeconds(score: number): number {
-  const s = Math.max(1, Math.floor(score));
+  const s = Math.floor(score);
+  if (s <= 0) return 0;
   return Math.round(SOLITAIRE_BONUS_K / s);
 }
