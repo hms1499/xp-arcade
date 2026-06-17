@@ -136,3 +136,21 @@ describe("sumPrizePoolUstx", () => {
     expect(sumPrizePoolUstx(pools({ a: null, b: null }))).toBe(null);
   });
 });
+
+describe("leaderboard-showcase solitaire", () => {
+  it("uses solitaire rarity thresholds (2400/4000/6000)", () => {
+    expect(scoreRarity(2399, "solitaire")).toBe("Common");
+    expect(scoreRarity(2400, "solitaire")).toBe("Rare");
+    expect(scoreRarity(4000, "solitaire")).toBe("Epic");
+    expect(scoreRarity(6000, "solitaire")).toBe("Legendary");
+  });
+
+  it("phrases the solitaire gap in win-time, not points", () => {
+    const rows = Array.from({ length: 10 }, (_, i) => ({
+      player: `P${i}`,
+      score: 5000 - i * 100,
+    }));
+    const goal = leaderboardGoal({ rows, score: 1000, gameId: "solitaire" });
+    expect(goal.secondary).not.toContain("point");
+  });
+});

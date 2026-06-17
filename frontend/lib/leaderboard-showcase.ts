@@ -61,6 +61,12 @@ export function scoreRarity(
     if (score >= 9819) return "Rare";
     return "Common";
   }
+  if (gameId === "solitaire") {
+    if (score >= 6000) return "Legendary";
+    if (score >= 4000) return "Epic";
+    if (score >= 2400) return "Rare";
+    return "Common";
+  }
   if (score >= 1000) return "Legendary";
   if (score >= 500) return "Epic";
   if (score >= 167) return "Rare";
@@ -104,10 +110,9 @@ export function leaderboardGoal({
   const fmt = (n: number) => (gameId ? formatScoreValue(gameId, n) : String(n));
   // The gap to close: minesweeper scores higher by being faster, so a 1-point
   // gap is "1s faster"; points games gain "more points".
+  const timeBased = gameId === "minesweeper" || gameId === "solitaire";
   const gap = (n: number) =>
-    gameId === "minesweeper"
-      ? `${n}s faster`
-      : `${n} more point${n === 1 ? "" : "s"}`;
+    timeBased ? `${n}s faster` : `${n} more point${n === 1 ? "" : "s"}`;
 
   if (typeof score === "number") {
     if (ranked.length === 0) {
