@@ -222,7 +222,7 @@ function QuickPlay({
             {cutoff === null
               ? "Top-10 is open. Any minted score can enter."
               : `Beat ${formatScoreValue(gameId, cutoff)}${
-                  gameId === "minesweeper" ? "" : " points"
+                  gameId === "minesweeper" || gameId === "solitaire" ? "" : " points"
                 } to pass the current #10.`}
           </span>
           <button
