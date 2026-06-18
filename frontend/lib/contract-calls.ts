@@ -205,10 +205,3 @@ export type SeasonPrize = {
   total: number;
   topTen: Array<{ player: string; score: number }>;
 } | null;
-
-// Rank-based payout (mirrors the on-chain formula): top 1-3 get 20% each, rank 4-10 get 4/70 each.
-// Used by Season Admin for owner-initiated STX transfers.
-export function computePayoutUstx(total: number, rank: number): number {
-  if (rank <= 3) return Math.floor((total * 20) / 100);
-  return Math.floor((total * 4) / 70);
-}
