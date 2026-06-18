@@ -7,6 +7,8 @@ import { fetchAllScoreHoldings, scoreNftKey, type ScoreNft } from "@/lib/holding
 import { rarityColor } from "@/lib/metadata-svg";
 import { computePlayerStats, ustxToStx } from "@/lib/player-stats";
 import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
+import { fetchLeaderboardSnapshot } from "@/lib/leaderboard-snapshot";
+import { playerLiveRanks, bestLiveRank, type LiveRanks } from "@/lib/player-ranks";
 import { PlayerStatsPanel } from "./PlayerStatsPanel";
 import { RarityBreakdown } from "./RarityBreakdown";
 import { AchievementsPanel } from "./AchievementsPanel";
@@ -41,6 +43,8 @@ export function PlayerProfileBody({
 }) {
   const [loadState, setLoadState] = useState<NftLoadState | null>(null);
   const [filter, setFilter] = useState<ProfileFilter>("all");
+  const [rankState, setRankState] =
+    useState<{ address: string; ranks: LiveRanks } | { address: string; error: true } | null>(null);
   const walletAddress = useWallet((s) => s.address);
   const openWindow = useWindows((s) => s.open);
   const mintTxId = useMintTx((s) => s.txId);
@@ -78,6 +82,21 @@ export function PlayerProfileBody({
     };
   }, [address, confirmedOwnMintTxId]);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchLeaderboardSnapshot()
+      .then((snap) => {
+        if (!cancelled)
+          setRankState({ address, ranks: playerLiveRanks(snap, address) });
+      })
+      .catch(() => {
+        if (!cancelled) setRankState({ address, error: true });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [address]);
+
   const activeState = loadState?.address === address ? loadState : null;
   const nfts = activeState?.nfts ?? null;
   const error = activeState?.error ?? null;
@@ -86,6 +105,11 @@ export function PlayerProfileBody({
     [nfts, filter],
   );
   const stats = useMemo(() => (nfts ? computePlayerStats(nfts) : null), [nfts]);
+  const activeRankState = rankState?.address === address ? rankState : null;
+  const ranks = activeRankState && "ranks" in activeRankState ? activeRankState.ranks : null;
+  const ranksLoading = activeRankState === null;
+  const ranksError = activeRankState !== null && "error" in activeRankState;
+  const topLiveRank = ranks ? bestLiveRank(ranks) : null;
   const filteredStats = useMemo(
     () => (filteredNfts ? computePlayerStats(filteredNfts) : null),
     [filteredNfts],
@@ -122,12 +146,21 @@ export function PlayerProfileBody({
             ? () => openWindow("mynfts")
             : undefined
         }
+        liveRank={topLiveRank}
+        ranksLoading={ranksLoading}
       />
 
       {stats && nfts && nfts.length > 0 && (
         <>
           <PlayerStatsPanel stats={filteredStats ?? stats} />
-          <GameBreakdown stats={stats} active={filter} onSelect={setFilter} />
+          <GameBreakdown
+            stats={stats}
+            active={filter}
+            onSelect={setFilter}
+            ranks={ranks}
+            ranksLoading={ranksLoading}
+            ranksError={ranksError}
+          />
           <RarityBreakdown counts={(filteredStats ?? stats).rarityCounts} />
           <AchievementsPanel stats={stats} />
           {featuredNfts && featuredNfts.length > 0 && filter === "all" && (
@@ -277,6 +310,11 @@ function FeaturedNfts({ nfts }: { nfts: ScoreNft[] }) {
   );
 }
 
+function rankLabel(rank: number | null): string {
+  if (rank == null) return "Not in top-10";
+  return rank <= 3 ? `🏆 #${rank}` : `#${rank}`;
+}
+
 function topGameLabel(stats: ReturnType<typeof computePlayerStats>): string | null {
   const [topGame] = GAME_IDS
     .map((id) => ({ id, bestScore: stats.byGame[id].bestScore }))
@@ -293,6 +331,8 @@ function ProfileHeader({
   topGame,
   levelInfo,
   onOpenMyNfts,
+  liveRank,
+  ranksLoading,
 }: {
   address: string;
   isOwnProfile: boolean;
@@ -301,6 +341,8 @@ function ProfileHeader({
   topGame: string | null;
   levelInfo?: LevelInfo | null;
   onOpenMyNfts?: () => void;
+  liveRank: { gameId: GameId; rank: number } | null;
+  ranksLoading: boolean;
 }) {
   return (
     <div
@@ -362,6 +404,14 @@ function ProfileHeader({
         <ProfileChip label="NFTs" value={totalMints ?? "..."} />
         <ProfileChip label="Best" value={bestScore ?? "..."} />
         <ProfileChip label="Top game" value={topGame ?? "..."} />
+        {ranksLoading ? (
+          <ProfileChip label="Live rank" value="…" />
+        ) : liveRank ? (
+          <ProfileChip
+            label="Live rank"
+            value={`#${liveRank.rank} — ${GAMES[liveRank.gameId].label}`}
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -396,10 +446,16 @@ function GameBreakdown({
   stats,
   active,
   onSelect,
+  ranks,
+  ranksLoading,
+  ranksError,
 }: {
   stats: ReturnType<typeof computePlayerStats>;
   active: ProfileFilter;
   onSelect: (filter: ProfileFilter) => void;
+  ranks: LiveRanks | null;
+  ranksLoading: boolean;
+  ranksError: boolean;
 }) {
   const filters: ProfileFilter[] = ["all", ...GAME_IDS];
   return (
@@ -463,6 +519,14 @@ function GameBreakdown({
                     color: "#555",
                   }}
                 >
+                  {!ranksError && (
+                    <>
+                      <span>Rank</span>
+                      <b style={{ textAlign: "right", color: "#000" }}>
+                        {ranksLoading ? "…" : rankLabel(ranks?.[id] ?? null)}
+                      </b>
+                    </>
+                  )}
                   <span>Best</span>
                   <b style={{ textAlign: "right", color: "#000" }}>
                     {gameStats.bestScore}
