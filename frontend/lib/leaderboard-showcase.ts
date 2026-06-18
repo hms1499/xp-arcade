@@ -79,6 +79,17 @@ export function rankRows(rows: TopEntry[]): RankedEntry[] {
     .map((row, index) => ({ ...row, rank: index + 1 }));
 }
 
+/** The player's positional rank (1-based) on a top-ten board, or null if the
+ *  player is not on it. Uses the same ordering as rankRows so the rank matches
+ *  every other leaderboard view. */
+export function findPlayerRank(
+  rows: TopEntry[],
+  address: string,
+): number | null {
+  const entry = rankRows(rows).find((row) => row.player === address);
+  return entry ? entry.rank : null;
+}
+
 export function summarizeLeaderboard(
   gameId: GameId,
   rows: TopEntry[],

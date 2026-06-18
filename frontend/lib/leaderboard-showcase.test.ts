@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  findPlayerRank,
   findTopTenChange,
   leaderboardGoal,
   rankRows,
@@ -77,6 +78,33 @@ describe("leaderboard showcase helpers", () => {
     expect(scoreRarity(167)).toBe("Rare");
     expect(scoreRarity(500)).toBe("Epic");
     expect(scoreRarity(1000)).toBe("Legendary");
+  });
+
+  it("findPlayerRank returns the player's positional rank", () => {
+    const rows = [
+      { player: "SP_B", score: 10 },
+      { player: "SP_A", score: 40 },
+      { player: "SP_C", score: 25 },
+    ];
+    expect(findPlayerRank(rows, "SP_A")).toBe(1);
+    expect(findPlayerRank(rows, "SP_C")).toBe(2);
+    expect(findPlayerRank(rows, "SP_B")).toBe(3);
+  });
+
+  it("findPlayerRank returns null when the player is not on the board", () => {
+    const rows = [{ player: "SP_A", score: 40 }];
+    expect(findPlayerRank(rows, "SP_X")).toBeNull();
+    expect(findPlayerRank([], "SP_A")).toBeNull();
+  });
+
+  it("findPlayerRank breaks ties the same way rankRows does", () => {
+    // Equal scores: rankRows tie-breaks by player.localeCompare, so SP_A < SP_B.
+    const rows = [
+      { player: "SP_B", score: 50 },
+      { player: "SP_A", score: 50 },
+    ];
+    expect(findPlayerRank(rows, "SP_A")).toBe(1);
+    expect(findPlayerRank(rows, "SP_B")).toBe(2);
   });
 
   it("uses minesweeper time-based rarity thresholds", () => {
