@@ -128,6 +128,22 @@ describe("leaderboard showcase helpers", () => {
     );
   });
 
+  it("phrases solitaire goal copy in real seconds, not score-point deltas", () => {
+    // Solitaire score = round(720000 / winSeconds) is non-linear, so a score
+    // delta is NOT a seconds delta. cutoff #10 = 4500 (160s); best = 4000 (180s)
+    // → ~20s faster needed, not a 501-point gap.
+    const rows = Array.from({ length: 10 }, (_, index) => ({
+      player: `SP_${index}`,
+      score: 4500 + index * 100, // #10 cutoff = 4500
+    }));
+    expect(
+      leaderboardGoal({ rows, playerBest: 4000, gameId: "solitaire" }).primary,
+    ).toBe("Need 20s faster.");
+    expect(
+      leaderboardGoal({ rows, score: 4000, gameId: "solitaire" }).secondary,
+    ).toBe("Needs 20s faster to beat #10 (160s).");
+  });
+
   it("builds player goal copy for open, cutoff, and ready states", () => {
     expect(leaderboardGoal({ rows: [] }).primary).toBe("Top-10 is open.");
 

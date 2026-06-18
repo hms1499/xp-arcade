@@ -1,7 +1,7 @@
 import { scoreSvg } from "@/lib/metadata-svg";
 import type { TopEntry } from "@/lib/contract-calls";
 import type { GameId } from "@/lib/game-registry";
-import { formatScoreValue } from "@/lib/score-format";
+import { formatScoreValue, secondsForScore } from "@/lib/score-format";
 
 export type RankedEntry = TopEntry & {
   rank: number;
@@ -119,11 +119,27 @@ export function leaderboardGoal({
   const cutoff = ranked.length >= 10 ? ranked[9] : null;
   // Display a score the way humans read it for this game (time vs. points).
   const fmt = (n: number) => (gameId ? formatScoreValue(gameId, n) : String(n));
-  // The gap to close: minesweeper scores higher by being faster, so a 1-point
-  // gap is "1s faster"; points games gain "more points".
+  // The gap to close. Time-based games (minesweeper/solitaire) report how many
+  // SECONDS faster the player must finish. Minesweeper's score is a linear
+  // inversion of time so a score delta equals a seconds delta, but solitaire's
+  // score (720000/seconds) is non-linear — so the seconds gap is derived from
+  // the actual win-times, not from score arithmetic. Points games gain points.
   const timeBased = gameId === "minesweeper" || gameId === "solitaire";
-  const gap = (n: number) =>
-    timeBased ? `${n}s faster` : `${n} more point${n === 1 ? "" : "s"}`;
+  const gapLabel = (playerScore: number): string => {
+    if (timeBased && cutoff && gameId) {
+      const seconds = Math.max(
+        1,
+        secondsForScore(gameId, playerScore) -
+          secondsForScore(gameId, cutoff.score + 1),
+      );
+      return `${seconds}s faster`;
+    }
+    const points = Math.max(
+      1,
+      (cutoff ? cutoff.score : playerScore) - playerScore + 1,
+    );
+    return `${points} more point${points === 1 ? "" : "s"}`;
+  };
 
   if (typeof score === "number") {
     if (ranked.length === 0) {
@@ -151,7 +167,7 @@ export function leaderboardGoal({
     return {
       tone: "warning",
       primary: `Mint as a collectible score NFT.`,
-      secondary: `Needs ${gap(needed)} to beat #10 (${cutoff ? fmt(cutoff.score) : "?"}).`,
+      secondary: `Needs ${gapLabel(score)} to beat #10 (${cutoff ? fmt(cutoff.score) : "?"}).`,
       pointsNeeded: needed,
       topTenReady: false,
     };
@@ -187,7 +203,7 @@ export function leaderboardGoal({
 
   return {
     tone: "warning",
-    primary: `Need ${gap(needed)}.`,
+    primary: `Need ${gapLabel(playerBest)}.`,
     secondary: `Your best ${fmt(playerBest)} · #10 is ${fmt(cutoff.score)}.`,
     pointsNeeded: needed,
     topTenReady: false,

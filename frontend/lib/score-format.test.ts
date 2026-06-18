@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatScore, formatScoreValue } from "./score-format";
+import { formatScore, formatScoreValue, secondsForScore } from "./score-format";
 
 describe("score-format", () => {
   it("passes other games through unchanged", () => {
@@ -27,5 +27,17 @@ describe("score-format solitaire", () => {
   it("phrases solitaire scores as a win time", () => {
     expect(formatScore("solitaire", 6000)).toBe("Won in 120s");
     expect(formatScoreValue("solitaire", 6000)).toBe("120s");
+  });
+});
+
+describe("secondsForScore", () => {
+  it("decodes the win-time for time-based games", () => {
+    expect(secondsForScore("minesweeper", 9952)).toBe(47); // 9999 - 9952
+    expect(secondsForScore("solitaire", 4500)).toBe(160); // 720000 / 4500
+  });
+
+  it("returns the raw score for points games (no time meaning)", () => {
+    expect(secondsForScore("snake", 400)).toBe(400);
+    expect(secondsForScore("tetris", 0)).toBe(0);
   });
 });
