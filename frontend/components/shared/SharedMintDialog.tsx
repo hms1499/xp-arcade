@@ -95,9 +95,17 @@ export function SharedMintDialog({
 
   useEffect(() => {
     if (!address) return;
+    let cancelled = false;
     getMintsRemaining(gameId, address)
-      .then(setMintsRemaining)
-      .catch(() => setMintsRemaining(null));
+      .then((n) => {
+        if (!cancelled) setMintsRemaining(n);
+      })
+      .catch(() => {
+        if (!cancelled) setMintsRemaining(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [address, gameId]);
 
   useEffect(() => {

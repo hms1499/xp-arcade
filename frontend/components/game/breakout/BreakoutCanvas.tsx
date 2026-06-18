@@ -115,6 +115,7 @@ export function BreakoutCanvas({
   const rafRef = useRef(0);
   const lastRef = useRef(0);
   const gameOverCalledRef = useRef(false);
+  const gameOverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pausedRef = useRef(false);
   const [paused, setPaused] = useState(false);
   const [isTouch] = useState(
@@ -152,7 +153,7 @@ export function BreakoutCanvas({
         }
         if (next.status === "game-over" && !gameOverCalledRef.current) {
           gameOverCalledRef.current = true;
-          setTimeout(() => onGameOver(next.score), 250);
+          gameOverTimerRef.current = setTimeout(() => onGameOver(next.score), 250);
         }
       }
 
@@ -161,7 +162,10 @@ export function BreakoutCanvas({
     }
 
     rafRef.current = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafRef.current);
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      if (gameOverTimerRef.current) clearTimeout(gameOverTimerRef.current);
+    };
   }, [onGameOver, onScoreChange]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {

@@ -102,6 +102,8 @@ export function GameCanvas({
     let last = 0;
     let raf = 0;
     let stopped = false;
+    let phaseTimer: ReturnType<typeof setTimeout> | undefined;
+    let advanceTimer: ReturnType<typeof setTimeout> | undefined;
 
     const canvasEl = canvasRef.current;
     const onTouch = () => {
@@ -312,10 +314,10 @@ export function GameCanvas({
           finalScoreRef.current = s.score;
           gameOverBestRef.current = getBestScore("snake");
           gameOverPhaseRef.current = "flash";
-          setTimeout(() => {
+          phaseTimer = setTimeout(() => {
             gameOverPhaseRef.current = "overlay";
           }, 200);
-          setTimeout(() => {
+          advanceTimer = setTimeout(() => {
             if (gameOverPhaseRef.current === "overlay") {
               gameOverPhaseRef.current = null;
               stopped = true;
@@ -331,6 +333,8 @@ export function GameCanvas({
     return () => {
       stopped = true;
       cancelAnimationFrame(raf);
+      clearTimeout(phaseTimer);
+      clearTimeout(advanceTimer);
       window.removeEventListener("keydown", onKey);
       document.removeEventListener("visibilitychange", onHide);
       window.removeEventListener("blur", onBlur);

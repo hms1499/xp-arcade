@@ -133,6 +133,7 @@ export function PacManCanvas({
   const rafRef = useRef<number>(0);
   const lastTickRef = useRef(0);
   const gameOverCalledRef = useRef(false);
+  const gameOverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flashUntilRef = useRef(0);
   const pausedRef = useRef(false);
   const [paused, setPaused] = useState(false);
@@ -176,7 +177,7 @@ export function PacManCanvas({
             // game-over moment doesn't feel abrupt. The setTimeout lets the
             // RAF keep painting the overlay while we wait.
             flashUntilRef.current = timestamp + 450;
-            setTimeout(() => onGameOver(next.score), 450);
+            gameOverTimerRef.current = setTimeout(() => onGameOver(next.score), 450);
           }
         }
       }
@@ -225,7 +226,10 @@ export function PacManCanvas({
     }
 
     rafRef.current = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafRef.current);
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      if (gameOverTimerRef.current) clearTimeout(gameOverTimerRef.current);
+    };
   }, [onGameOver, onScoreChange]);
 
   const handleKey = useCallback((e: KeyboardEvent) => {
