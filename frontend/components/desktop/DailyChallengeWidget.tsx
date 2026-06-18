@@ -3,8 +3,7 @@ import { useEffect } from "react";
 import { useWindows } from "@/state/window-manager";
 import { useDailyChallenge } from "@/state/daily-challenge";
 import { GAMES } from "@/lib/game-registry";
-import { dailyChallenge, todayKey, viewStreak } from "@/lib/daily-challenge";
-import { formatScoreValue } from "@/lib/score-format";
+import { dailyChallenge, dailyTargetLabel, todayKey, viewStreak } from "@/lib/daily-challenge";
 
 export function DailyChallengeWidget() {
   const open = useWindows((s) => s.open);
@@ -21,10 +20,7 @@ export function DailyChallengeWidget() {
   const game = GAMES[gameId];
   const { currentStreak, bestStreak, completedToday } = viewStreak(daily, day);
 
-  const targetLabel =
-    gameId === "minesweeper"
-      ? `Clear in ≤ ${formatScoreValue(gameId, target)}`
-      : `Reach ${formatScoreValue(gameId, target)}`;
+  const targetLabel = dailyTargetLabel(gameId, target);
 
   return (
     <section

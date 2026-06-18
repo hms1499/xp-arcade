@@ -1,6 +1,7 @@
 // WARNING: GAME_IDS order is part of the daily schedule — reordering or inserting
 // a game shifts which game is spotlighted on every past/future day.
 import { GAME_IDS, type GameId } from "./game-registry";
+import { formatScoreValue } from "./score-format";
 
 /** Local-date day key, e.g. "2026-06-15". Local (not UTC) so a player's day
  *  follows their own midnight (friendlier streaks, Wordle-style). */
@@ -41,6 +42,15 @@ export type DailyChallenge = { gameId: GameId; target: number };
 export function dailyChallenge(dayKey: string): DailyChallenge {
   const gameId = dailyGame(dayKey);
   return { gameId, target: DAILY_TARGETS[gameId] };
+}
+
+/** Human label for a daily target. Time-based games (minesweeper/solitaire) ask
+ *  the player to FINISH within a time ceiling — meeting the on-chain target
+ *  means being fast enough — so they read as "≤ Xs", not "reach a score". */
+export function dailyTargetLabel(gameId: GameId, target: number): string {
+  if (gameId === "minesweeper") return `Clear in ≤ ${formatScoreValue(gameId, target)}`;
+  if (gameId === "solitaire") return `Win in ≤ ${formatScoreValue(gameId, target)}`;
+  return `Reach ${formatScoreValue(gameId, target)}`;
 }
 
 /** True when `prev` is exactly the calendar day before `today`. Uses calendar

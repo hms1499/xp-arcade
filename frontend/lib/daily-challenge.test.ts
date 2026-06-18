@@ -11,9 +11,23 @@ import {
   meetsDailyTarget,
   loadDailyState,
   saveDailyState,
+  dailyTargetLabel,
   DAILY_STORAGE_KEY,
 } from "./daily-challenge";
 import { GAME_IDS } from "./game-registry";
+
+describe("dailyTargetLabel", () => {
+  it("frames time-based games as a finish-time ceiling, not a score to reach", () => {
+    // solitaire 4000 = 720000/4000 = 180s; meeting it means WINNING in ≤180s.
+    expect(dailyTargetLabel("solitaire", 4000)).toBe("Win in ≤ 180s");
+    // minesweeper 9819 = 9999 - 180 = 180s.
+    expect(dailyTargetLabel("minesweeper", 9819)).toBe("Clear in ≤ 180s");
+  });
+
+  it("frames points games as a score to reach", () => {
+    expect(dailyTargetLabel("snake", 150)).toBe("Reach 150");
+  });
+});
 
 describe("todayKey", () => {
   it("formats a date as local YYYY-MM-DD with zero padding", () => {
