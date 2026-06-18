@@ -12,7 +12,7 @@ export function playerLiveRanks(
   return Object.fromEntries(
     GAME_IDS.map((id) => [
       id,
-      findPlayerRank(snapshot.games[id].topTen, address),
+      findPlayerRank(snapshot.games[id]?.topTen ?? [], address),
     ]),
   ) as LiveRanks;
 }

@@ -66,4 +66,17 @@ describe("player-ranks", () => {
     };
     expect(bestLiveRank(ranks)).toBeNull();
   });
+
+  it("bestLiveRank breaks ties by GAME_IDS order (first game wins)", () => {
+    const ranks: LiveRanks = {
+      snake: 1,
+      tetris: 1,
+      pacman: null,
+      breakout: null,
+      minesweeper: null,
+      solitaire: null,
+    };
+    // snake precedes tetris in GAME_IDS, so the strict < keeps the first seen.
+    expect(bestLiveRank(ranks)).toEqual({ gameId: "snake", rank: 1 });
+  });
 });
