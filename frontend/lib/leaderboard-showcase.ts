@@ -210,6 +210,37 @@ export function leaderboardGoal({
   };
 }
 
+/**
+ * One-line copy for the High Scores window telling a player what it takes to
+ * enter the top 10. Time-based games (minesweeper/solitaire) phrase the gap in
+ * real seconds; points games phrase it in points. `cutoff` is the #10 score
+ * (null when the board isn't full); `playerBest` is null when it can't be read.
+ */
+export function topTenEntryHint(
+  gameId: GameId,
+  cutoff: number | null,
+  playerBest: number | null,
+): string {
+  if (cutoff === null) return "Any minted score will enter this leaderboard.";
+  if (playerBest === null) return "Current best could not be read.";
+
+  const pointsNeeded = Math.max(0, cutoff - playerBest + 1);
+  if (pointsNeeded === 0) {
+    return "Your current best is enough to enter; mint a qualifying run to update your row.";
+  }
+
+  const timeBased = gameId === "minesweeper" || gameId === "solitaire";
+  if (timeBased) {
+    const seconds = Math.max(
+      1,
+      secondsForScore(gameId, playerBest) - secondsForScore(gameId, cutoff + 1),
+    );
+    return `You need to finish ${seconds}s faster than your current best to enter top 10.`;
+  }
+
+  return `You need ${pointsNeeded} more point${pointsNeeded === 1 ? "" : "s"} than your current best to enter top 10.`;
+}
+
 export function findTopTenChange(
   previousRows: TopEntry[],
   nextRows: TopEntry[],

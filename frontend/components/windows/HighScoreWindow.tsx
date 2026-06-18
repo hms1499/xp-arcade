@@ -15,6 +15,7 @@ import { watchTx } from "@/lib/tx-tracker";
 import { useToasts } from "@/state/toasts";
 import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
 import { formatScoreValue } from "@/lib/score-format";
+import { topTenEntryHint } from "@/lib/leaderboard-showcase";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
 import { markSeasonEnded, wasSeasonEnded } from "@/lib/ended-seasons";
 import { stacks } from "@/lib/stacks";
@@ -228,10 +229,6 @@ function LeaderboardTab({
   const myRank =
     address && rows ? rows.findIndex((r) => r.player === address) + 1 : 0;
   const cutoff = rows && rows.length >= 10 ? rows[9].score : null;
-  const pointsNeeded =
-    address && rows && myRank === 0 && cutoff !== null && playerBest !== null
-      ? Math.max(0, cutoff - playerBest + 1)
-      : null;
   const claims =
     claimState.key === claimKey && claimState.checked ? claimState.claims : [];
   const claimsChecked = claimState.key === claimKey && claimState.checked;
@@ -456,13 +453,7 @@ function LeaderboardTab({
           className="text-[9px] text-gray-600 mb-2 px-1 py-1"
           style={{ background: "#fff8e1", border: "1px solid #d7b35a", lineHeight: 1.3 }}
         >
-          {cutoff === null
-            ? "Any minted score will enter this leaderboard."
-            : playerBest === null
-            ? "Current best could not be read."
-            : pointsNeeded === 0
-            ? "Your current best is enough to enter; mint a qualifying run to update your row."
-            : `You need ${pointsNeeded} more point${pointsNeeded === 1 ? "" : "s"} than your current best to enter top 10.`}
+          {topTenEntryHint(gameId, cutoff, playerBest)}
         </p>
       )}
       {gameId === "snake" && (

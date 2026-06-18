@@ -8,6 +8,7 @@ import {
   shortPlayer,
   summarizeLeaderboard,
   sumPrizePoolUstx,
+  topTenEntryHint,
 } from "./leaderboard-showcase";
 import type { GameId } from "@/lib/game-registry";
 
@@ -196,5 +197,42 @@ describe("leaderboard-showcase solitaire", () => {
     }));
     const goal = leaderboardGoal({ rows, score: 1000, gameId: "solitaire" });
     expect(goal.secondary).not.toContain("point");
+  });
+});
+
+describe("topTenEntryHint", () => {
+  it("frames the gap in points for points games", () => {
+    expect(topTenEntryHint("snake", 91, 88)).toBe(
+      "You need 4 more points than your current best to enter top 10.",
+    );
+    expect(topTenEntryHint("snake", 91, 91)).toBe(
+      "You need 1 more point than your current best to enter top 10.",
+    );
+  });
+
+  it("frames the gap in real seconds for time-based games", () => {
+    // minesweeper: 9880 = 119s, cutoff 9891 = 108s -> 12s faster
+    expect(topTenEntryHint("minesweeper", 9891, 9880)).toBe(
+      "You need to finish 12s faster than your current best to enter top 10.",
+    );
+    // solitaire: 4000 = 180s, cutoff 4500 = 160s -> 20s faster
+    expect(topTenEntryHint("solitaire", 4500, 4000)).toBe(
+      "You need to finish 20s faster than your current best to enter top 10.",
+    );
+  });
+
+  it("says the best is already enough when it clears the cutoff", () => {
+    expect(topTenEntryHint("snake", 91, 100)).toBe(
+      "Your current best is enough to enter; mint a qualifying run to update your row.",
+    );
+  });
+
+  it("handles missing cutoff and unknown best", () => {
+    expect(topTenEntryHint("snake", null, 50)).toBe(
+      "Any minted score will enter this leaderboard.",
+    );
+    expect(topTenEntryHint("snake", 91, null)).toBe(
+      "Current best could not be read.",
+    );
   });
 });
