@@ -45,7 +45,7 @@ export function SeasonAdminWindow() {
   const [gameId, setGameId] = useState<GameId>("snake");
   const countdown = useSeasonCountdown(gameId);
 
-  const loadPastSeasons = useCallback(async (cs: number, g: GameId) => {
+  const loadPastSeasons = useCallback(async (cs: number, g: GameId): Promise<SeasonView[]> => {
     const results: SeasonView[] = [];
     for (let s = 1; s < cs; s++) {
       const snap = await getSeasonPrizeForGame(g, s);
@@ -61,24 +61,32 @@ export function SeasonAdminWindow() {
       const hasTies = new Set(scores).size < scores.length;
       results.push({ season: s, total: snap.total, rows, hasTies });
     }
-    setSeasons(results);
+    return results;
   }, []);
 
   useEffect(() => {
     if (!w) return;
+    let cancelled = false;
     Promise.all([
       getCurrentSeasonForGame(gameId),
       getPrizePoolBalanceForGame(gameId),
       getTopTenForGame(gameId),
     ])
-      .then(([cs, pool, topTen]) => {
+      .then(async ([cs, pool, topTen]) => {
+        if (cancelled) return;
         setError(null);
         setCurrentSeason(cs);
         setAccumulated(pool);
         setCurrentTopTen([...topTen].sort((a, b) => b.score - a.score));
-        return loadPastSeasons(cs, gameId);
+        const past = await loadPastSeasons(cs, gameId);
+        if (!cancelled) setSeasons(past);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "Load failed"));
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Load failed");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [w, gameId, loadPastSeasons]);
 
   if (!w) return null;
@@ -125,9 +133,9 @@ export function SeasonAdminWindow() {
             title: "Season closed",
             body: "Snapshot locked. Reloading…",
           });
-          getCurrentSeasonForGame(gameId).then((cs) => {
+          getCurrentSeasonForGame(gameId).then(async (cs) => {
             setCurrentSeason(cs);
-            loadPastSeasons(cs, gameId);
+            setSeasons(await loadPastSeasons(cs, gameId));
           });
           getPrizePoolBalanceForGame(gameId).then(setAccumulated);
         } else if (s === "timeout") {

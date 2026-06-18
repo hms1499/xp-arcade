@@ -15,9 +15,17 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
     : null;
 
   useEffect(() => {
+    let cancelled = false;
     getLastTokenId()
-      .then(setTotalNfts)
-      .catch(() => setTotalNfts(null));
+      .then((n) => {
+        if (!cancelled) setTotalNfts(n);
+      })
+      .catch(() => {
+        if (!cancelled) setTotalNfts(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
