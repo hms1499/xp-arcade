@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { type GameId } from "@/lib/game-registry";
 import { seasonShareUrl, xSeasonIntentUrl } from "@/lib/share";
 
@@ -11,6 +11,13 @@ export function SeasonShareActions({
   season: number;
 }) {
   const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+    },
+    [],
+  );
 
   function handleShareOnX() {
     window.open(xSeasonIntentUrl(gameId, season), "_blank", "noopener");
@@ -20,7 +27,8 @@ export function SeasonShareActions({
     try {
       await navigator.clipboard.writeText(seasonShareUrl(gameId, season));
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+      copiedTimer.current = setTimeout(() => setCopied(false), 2000);
     } catch {
       // clipboard unavailable (permissions / insecure context) — leave label as-is
     }
