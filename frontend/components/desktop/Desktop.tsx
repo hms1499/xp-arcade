@@ -138,6 +138,11 @@ export function Desktop({ children }: { children: React.ReactNode }) {
           emoji="💾"
           onOpen={() => open("mynfts")}
         />
+        <DesktopIcon
+          label="Internet"
+          emoji="🌐"
+          onOpen={() => open("browser")}
+        />
       </div>
       <QuickPlay
         gameId={lastGame ?? "snake"}

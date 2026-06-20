@@ -158,6 +158,11 @@ export function StartMenu({
             label="My NFTs"
             onClick={() => { openWin("mynfts"); onClose(); }}
           />
+          <MenuItem
+            icon="🌐"
+            label="Internet"
+            onClick={() => { openWin("browser"); onClose(); }}
+          />
           {isOwner && (
             <MenuItem
               icon="🛠️"
