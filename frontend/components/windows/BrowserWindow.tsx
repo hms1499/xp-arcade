@@ -17,6 +17,9 @@ export function BrowserWindow() {
   if (!w) return null;
 
   async function go() {
+    // Clear any stale target so the error/blocked panel's "Open in new tab"
+    // can't point at a previously-navigated URL.
+    setEmbedUrl("");
     const normalized = normalizeUrl(input);
     if (!normalized.ok) {
       setStatus("error");
