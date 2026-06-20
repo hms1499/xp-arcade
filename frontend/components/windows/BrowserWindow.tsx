@@ -20,6 +20,9 @@ export function BrowserWindow() {
   const sessionIdRef = useRef<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Serializes go() so two rapid clicks can't each create a session (which
+  // would orphan the first) — enforces "one session at a time".
+  const busyRef = useRef(false);
 
   // Best-effort release that survives unmount (sendBeacon, falls back to fetch).
   function releaseSession() {
@@ -30,7 +33,12 @@ export function BrowserWindow() {
     if (typeof navigator !== "undefined" && navigator.sendBeacon) {
       navigator.sendBeacon("/api/browser/end", new Blob([payload], { type: "application/json" }));
     } else {
-      fetch("/api/browser/end", { method: "POST", body: payload, keepalive: true }).catch(() => {});
+      fetch("/api/browser/end", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+        keepalive: true,
+      }).catch(() => {});
     }
   }
 
@@ -105,6 +113,7 @@ export function BrowserWindow() {
       // Point the fresh session at the requested page.
       await fetch("/api/browser/navigate", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: body.sessionId, url }),
       }).catch(() => {});
     } catch {
@@ -119,11 +128,22 @@ export function BrowserWindow() {
     armIdleTimer();
     await fetch("/api/browser/navigate", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId: sessionIdRef.current, url }),
     }).catch(() => {});
   }
 
   async function go() {
+    if (busyRef.current) return; // a navigation/session op is already in flight
+    busyRef.current = true;
+    try {
+      await runGo();
+    } finally {
+      busyRef.current = false;
+    }
+  }
+
+  async function runGo() {
     setEmbedUrl("");
     const normalized = normalizeUrl(input);
     if (!normalized.ok) {
