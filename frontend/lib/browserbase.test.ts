@@ -84,6 +84,19 @@ describe("navigate", () => {
     const result = await navigate("sess_1", "https://example.com/");
     expect(JSON.stringify(result)).not.toContain("test-key");
   });
+
+  it("closes the browser even when goto throws", async () => {
+    const close = vi.fn();
+    const browser = {
+      contexts: () => [
+        { pages: () => [{ goto: vi.fn().mockRejectedValue(new Error("timeout")), title: vi.fn() }], newPage: vi.fn() },
+      ],
+      close,
+    };
+    connectOverCDPMock.mockResolvedValue(browser);
+    await expect(navigate("sess_1", "https://example.com/")).rejects.toThrow("timeout");
+    expect(close).toHaveBeenCalled();
+  });
 });
 
 describe("endSession", () => {
