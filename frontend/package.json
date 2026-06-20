@@ -17,13 +17,16 @@
     "ci": "npm run lint && npm run test && npm run typecheck && npm run build"
   },
   "dependencies": {
+    "@browserbasehq/sdk": "^2.14.1",
     "@stacks/connect": "^8.2.6",
     "@stacks/network": "^7.3.1",
     "@stacks/transactions": "^7.4.0",
     "98.css": "^0.1.21",
     "next": "16.2.6",
+    "playwright-core": "^1.61.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "server-only": "^0.0.1",
     "zustand": "^5.0.13"
   },
   "devDependencies": {
