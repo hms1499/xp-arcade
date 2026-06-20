@@ -98,8 +98,18 @@ Adds a `remote` rendering mode and session lifecycle on top of v1's states.
   idle.
 - **Auto-close (strict):** end the session when any of these occur — window
   closed/unmounted (sendBeacon), navigating to an embeddable (iframe) site,
-  returning to idle, or ~2 minutes with no user interaction (idle timer reset on
-  pointer/key activity over the window). All timers cleared on unmount.
+  returning to idle, "Stop session", or the idle timer below. All timers cleared
+  on unmount.
+- **Idle timer caveat (cross-origin iframe):** the parent page cannot observe
+  pointer/key events *inside* the live-view iframe (it is cross-origin). So
+  "activity" is inferred conservatively: (a) any interaction with our own window
+  chrome (URL bar, buttons) resets the timer; (b) while the iframe holds focus —
+  detected via the window `blur` event with `document.activeElement === <the
+  iframe>` — the idle countdown is **paused** (treated as active). The countdown
+  only runs when focus is outside the iframe and the chrome is idle. The
+  Browserbase server-side `timeout` (~300s) is the authoritative hard cap; the
+  client idle timer is a best-effort cost saver, deliberately biased against
+  killing a focused session.
 
 ### Dependencies
 
