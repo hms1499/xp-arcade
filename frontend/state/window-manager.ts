@@ -8,7 +8,8 @@ export type WindowType =
   | "hall-of-fame"
   | "mynfts"
   | "season-admin"
-  | "player-profile";
+  | "player-profile"
+  | "browser";
 
 export type WindowPayload = {
   address?: string;
@@ -66,9 +67,9 @@ export const useWindows = create<S>((set, get) => ({
           y: 80 + s.windows.length * 24,
           z,
           minimized: false,
-          // Solitaire's Klondike board needs the room — open it maximized so the
-          // full tableau is visible from the first deal.
-          maximized: type === "game-solitaire",
+          // Solitaire's Klondike board and the browser both need the room —
+          // open them maximized.
+          maximized: type === "game-solitaire" || type === "browser",
           payload,
         },
       ],

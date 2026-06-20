@@ -111,3 +111,25 @@ describe("open payload updates", () => {
     expect(st.windows[0].z).toBeGreaterThan(first.z);
   });
 });
+
+describe("browser window", () => {
+  beforeEach(() => {
+    useWindows.setState({ windows: [], topZ: 10 });
+  });
+
+  it("opens a maximized browser window", () => {
+    useWindows.getState().open("browser");
+    const win = useWindows.getState().windows.find((w) => w.type === "browser");
+    expect(win).toBeDefined();
+    expect(win?.maximized).toBe(true);
+  });
+
+  it("is single-instance (re-open focuses the existing one)", () => {
+    useWindows.getState().open("browser");
+    useWindows.getState().open("browser");
+    const count = useWindows
+      .getState()
+      .windows.filter((w) => w.type === "browser").length;
+    expect(count).toBe(1);
+  });
+});
