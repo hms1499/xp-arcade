@@ -22,12 +22,19 @@ describe("checkSsrf", () => {
     "http://169.254.169.254/latest/meta-data/",
     "http://[::1]/",
     "http://printer.local/",
+    "http://evil.localhost/",
+    "http://[fc00::1]/",
+    "http://[fe80::1]/",
   ])("blocks internal host %s", (url) => {
     expect(checkSsrf(url).safe).toBe(false);
   });
 
   it("allows a public IP (8.8.8.8)", () => {
     expect(checkSsrf("http://8.8.8.8/")).toEqual({ safe: true });
+  });
+
+  it("allows a public IPv6 address", () => {
+    expect(checkSsrf("http://[2606:4700:4700::1111]/")).toEqual({ safe: true });
   });
 
   it("blocks non-http(s) schemes", () => {

@@ -38,11 +38,19 @@ export function checkSsrf(url: string): SsrfVerdict {
 
   const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
 
-  if (host === "localhost" || host.endsWith(".local")) {
+  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local")) {
     return { safe: false, reason: "Internal host blocked" };
   }
   if (host === "::1" || host === "0:0:0:0:0:0:0:1") {
     return { safe: false, reason: "Internal host blocked" };
+  }
+
+  if (host.includes(":")) {
+    // IPv6: block ULA fc00::/7 (fc/fd…) and link-local fe80::/10 (fe8–feb…).
+    const firstHextet = host.split(":")[0];
+    if (/^f[cd]/.test(firstHextet) || /^fe[89ab]/.test(firstHextet)) {
+      return { safe: false, reason: "Internal host blocked" };
+    }
   }
 
   const octets = ipv4Octets(host);
