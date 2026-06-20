@@ -18,6 +18,24 @@ function isPrivateIpv4([a, b]: number[]): boolean {
   return false;
 }
 
+function isBlockedIpv6(host: string): boolean {
+  if (!host.includes(":")) return false;
+  if (host === "::1" || host === "0:0:0:0:0:0:0:1") return true;
+  const first = host.split(":")[0];
+  return /^f[cd]/.test(first) || /^fe[89ab]/.test(first);
+}
+
+/**
+ * True when a host string is a private/loopback/link-local IP literal
+ * (IPv4 or IPv6). Exported so the route can check DNS-resolved addresses.
+ */
+export function isBlockedIp(host: string): boolean {
+  const h = host.toLowerCase().replace(/^\[|\]$/g, "");
+  const octets = ipv4Octets(h);
+  if (octets) return isPrivateIpv4(octets);
+  return isBlockedIpv6(h);
+}
+
 /**
  * Decide whether `url` is safe to fetch server-side. Only http(s) public
  * hosts pass; loopback, private ranges, link-local (incl. 169.254.169.254
@@ -41,20 +59,7 @@ export function checkSsrf(url: string): SsrfVerdict {
   if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local")) {
     return { safe: false, reason: "Internal host blocked" };
   }
-  if (host === "::1" || host === "0:0:0:0:0:0:0:1") {
-    return { safe: false, reason: "Internal host blocked" };
-  }
-
-  if (host.includes(":")) {
-    // IPv6: block ULA fc00::/7 (fc/fd…) and link-local fe80::/10 (fe8–feb…).
-    const firstHextet = host.split(":")[0];
-    if (/^f[cd]/.test(firstHextet) || /^fe[89ab]/.test(firstHextet)) {
-      return { safe: false, reason: "Internal host blocked" };
-    }
-  }
-
-  const octets = ipv4Octets(host);
-  if (octets && isPrivateIpv4(octets)) {
+  if (isBlockedIp(host)) {
     return { safe: false, reason: "Internal host blocked" };
   }
 
