@@ -26,13 +26,11 @@ export function normalizeUrl(input: string): NormalizedUrl {
     return { ok: false, reason: `Unsupported scheme: ${parsed.protocol}` };
   }
 
-  // If we auto-added the scheme, validate that the original input
-  // doesn't look like a broken scheme attempt (contains :// or looks malformed)
-  if (!hasScheme && /[:!@#$%^&*(){}[\]<>?/\\|`~;"]/.test(trimmed)) {
-    // Allow common URL chars like ? and /, but reject obvious malformation indicators
-    if (/[!@#$%^&*(){}[\]<>\\|`~;"]/.test(trimmed)) {
-      return { ok: false, reason: "Not a valid address" };
-    }
+  // We prepended https:// to scheme-less input, which makes the URL parser
+  // lenient about junk like "ht!tp://%%%". Reject bare input containing
+  // characters that can't appear in a real host or path.
+  if (!hasScheme && /[!%<>{}|\\^`"\s]/.test(trimmed)) {
+    return { ok: false, reason: "Not a valid address" };
   }
 
   return { ok: true, url: parsed.toString() };
