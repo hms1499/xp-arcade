@@ -13,6 +13,7 @@ const TYPE_LABEL: Record<string, string> = {
   mynfts: "My NFTs",
   "season-admin": "Season Admin",
   "player-profile": "Player Profile",
+  browser: "Internet",
 };
 
 function shortAddr(addr: string) {
