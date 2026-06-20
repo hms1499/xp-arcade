@@ -44,6 +44,9 @@ export async function GET(req: Request) {
     });
     const xfo = res.headers.get("x-frame-options");
     const csp = res.headers.get("content-security-policy");
+    // Headers-only check: we never forward the body, so release the stream
+    // instead of leaving the socket checked out until GC.
+    await res.body?.cancel();
     const embeddable = !xfo && !cspBlocksFraming(csp);
     return noStore({
       embeddable,
