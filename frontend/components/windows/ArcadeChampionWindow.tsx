@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useWindows } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
 import { Window } from "@/components/windows/Window";
 import { ChampionBoard } from "@/components/champion/ChampionBoard";
 import { fetchLeaderboardSnapshot } from "@/lib/leaderboard-snapshot";
-import { computeArcadeChampions, type RowsByGame } from "@/lib/arcade-champion";
+import { computeArcadeChampions, detectNewChampion, type RowsByGame, type ChampionEntry } from "@/lib/arcade-champion";
+import { loadSeenChampion, saveSeenChampion } from "@/lib/champion-seen";
 import { GAME_IDS } from "@/lib/game-registry";
 
 function rowsFromSnapshot(games: Awaited<ReturnType<typeof fetchLeaderboardSnapshot>>["games"]): RowsByGame {
@@ -18,9 +19,10 @@ function rowsFromSnapshot(games: Awaited<ReturnType<typeof fetchLeaderboardSnaps
 export function ArcadeChampionWindow() {
   const w = useWindows((s) => s.windows.find((win) => win.type === "arcade-champion"));
   const address = useWallet((s) => s.address);
-  const [rows, setRows] = useState<RowsByGame | null>(null);
+  const [champions, setChampions] = useState<ChampionEntry[]>([]);
   const [season, setSeason] = useState<number | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [newChampion, setNewChampion] = useState<{ player: string; dethroned: string | null } | null>(null);
 
   const open = !!w;
   useEffect(() => {
@@ -30,9 +32,18 @@ export function ArcadeChampionWindow() {
       fetchLeaderboardSnapshot()
         .then((snap) => {
           if (cancelled) return;
-          setRows(rowsFromSnapshot(snap.games));
-          setSeason(snap.games.snake?.currentSeason ?? null);
+          const rows = rowsFromSnapshot(snap.games);
+          const currentSeason = snap.games.snake?.currentSeason ?? null;
+          const computed = computeArcadeChampions(rows);
+          setSeason(currentSeason);
+          setChampions(computed);
           setLastUpdated(new Date());
+          if (computed.length > 0) {
+            const prev = loadSeenChampion(currentSeason);
+            const change = detectNewChampion(prev, computed);
+            if (change) setNewChampion(change);
+            saveSeenChampion(currentSeason, computed[0].player);
+          }
         })
         .catch(() => {});
     }
@@ -44,8 +55,6 @@ export function ArcadeChampionWindow() {
     };
   }, [open]);
 
-  const champions = useMemo(() => (rows ? computeArcadeChampions(rows) : []), [rows]);
-
   if (!w) return null;
 
   return (
@@ -54,7 +63,7 @@ export function ArcadeChampionWindow() {
         champions={champions}
         season={season}
         address={address}
-        newChampion={null}
+        newChampion={newChampion}
         lastUpdated={lastUpdated}
       />
     </Window>
