@@ -1,32 +1,20 @@
 import type { GameId } from "./game-registry";
-import { solitaireSeconds } from "./solitaire-score";
 
-/** seconds encoded inside a Minesweeper score (score = 9999 - seconds). */
-export function minesweeperSeconds(score: number): number {
-  return Math.min(9999, Math.max(0, 9999 - Math.floor(score)));
-}
-
-/** Win-time (seconds) encoded in a time-based game's score. Minesweeper is a
- *  linear inversion (9999 - seconds); solitaire is non-linear (720000 / seconds),
- *  so a score delta is NOT a seconds delta — callers needing a seconds gap must
- *  derive it from this, not from raw score arithmetic. Points games have no time
- *  meaning, so the score is returned unchanged (callers guard on game type). */
-export function secondsForScore(gameId: GameId, score: number): number {
-  if (gameId === "minesweeper") return minesweeperSeconds(score);
-  if (gameId === "solitaire") return solitaireSeconds(score);
-  return score;
-}
-
-/** Full prose label for a score, e.g. "Cleared in 47s" or "400". */
+/** Full prose label for a score, e.g. "400".
+ *
+ * Every game — including the time-based ones (minesweeper/solitaire) — shows the
+ * raw on-chain number. Those games store an encoded score where a higher number
+ * is a faster/better result, so the raw value already reads as "higher = better",
+ * exactly like the points games. `gameId` is kept in the signature so callers
+ * stay uniform and per-game formatting can return later if needed. */
 export function formatScore(gameId: GameId, score: number): string {
-  if (gameId === "minesweeper") return `Cleared in ${minesweeperSeconds(score)}s`;
-  if (gameId === "solitaire") return `Won in ${solitaireSeconds(score)}s`;
+  void gameId;
   return String(score);
 }
 
-/** Compact value for tiles/leaderboards, e.g. "47s" or "400". */
+/** Compact value for tiles/leaderboards, e.g. "400". Same raw number as
+ *  formatScore. */
 export function formatScoreValue(gameId: GameId, score: number): string {
-  if (gameId === "minesweeper") return `${minesweeperSeconds(score)}s`;
-  if (gameId === "solitaire") return `${solitaireSeconds(score)}s`;
+  void gameId;
   return String(score);
 }

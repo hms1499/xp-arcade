@@ -44,12 +44,10 @@ export function dailyChallenge(dayKey: string): DailyChallenge {
   return { gameId, target: DAILY_TARGETS[gameId] };
 }
 
-/** Human label for a daily target. Time-based games (minesweeper/solitaire) ask
- *  the player to FINISH within a time ceiling — meeting the on-chain target
- *  means being fast enough — so they read as "≤ Xs", not "reach a score". */
+/** Human label for a daily target. Every game — including the time-based ones —
+ *  shows its raw on-chain number, so the target reads as a score to reach
+ *  (higher = better). */
 export function dailyTargetLabel(gameId: GameId, target: number): string {
-  if (gameId === "minesweeper") return `Clear in ≤ ${formatScoreValue(gameId, target)}`;
-  if (gameId === "solitaire") return `Win in ≤ ${formatScoreValue(gameId, target)}`;
   return `Reach ${formatScoreValue(gameId, target)}`;
 }
 

@@ -1,7 +1,7 @@
 import { scoreSvg } from "@/lib/metadata-svg";
 import type { TopEntry } from "@/lib/contract-calls";
 import type { GameId } from "@/lib/game-registry";
-import { formatScoreValue, secondsForScore } from "@/lib/score-format";
+import { formatScoreValue } from "@/lib/score-format";
 
 export type RankedEntry = TopEntry & {
   rank: number;
@@ -117,23 +117,11 @@ export function leaderboardGoal({
 }): LeaderboardGoal {
   const ranked = rankRows(rows);
   const cutoff = ranked.length >= 10 ? ranked[9] : null;
-  // Display a score the way humans read it for this game (time vs. points).
+  // Every game shows the raw on-chain number, so the gap to close is always a
+  // point delta — including the time-based games, whose encoded score reads as
+  // "higher = better" just like the points games.
   const fmt = (n: number) => (gameId ? formatScoreValue(gameId, n) : String(n));
-  // The gap to close. Time-based games (minesweeper/solitaire) report how many
-  // SECONDS faster the player must finish. Minesweeper's score is a linear
-  // inversion of time so a score delta equals a seconds delta, but solitaire's
-  // score (720000/seconds) is non-linear — so the seconds gap is derived from
-  // the actual win-times, not from score arithmetic. Points games gain points.
-  const timeBased = gameId === "minesweeper" || gameId === "solitaire";
   const gapLabel = (playerScore: number): string => {
-    if (timeBased && cutoff && gameId) {
-      const seconds = Math.max(
-        1,
-        secondsForScore(gameId, playerScore) -
-          secondsForScore(gameId, cutoff.score + 1),
-      );
-      return `${seconds}s faster`;
-    }
     const points = Math.max(
       1,
       (cutoff ? cutoff.score : playerScore) - playerScore + 1,
@@ -212,30 +200,23 @@ export function leaderboardGoal({
 
 /**
  * One-line copy for the High Scores window telling a player what it takes to
- * enter the top 10. Time-based games (minesweeper/solitaire) phrase the gap in
- * real seconds; points games phrase it in points. `cutoff` is the #10 score
- * (null when the board isn't full); `playerBest` is null when it can't be read.
+ * enter the top 10. The gap is phrased in points for every game — the time-based
+ * games (minesweeper/solitaire) show their raw on-chain number like the points
+ * games. `cutoff` is the #10 score (null when the board isn't full); `playerBest`
+ * is null when it can't be read. `gameId` is kept for signature uniformity.
  */
 export function topTenEntryHint(
   gameId: GameId,
   cutoff: number | null,
   playerBest: number | null,
 ): string {
+  void gameId;
   if (cutoff === null) return "Any minted score will enter this leaderboard.";
   if (playerBest === null) return "Current best could not be read.";
 
   const pointsNeeded = Math.max(0, cutoff - playerBest + 1);
   if (pointsNeeded === 0) {
     return "Your current best is enough to enter; mint a qualifying run to update your row.";
-  }
-
-  const timeBased = gameId === "minesweeper" || gameId === "solitaire";
-  if (timeBased) {
-    const seconds = Math.max(
-      1,
-      secondsForScore(gameId, playerBest) - secondsForScore(gameId, cutoff + 1),
-    );
-    return `You need to finish ${seconds}s faster than your current best to enter top 10.`;
   }
 
   return `You need ${pointsNeeded} more point${pointsNeeded === 1 ? "" : "s"} than your current best to enter top 10.`;

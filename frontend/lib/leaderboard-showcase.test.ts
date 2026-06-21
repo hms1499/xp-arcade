@@ -116,33 +116,30 @@ describe("leaderboard showcase helpers", () => {
     expect(scoreRarity(9959, "minesweeper")).toBe("Legendary");
   });
 
-  it("phrases minesweeper goal copy in seconds, not points", () => {
+  it("phrases minesweeper goal copy as points like the other games", () => {
     const rows = Array.from({ length: 10 }, (_, index) => ({
       player: `SP_${index}`,
       score: 9900 - index, // #10 cutoff = 9891
     }));
     expect(leaderboardGoal({ rows, playerBest: 9880, gameId: "minesweeper" }).primary).toBe(
-      "Need 12s faster.",
+      "Need 12 more points.",
     );
     expect(leaderboardGoal({ rows, playerBest: null, gameId: "minesweeper" }).primary).toBe(
-      "Beat #10: 108s",
+      "Beat #10: 9891",
     );
   });
 
-  it("phrases solitaire goal copy in real seconds, not score-point deltas", () => {
-    // Solitaire score = round(720000 / winSeconds) is non-linear, so a score
-    // delta is NOT a seconds delta. cutoff #10 = 4500 (160s); best = 4000 (180s)
-    // → ~20s faster needed, not a 501-point gap.
+  it("phrases solitaire goal copy as points like the other games", () => {
     const rows = Array.from({ length: 10 }, (_, index) => ({
       player: `SP_${index}`,
       score: 4500 + index * 100, // #10 cutoff = 4500
     }));
     expect(
       leaderboardGoal({ rows, playerBest: 4000, gameId: "solitaire" }).primary,
-    ).toBe("Need 20s faster.");
+    ).toBe("Need 501 more points.");
     expect(
       leaderboardGoal({ rows, score: 4000, gameId: "solitaire" }).secondary,
-    ).toBe("Needs 20s faster to beat #10 (160s).");
+    ).toBe("Needs 501 more points to beat #10 (4500).");
   });
 
   it("builds player goal copy for open, cutoff, and ready states", () => {
@@ -190,13 +187,13 @@ describe("leaderboard-showcase solitaire", () => {
     expect(scoreRarity(6000, "solitaire")).toBe("Legendary");
   });
 
-  it("phrases the solitaire gap in win-time, not points", () => {
+  it("phrases the solitaire gap in points like the points games", () => {
     const rows = Array.from({ length: 10 }, (_, i) => ({
       player: `P${i}`,
       score: 5000 - i * 100,
     }));
     const goal = leaderboardGoal({ rows, score: 1000, gameId: "solitaire" });
-    expect(goal.secondary).not.toContain("point");
+    expect(goal.secondary).toContain("point");
   });
 });
 
@@ -210,14 +207,12 @@ describe("topTenEntryHint", () => {
     );
   });
 
-  it("frames the gap in real seconds for time-based games", () => {
-    // minesweeper: 9880 = 119s, cutoff 9891 = 108s -> 12s faster
+  it("frames the gap in points for minesweeper and solitaire too", () => {
     expect(topTenEntryHint("minesweeper", 9891, 9880)).toBe(
-      "You need to finish 12s faster than your current best to enter top 10.",
+      "You need 12 more points than your current best to enter top 10.",
     );
-    // solitaire: 4000 = 180s, cutoff 4500 = 160s -> 20s faster
     expect(topTenEntryHint("solitaire", 4500, 4000)).toBe(
-      "You need to finish 20s faster than your current best to enter top 10.",
+      "You need 501 more points than your current best to enter top 10.",
     );
   });
 
