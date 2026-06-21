@@ -6,6 +6,7 @@ export type WindowType =
   | `game-${GameId}`
   | "highscore"
   | "hall-of-fame"
+  | "arcade-champion"
   | "mynfts"
   | "season-admin"
   | "player-profile"
