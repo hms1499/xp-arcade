@@ -294,3 +294,73 @@ input[type='text'], input[type='password'], input[type='number'],
 input[type='email'], input[type='search'], textarea {
   cursor: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='20'%3E%3Cline x1='2' y1='1' x2='9' y2='1' stroke='black' stroke-width='1.5'/%3E%3Cline x1='5.5' y1='1' x2='5.5' y2='19' stroke='black' stroke-width='1.5'/%3E%3Cline x1='2' y1='19' x2='9' y2='19' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E") 5 10, text !important;
 }
+
+/* ---- Arcade Champion ---- */
+.champion-screen {
+  position: relative;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.25) 0px,
+      rgba(0, 0, 0, 0.25) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    radial-gradient(ellipse at center, #0b1026 0%, #05060f 100%);
+  color: #e7ecff;
+  overflow: hidden;
+}
+.champion-marquee {
+  color: #ffe169;
+  text-shadow: 0 0 4px #ffb800, 0 0 12px #ff7a00;
+  animation: championFlicker 3.2s infinite;
+}
+@keyframes championFlicker {
+  0%, 92%, 100% { opacity: 1; }
+  93% { opacity: 0.55; }
+  96% { opacity: 0.9; }
+}
+.champion-pop { animation: championPop 0.5s ease-out both; }
+@keyframes championPop {
+  0% { transform: scale(0.6); opacity: 0; }
+  70% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.champion-crown { animation: championBob 2.4s ease-in-out infinite; }
+@keyframes championBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.champion-you { animation: championYouPulse 1.8s ease-in-out infinite; }
+@keyframes championYouPulse {
+  0%, 100% { box-shadow: 0 0 0 1px #ffcf33, 0 0 6px rgba(255, 207, 51, 0.5); }
+  50% { box-shadow: 0 0 0 1px #ffcf33, 0 0 12px rgba(255, 207, 51, 0.9); }
+}
+.champion-banner { animation: championPop 0.5s ease-out both; }
+.champion-new-pip { animation: championNewPip 1.2s ease-in-out infinite; }
+@keyframes championNewPip {
+  0%, 100% { opacity: 1; text-shadow: 0 0 4px #ffb800; }
+  50% { opacity: 0.55; text-shadow: 0 0 10px #ff7a00; }
+}
+.champion-confetti span {
+  position: absolute;
+  top: -8px;
+  width: 5px;
+  height: 5px;
+  animation: championConfetti 1.6s linear forwards;
+}
+@keyframes championConfetti {
+  to { transform: translateY(260px) rotate(360deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .champion-marquee,
+  .champion-pop,
+  .champion-crown,
+  .champion-you,
+  .champion-banner,
+  .champion-new-pip,
+  .champion-confetti span {
+    animation: none !important;
+  }
+  .champion-confetti { display: none; }
+}

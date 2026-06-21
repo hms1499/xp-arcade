@@ -14,6 +14,8 @@ import { formatScoreValue } from "@/lib/score-format";
 import { useWindows } from "@/state/window-manager";
 import { PrizePoolHero } from "./PrizePoolHero";
 import { DailyChallengeWidget } from "./DailyChallengeWidget";
+import { DesktopChampionPanel } from "./DesktopChampionPanel";
+import type { ChampionEntry } from "@/lib/arcade-champion";
 
 const GAME_IDS = Object.keys(GAMES) as GameId[];
 
@@ -58,12 +60,16 @@ export function DesktopLeaderboardShowcase({
   poolsByGame,
   lastUpdated,
   error,
+  championEntries,
+  championIsNew,
 }: {
   summaries: Record<GameId, LeaderboardSummary>;
   seasonsByGame: Record<GameId, number | null>;
   poolsByGame: Record<GameId, number | null>;
   lastUpdated: Date | null;
   error: string | null;
+  championEntries: ChampionEntry[];
+  championIsNew: boolean;
 }) {
   const open = useWindows((s) => s.open);
   const countdown = useSeasonCountdown("snake");
@@ -106,6 +112,11 @@ export function DesktopLeaderboardShowcase({
         countdown={countdown}
       />
       <DailyChallengeWidget />
+      <DesktopChampionPanel
+        entries={championEntries}
+        isNew={championIsNew}
+        onOpen={() => open("arcade-champion")}
+      />
       <section style={panelStyle()}>
         <PanelTitle>
           <span>🏆 Hall of Fame</span>

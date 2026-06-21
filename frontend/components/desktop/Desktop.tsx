@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DesktopIcon } from "./DesktopIcon";
 import { Taskbar } from "./Taskbar";
 import { DesktopWallpaper } from "./DesktopWallpaper";
@@ -15,6 +15,7 @@ import {
 } from "@/lib/leaderboard-showcase";
 import { formatScoreValue } from "@/lib/score-format";
 import type { TopEntry } from "@/lib/contract-calls";
+import { computeArcadeChampions } from "@/lib/arcade-champion";
 import { useToasts } from "@/state/toasts";
 import { WelcomeDialog } from "@/components/dialogs/WelcomeDialog";
 import { useWelcome } from "@/state/welcome";
@@ -96,6 +97,23 @@ export function Desktop({ children }: { children: React.ReactNode }) {
     previousRowsRef.current = leaderboard.rowsByGame;
   }, [leaderboard.lastUpdated, leaderboard.rowsByGame]);
 
+  const champions = useMemo(
+    () => computeArcadeChampions(leaderboard.rowsByGame),
+    [leaderboard.rowsByGame],
+  );
+  const prevChampRef = useRef<string | null>(null);
+  const [championIsNew, setChampionIsNew] = useState(false);
+  useEffect(() => {
+    const leader = champions[0]?.player ?? null;
+    if (leader && prevChampRef.current && leader !== prevChampRef.current) {
+      setChampionIsNew(true);
+      const t = setTimeout(() => setChampionIsNew(false), 8000);
+      prevChampRef.current = leader;
+      return () => clearTimeout(t);
+    }
+    if (leader) prevChampRef.current = leader;
+  }, [champions]);
+
   return (
     <div
       className="fixed inset-0"
@@ -134,6 +152,11 @@ export function Desktop({ children }: { children: React.ReactNode }) {
           onOpen={() => open("hall-of-fame")}
         />
         <DesktopIcon
+          label="Arcade Champion"
+          emoji="👑"
+          onOpen={() => open("arcade-champion")}
+        />
+        <DesktopIcon
           label="My NFTs"
           emoji="💾"
           onOpen={() => open("mynfts")}
@@ -156,6 +179,8 @@ export function Desktop({ children }: { children: React.ReactNode }) {
         poolsByGame={leaderboard.poolsByGame}
         lastUpdated={leaderboard.lastUpdated}
         error={leaderboard.error}
+        championEntries={champions}
+        championIsNew={championIsNew}
       />
       {children}
       {welcomeOpen && (

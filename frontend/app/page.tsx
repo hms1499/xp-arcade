@@ -8,6 +8,7 @@ import { MinesweeperWindow } from "@/components/game/minesweeper/MinesweeperWind
 import { SolitaireWindow } from "@/components/game/solitaire/SolitaireWindow";
 import { HighScoreWindow } from "@/components/windows/HighScoreWindow";
 import { HallOfFameWindow } from "@/components/windows/HallOfFameWindow";
+import { ArcadeChampionWindow } from "@/components/windows/ArcadeChampionWindow";
 import { MyNftsWindow } from "@/components/windows/MyNftsWindow";
 import { SeasonAdminWindow } from "@/components/windows/SeasonAdminWindow";
 import { PlayerProfileWindow } from "@/components/windows/PlayerProfileWindow";
@@ -26,6 +27,7 @@ export default function Home() {
         <SolitaireWindow />
         <HighScoreWindow />
         <HallOfFameWindow />
+        <ArcadeChampionWindow />
         <MyNftsWindow />
         <SeasonAdminWindow />
         <PlayerProfileWindow />
