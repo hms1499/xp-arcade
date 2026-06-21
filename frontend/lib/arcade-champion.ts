@@ -59,3 +59,17 @@ export function computeArcadeChampions(rows: RowsByGame): ChampionEntry[] {
   );
   return entries;
 }
+
+/** Detect a throne change for the NEW CHAMPION banner. `prevChampion` is the
+ *  last-seen leader address (null on first sight). Returns null when there is
+ *  no leader, on first sight (so no banner flashes), or when unchanged. */
+export function detectNewChampion(
+  prevChampion: string | null,
+  current: ChampionEntry[],
+): { player: string; dethroned: string | null } | null {
+  const leader = current[0];
+  if (!leader) return null;
+  if (prevChampion === null) return null;
+  if (leader.player === prevChampion) return null;
+  return { player: leader.player, dethroned: prevChampion };
+}

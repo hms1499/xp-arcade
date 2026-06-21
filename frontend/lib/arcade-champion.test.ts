@@ -4,7 +4,9 @@ import type { TopEntry } from "./contract-calls";
 import {
   rankPoints,
   computeArcadeChampions,
+  detectNewChampion,
   type RowsByGame,
+  type ChampionEntry,
 } from "./arcade-champion";
 
 /** Players given highest-first; assigns descending scores so findPlayerRank
@@ -75,5 +77,30 @@ describe("computeArcadeChampions", () => {
     const champs = computeArcadeChampions(rows);
     const top2 = champs.slice(0, 2).map((c) => c.player);
     expect(top2).toEqual(["P", "Q"]); // 16 == 16, 0 == 0 firsts; P wins (bestRank 2 < 3)
+  });
+});
+
+function champ(player: string): ChampionEntry {
+  return { player, points: 10, ranks: {} as never, firsts: 1, bestRank: 1, gamesRanked: 1 };
+}
+
+describe("detectNewChampion", () => {
+  it("returns null on first-ever sight (no stored champion)", () => {
+    expect(detectNewChampion(null, [champ("A")])).toBeNull();
+  });
+
+  it("returns null when the leader is unchanged", () => {
+    expect(detectNewChampion("A", [champ("A"), champ("B")])).toBeNull();
+  });
+
+  it("returns null when there is no leader", () => {
+    expect(detectNewChampion("A", [])).toBeNull();
+  });
+
+  it("reports the new leader and who was dethroned on a throne change", () => {
+    expect(detectNewChampion("A", [champ("B"), champ("A")])).toEqual({
+      player: "B",
+      dethroned: "A",
+    });
   });
 });
