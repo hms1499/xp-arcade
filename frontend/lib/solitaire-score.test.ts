@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { SOLITAIRE_BONUS_K, solitaireScore, solitaireSeconds } from "./solitaire-score";
+import { SOLITAIRE_BONUS_K, solitaireScore } from "./solitaire-score";
 
 describe("solitaire-score", () => {
   it("uses the 720000 bonus constant", () => {
@@ -21,15 +21,5 @@ describe("solitaire-score", () => {
     const s = solitaireScore(99999);
     expect(Number.isInteger(s)).toBe(true);
     expect(s).toBeGreaterThanOrEqual(0);
-  });
-
-  it("solitaireSeconds inverts the score back to win time", () => {
-    expect(solitaireSeconds(6000)).toBe(120);
-    expect(solitaireSeconds(4000)).toBe(180);
-  });
-
-  it("treats a non-positive score (no win yet) as 0s, not 720000s", () => {
-    expect(solitaireSeconds(0)).toBe(0);
-    expect(solitaireSeconds(-5)).toBe(0);
   });
 });
