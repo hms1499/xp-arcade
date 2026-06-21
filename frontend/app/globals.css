@@ -337,6 +337,11 @@ input[type='email'], input[type='search'], textarea {
   50% { box-shadow: 0 0 0 1px #ffcf33, 0 0 12px rgba(255, 207, 51, 0.9); }
 }
 .champion-banner { animation: championPop 0.5s ease-out both; }
+.champion-new-pip { animation: championNewPip 1.2s ease-in-out infinite; }
+@keyframes championNewPip {
+  0%, 100% { opacity: 1; text-shadow: 0 0 4px #ffb800; }
+  50% { opacity: 0.55; text-shadow: 0 0 10px #ff7a00; }
+}
 .champion-confetti span {
   position: absolute;
   top: -8px;
@@ -353,6 +358,7 @@ input[type='email'], input[type='search'], textarea {
   .champion-crown,
   .champion-you,
   .champion-banner,
+  .champion-new-pip,
   .champion-confetti span {
     animation: none !important;
   }

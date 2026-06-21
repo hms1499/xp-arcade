@@ -35,7 +35,7 @@ export function DesktopChampionPanel({
           justifyContent: "space-between",
         }}
       >
-        <span>👑 Arcade Champion{isNew ? <span className="champion-you" style={{ marginLeft: 6, color: "#ffe169" }}>NEW!</span> : null}</span>
+        <span>👑 Arcade Champion{isNew ? <span className="champion-new-pip" style={{ marginLeft: 6, color: "#ffe169" }}>NEW!</span> : null}</span>
         <button onMouseDown={(e) => e.stopPropagation()} onClick={onOpen} style={{ fontSize: 10, height: 18, padding: "0 6px" }}>
           Open
         </button>

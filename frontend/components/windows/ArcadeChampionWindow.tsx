@@ -55,6 +55,12 @@ export function ArcadeChampionWindow() {
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!newChampion) return;
+    const t = setTimeout(() => setNewChampion(null), 6000);
+    return () => clearTimeout(t);
+  }, [newChampion]);
+
   if (!w) return null;
 
   return (
