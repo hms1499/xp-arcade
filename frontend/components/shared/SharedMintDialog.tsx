@@ -8,6 +8,7 @@ import {
 } from "@/lib/contract-calls";
 import { useMintTx } from "@/state/mint-tx";
 import { type TxStatus } from "@/lib/tx-tracker";
+import { humanizeContractError, isUserCancellation } from "@/lib/tx-errors";
 import { recordScore } from "@/lib/high-score";
 import { GAMES, type GameId } from "@/lib/game-registry";
 import { formatScore } from "@/lib/score-format";
@@ -173,18 +174,8 @@ export function SharedMintDialog({
       startMintTx(gameId, tx, score);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Mint failed";
-      if (msg.includes("108") || msg.toLowerCase().includes("mint-limit")) {
-        setError("Mint limit reached for this season (10/10).");
-      } else if (
-        msg.includes("104") ||
-        msg.toLowerCase().includes("score-too-high")
-      ) {
-        setError(
-          "Score rejected by contract (too high). Please play a normal game.",
-        );
-      } else {
-        setError(msg);
-      }
+      // A cancelled wallet prompt is a normal user action, not an error.
+      setError(isUserCancellation(msg) ? null : humanizeContractError(msg));
     } finally {
       setBusy(false);
     }
