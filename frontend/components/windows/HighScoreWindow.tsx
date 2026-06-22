@@ -337,7 +337,7 @@ function LeaderboardTab({
             >
               {claimingSeason === c.season
                 ? "Confirming..."
-                : `Claim ${(c.amountUstx / 1_000_000).toFixed(2)} STX · Season ${c.season}`}
+                : `Claim up to ${(c.amountUstx / 1_000_000).toFixed(2)} STX · Season ${c.season}`}
             </button>
             ) : (
               <span
