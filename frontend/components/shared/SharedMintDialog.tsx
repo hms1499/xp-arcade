@@ -334,6 +334,16 @@ export function SharedMintDialog({
         </div>
       ) : (
         <div>
+          {mintStatus === "pending" && (
+            <div
+              className="progress-indicator tx-progress"
+              role="progressbar"
+              aria-label="Confirming transaction on-chain"
+              style={{ marginBottom: 8 }}
+            >
+              <span className="progress-indicator-bar" />
+            </div>
+          )}
           <ol className="text-xs mb-2" style={{ color: "#555", lineHeight: 1.7 }}>
             <li>1. Submitted to wallet</li>
             <li style={{ color: STATUS_COLOR[mintStatus] }}>
