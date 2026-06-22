@@ -56,6 +56,7 @@ export function Desktop({ children }: { children: React.ReactNode }) {
     closeWelcome();
   };
 
+  const [quickPlayClosed, setQuickPlayClosed] = useState(false);
   const previousRowsRef = useRef<Record<GameId, TopEntry[]> | null>(null);
   const [lastGame, setLastGame] = useState<GameId | null>(() => {
     if (typeof window === "undefined") return null;
@@ -167,12 +168,15 @@ export function Desktop({ children }: { children: React.ReactNode }) {
           onOpen={() => open("browser")}
         />
       </div>
-      <QuickPlay
-        gameId={lastGame ?? "snake"}
-        hasHistory={lastGame !== null}
-        cutoff={leaderboard.summaries[lastGame ?? "snake"].cutoff?.score ?? null}
-        onOpen={() => open(`game-${lastGame ?? "snake"}`)}
-      />
+      {!quickPlayClosed && (
+        <QuickPlay
+          gameId={lastGame ?? "snake"}
+          hasHistory={lastGame !== null}
+          cutoff={leaderboard.summaries[lastGame ?? "snake"].cutoff?.score ?? null}
+          onOpen={() => open(`game-${lastGame ?? "snake"}`)}
+          onClose={() => setQuickPlayClosed(true)}
+        />
+      )}
       <DesktopLeaderboardShowcase
         summaries={leaderboard.summaries}
         seasonsByGame={leaderboard.seasonsByGame}
@@ -202,11 +206,13 @@ function QuickPlay({
   hasHistory,
   cutoff,
   onOpen,
+  onClose,
 }: {
   gameId: GameId;
   hasHistory: boolean;
   cutoff: number | null;
   onOpen: () => void;
+  onClose: () => void;
 }) {
   const game = GAMES[gameId];
 
@@ -216,7 +222,9 @@ function QuickPlay({
       style={{
         position: "absolute",
         top: 16,
-        left: 112,
+        // Clear a possible second column of desktop icons (ends ~187px) so the
+        // panel never covers them.
+        left: 200,
         zIndex: 1,
         width: 250,
         background: "#c0c0c0",
@@ -232,9 +240,28 @@ function QuickPlay({
           color: "#ffffff",
           fontWeight: "bold",
           padding: "3px 6px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        {hasHistory ? "Continue Playing" : "Quick Start"}
+        <span>{hasHistory ? "Continue Playing" : "Quick Start"}</span>
+        <button
+          aria-label="Close"
+          onClick={onClose}
+          style={{
+            minWidth: 0,
+            minHeight: 0,
+            width: 16,
+            height: 14,
+            padding: 0,
+            fontSize: 11,
+            lineHeight: 1,
+            fontWeight: "bold",
+          }}
+        >
+          ×
+        </button>
       </div>
       <div
         style={{
