@@ -12,6 +12,7 @@ import {
 import { fetchLeaderboardSnapshot } from "@/lib/leaderboard-snapshot";
 import { findClaimablePrizes, classifyClaimTx, type Claim } from "@/lib/claimable-prizes";
 import { watchTx } from "@/lib/tx-tracker";
+import { humanizeContractError, isUserCancellation } from "@/lib/tx-errors";
 import { useToasts } from "@/state/toasts";
 import { GAME_IDS, GAMES, type GameId } from "@/lib/game-registry";
 import { formatScoreValue } from "@/lib/score-format";
@@ -176,10 +177,13 @@ function LeaderboardTab({
         }
       });
     } catch (e) {
-      useToasts.getState().push({
-        title: "End-season failed",
-        body: e instanceof Error ? e.message : "Could not submit.",
-      });
+      const msg = e instanceof Error ? e.message : "Could not submit.";
+      if (!isUserCancellation(msg)) {
+        useToasts.getState().push({
+          title: "End-season failed",
+          body: humanizeContractError(msg),
+        });
+      }
     } finally {
       setBusyEnd(false);
     }
@@ -278,10 +282,10 @@ function LeaderboardTab({
                   txId = await claimPrizeV3(gameId, c.season, c.amountUstx);
                 } catch (err) {
                   const msg = err instanceof Error ? err.message : String(err);
-                  if (msg !== "cancelled") {
+                  if (!isUserCancellation(msg)) {
                     useToasts.getState().push({
                       title: "Claim failed",
-                      body: msg,
+                      body: humanizeContractError(msg),
                       type: "error",
                     });
                   }
