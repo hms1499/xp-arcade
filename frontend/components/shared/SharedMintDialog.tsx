@@ -9,6 +9,11 @@ import {
 import { useMintTx } from "@/state/mint-tx";
 import { type TxStatus } from "@/lib/tx-tracker";
 import { humanizeContractError, isUserCancellation } from "@/lib/tx-errors";
+import {
+  getStxBalanceUstx,
+  insufficientStxWarning,
+  networkMismatchWarning,
+} from "@/lib/wallet-safety";
 import { recordScore } from "@/lib/high-score";
 import { GAMES, type GameId } from "@/lib/game-registry";
 import { formatScore } from "@/lib/score-format";
@@ -92,6 +97,7 @@ export function SharedMintDialog({
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [mintsRemaining, setMintsRemaining] = useState<number | null>(null);
+  const [balanceUstx, setBalanceUstx] = useState<number | null>(null);
   const [goal, setGoal] = useState<LeaderboardGoal | null>(null);
 
   useEffect(() => {
@@ -108,6 +114,21 @@ export function SharedMintDialog({
       cancelled = true;
     };
   }, [address, gameId]);
+
+  useEffect(() => {
+    if (!address) return;
+    let cancelled = false;
+    getStxBalanceUstx(address)
+      .then((b) => {
+        if (!cancelled) setBalanceUstx(b);
+      })
+      .catch(() => {
+        if (!cancelled) setBalanceUstx(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [address]);
 
   useEffect(() => {
     let cancelled = false;
@@ -148,7 +169,13 @@ export function SharedMintDialog({
 
   const feeStx = (Number(game.mintFeeUstx) / 1_000_000).toFixed(2);
   const chain = stacks.networkName;
-  const isMintDisabled = busy || mintsRemaining === 0;
+  const networkWarning = networkMismatchWarning(address, stacks.networkName);
+  const balanceWarning = insufficientStxWarning(
+    balanceUstx,
+    Number(game.mintFeeUstx),
+  );
+  const isMintDisabled =
+    busy || mintsRemaining === 0 || !!networkWarning || !!balanceWarning;
   const canEnterLeaderboard = goal?.topTenReady === true;
   // A timeout may still confirm, so only hard on-chain failures offer a retry.
   const isHardFailure =
@@ -159,6 +186,10 @@ export function SharedMintDialog({
     ? "Opening wallet..."
     : mintsRemaining === 0
     ? "Limit reached"
+    : networkWarning
+    ? "Wrong network"
+    : balanceWarning
+    ? "Not enough STX"
     : canEnterLeaderboard
     ? `Mint & enter board · ${feeStx} STX`
     : `Mint score NFT · ${feeStx} STX`;
@@ -307,6 +338,12 @@ export function SharedMintDialog({
               className="w-full text-xs"
             />
           </div>
+          {networkWarning && (
+            <p className="text-xs text-red-600 mb-2">⚠️ {networkWarning}</p>
+          )}
+          {!networkWarning && balanceWarning && (
+            <p className="text-xs text-red-600 mb-2">⚠️ {balanceWarning}</p>
+          )}
           {error && (
             <p className="text-xs text-red-600 mb-2">⚠️ {error}</p>
           )}
