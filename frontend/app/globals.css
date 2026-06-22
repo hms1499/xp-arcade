@@ -116,6 +116,18 @@ body {
   }
 }
 
+/* Desktop icons flow into a second column when they fill the viewport height,
+   like a real Windows desktop, instead of overflowing off-screen / behind the
+   taskbar. Taskbar is 28px; top inset is 16px (top-4); leave 8px breathing room. */
+.desktop-icon-grid {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 16px;
+  max-height: calc(100dvh - 16px - 28px - 8px);
+}
+
 @media (max-width: 900px), (max-height: 620px) {
   .desktop-showcase,
   .desktop-quick-play {
@@ -125,6 +137,8 @@ body {
 
 @media (max-width: 640px) {
   .desktop-icon-grid {
+    display: grid !important;
+    max-height: none !important;
     top: 12px !important;
     left: 8px !important;
     right: 8px !important;
