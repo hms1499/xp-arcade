@@ -9,6 +9,7 @@ import { unlockAudio, playBootChimeOnce } from "@/lib/sounds";
 import { useLeaderboardShowcase } from "@/hooks/useLeaderboardShowcase";
 import { DesktopLeaderboardShowcase } from "./DesktopLeaderboardShowcase";
 import { SettingsEffects } from "./SettingsEffects";
+import { WindowKeyboard } from "./WindowKeyboard";
 import {
   findTopTenChange,
   shortPlayer,
@@ -125,6 +126,7 @@ export function Desktop({ children }: { children: React.ReactNode }) {
     >
       <DesktopWallpaper />
       <SettingsEffects />
+      <WindowKeyboard />
       <div
         className="desktop-icon-grid absolute top-4 left-4"
         style={{ zIndex: 1 }}
