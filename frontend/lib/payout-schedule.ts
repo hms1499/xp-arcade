@@ -13,6 +13,24 @@ export function computePayoutUstx(total: number, rank: number): number {
   return Math.floor((total * 4) / 70);
 }
 
+export type SplitBand = {
+  label: string;
+  positions: number;
+  percentEach: number;
+};
+
+/**
+ * Human-readable view of the on-chain prize split for the "How It Works"
+ * explainer. Mirrors computePayoutUstx: ranks 1-3 take 20% each, ranks 4-10
+ * take 4/70 (~5.71%) each — together exactly 100% of the pool.
+ */
+export function prizeSplitBands(): SplitBand[] {
+  return [
+    { label: "1st – 3rd", positions: 3, percentEach: 20 },
+    { label: "4th – 10th", positions: 7, percentEach: (4 / 70) * 100 },
+  ];
+}
+
 export function buildPayoutRows(total: number, topTen: TopEntry[]): RankedPayout[] {
   return topTen
     .map((row, index) => ({ row, index }))

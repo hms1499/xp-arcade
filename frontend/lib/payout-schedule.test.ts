@@ -1,5 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { buildPayoutRows, computePayoutUstx } from "./payout-schedule";
+import {
+  buildPayoutRows,
+  computePayoutUstx,
+  prizeSplitBands,
+} from "./payout-schedule";
+
+describe("prizeSplitBands", () => {
+  it("describes the two on-chain bands", () => {
+    const [top, rest] = prizeSplitBands();
+    expect(top.positions).toBe(3);
+    expect(top.percentEach).toBe(20);
+    expect(rest.positions).toBe(7);
+    expect(rest.percentEach).toBeCloseTo(5.714, 2);
+  });
+
+  it("accounts for 100% of the pool across all ten positions", () => {
+    const total = prizeSplitBands().reduce(
+      (sum, b) => sum + b.positions * b.percentEach,
+      0,
+    );
+    expect(total).toBeCloseTo(100, 5);
+  });
+});
 
 describe("computePayoutUstx", () => {
   it("uses 20% for ranks 1-3 and 4/70 for ranks 4-10", () => {
