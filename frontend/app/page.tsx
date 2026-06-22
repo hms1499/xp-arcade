@@ -14,6 +14,7 @@ import { SeasonAdminWindow } from "@/components/windows/SeasonAdminWindow";
 import { PlayerProfileWindow } from "@/components/windows/PlayerProfileWindow";
 import { BrowserWindow } from "@/components/windows/BrowserWindow";
 import { ControlPanelWindow } from "@/components/windows/ControlPanelWindow";
+import { HowItWorksWindow } from "@/components/windows/HowItWorksWindow";
 import { Balloons } from "@/components/dialogs/BalloonNotification";
 
 export default function Home() {
@@ -34,6 +35,7 @@ export default function Home() {
         <PlayerProfileWindow />
         <BrowserWindow />
         <ControlPanelWindow />
+        <HowItWorksWindow />
         <Balloons />
       </Desktop>
     </BootScreen>

@@ -185,6 +185,11 @@ export function StartMenu({
           />
 
           <MenuItem
+            icon="❔"
+            label="How It Works"
+            onClick={() => { openWin("how-it-works"); onClose(); }}
+          />
+          <MenuItem
             icon="⚙️"
             label="Control Panel"
             onClick={() => { openWin("control-panel"); onClose(); }}

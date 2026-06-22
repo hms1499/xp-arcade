@@ -11,6 +11,7 @@ export type WindowType =
   | "season-admin"
   | "player-profile"
   | "control-panel"
+  | "how-it-works"
   | "browser";
 
 export type WindowPayload = {
