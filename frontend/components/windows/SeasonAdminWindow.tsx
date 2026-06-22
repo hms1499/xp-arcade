@@ -13,6 +13,7 @@ import {
   type TopEntry,
 } from "@/lib/contract-calls";
 import { buildPayoutRows } from "@/lib/payout-schedule";
+import { humanizeContractError, isUserCancellation } from "@/lib/tx-errors";
 import { useToasts } from "@/state/toasts";
 import { watchTx } from "@/lib/tx-tracker";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
@@ -151,7 +152,8 @@ export function SeasonAdminWindow() {
         }
       });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "End season failed");
+      const msg = e instanceof Error ? e.message : "End season failed";
+      setError(isUserCancellation(msg) ? null : humanizeContractError(msg));
     } finally {
       setBusyEnd(false);
     }
