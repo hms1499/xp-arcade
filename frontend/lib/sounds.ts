@@ -2,6 +2,16 @@
 
 let ctx: AudioContext | null = null;
 let bootChimePlayed = false;
+let muted = false;
+
+/** Silence (or unsilence) all UI sounds. Driven by the settings store. */
+export function setSoundMuted(value: boolean) {
+  muted = value;
+}
+
+export function isSoundMuted(): boolean {
+  return muted;
+}
 
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -22,6 +32,7 @@ function tone(
   gain = 0.15,
   startDelay = 0,
 ) {
+  if (muted) return;
   const ac = getCtx();
   if (!ac) return;
   const osc = ac.createOscillator();

@@ -1,5 +1,30 @@
-import { describe, it, expect } from "vitest";
-import { playEat, playBootChimeOnce } from "@/lib/sounds";
+import { describe, it, expect, afterEach } from "vitest";
+import {
+  playEat,
+  playBootChimeOnce,
+  setSoundMuted,
+  isSoundMuted,
+} from "@/lib/sounds";
+
+describe("sound mute", () => {
+  afterEach(() => setSoundMuted(false));
+
+  it("is off by default", () => {
+    expect(isSoundMuted()).toBe(false);
+  });
+
+  it("setSoundMuted toggles the muted flag", () => {
+    setSoundMuted(true);
+    expect(isSoundMuted()).toBe(true);
+    setSoundMuted(false);
+    expect(isSoundMuted()).toBe(false);
+  });
+
+  it("playing a sound while muted never throws", () => {
+    setSoundMuted(true);
+    expect(() => playEat()).not.toThrow();
+  });
+});
 
 describe("sounds — AudioContext safety", () => {
   it("invoking a sound never throws when AudioContext is unavailable", () => {
