@@ -2,8 +2,10 @@
 import { useEffect, useState } from "react";
 import { stacks } from "@/lib/stacks";
 import { getLastTokenId } from "@/lib/contract-calls";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 export function AboutDialog({ onClose }: { onClose: () => void }) {
+  const ref = useFocusTrap<HTMLDivElement>(onClose);
   const [totalNfts, setTotalNfts] = useState<number | null>(null);
   const contractId = stacks.contractAddress
     ? `${stacks.contractAddress}.${stacks.contractName}`
@@ -30,7 +32,12 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div
+      ref={ref}
+      tabIndex={-1}
       className="window"
+      role="dialog"
+      aria-modal="true"
+      aria-label="About XP Arcade"
       style={{
         position: "fixed",
         top: "50%",

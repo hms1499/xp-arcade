@@ -1,4 +1,5 @@
 "use client";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 const STEPS: { n: number; emoji: string; label: string; body: string }[] = [
   { n: 1, emoji: "🎯", label: "PLAY", body: "6 retro games" },
@@ -18,8 +19,11 @@ export function WelcomeDialog({
   onPlay: () => void;
   onClose: () => void;
 }) {
+  const ref = useFocusTrap<HTMLDivElement>(onClose);
   return (
     <div
+      ref={ref}
+      tabIndex={-1}
       className="window"
       role="dialog"
       aria-modal="true"
