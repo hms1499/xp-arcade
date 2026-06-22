@@ -28,7 +28,10 @@ export function getFocusable(container: HTMLElement): HTMLElement[] {
 export function useFocusTrap<T extends HTMLElement>(onEscape?: () => void) {
   const ref = useRef<T>(null);
   const onEscapeRef = useRef(onEscape);
-  onEscapeRef.current = onEscape;
+
+  useEffect(() => {
+    onEscapeRef.current = onEscape;
+  }, [onEscape]);
 
   useEffect(() => {
     const container = ref.current;
