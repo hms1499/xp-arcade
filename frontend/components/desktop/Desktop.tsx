@@ -169,6 +169,11 @@ export function Desktop({ children }: { children: React.ReactNode }) {
           emoji="🌐"
           onOpen={() => open("browser")}
         />
+        <DesktopIcon
+          label="Control Panel"
+          emoji="⚙️"
+          onOpen={() => open("control-panel")}
+        />
       </div>
       {!quickPlayClosed && (
         <QuickPlay

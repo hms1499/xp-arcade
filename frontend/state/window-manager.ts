@@ -10,6 +10,7 @@ export type WindowType =
   | "mynfts"
   | "season-admin"
   | "player-profile"
+  | "control-panel"
   | "browser";
 
 export type WindowPayload = {

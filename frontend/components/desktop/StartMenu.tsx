@@ -185,6 +185,11 @@ export function StartMenu({
           />
 
           <MenuItem
+            icon="⚙️"
+            label="Control Panel"
+            onClick={() => { openWin("control-panel"); onClose(); }}
+          />
+          <MenuItem
             icon="👋"
             label="Welcome"
             onClick={() => {
