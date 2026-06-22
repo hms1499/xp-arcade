@@ -1,5 +1,83 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { isWindowActive, useWindows, type WindowEntry } from "./window-manager";
+import {
+  cascadePosition,
+  isUtilityType,
+  isWindowActive,
+  useWindows,
+  type WindowEntry,
+} from "./window-manager";
+
+describe("cascadePosition", () => {
+  it("starts at the top-left anchor for the first window", () => {
+    expect(cascadePosition(0)).toEqual({ x: 100, y: 80 });
+  });
+
+  it("steps down-right for each subsequent window", () => {
+    expect(cascadePosition(1)).toEqual({ x: 124, y: 104 });
+  });
+
+  it("wraps back so it never marches off-screen", () => {
+    expect(cascadePosition(8)).toEqual(cascadePosition(0));
+  });
+});
+
+describe("isUtilityType", () => {
+  it("treats non-game, non-browser windows as utilities", () => {
+    expect(isUtilityType("highscore")).toBe(true);
+    expect(isUtilityType("control-panel")).toBe(true);
+  });
+
+  it("excludes games and the browser", () => {
+    expect(isUtilityType("game-snake")).toBe(false);
+    expect(isUtilityType("browser")).toBe(false);
+  });
+});
+
+describe("window position memory", () => {
+  beforeEach(() => {
+    useWindows.setState({ windows: [], topZ: 10, lastPos: {} });
+  });
+
+  it("reopens a window where the user last moved it", () => {
+    useWindows.getState().open("highscore");
+    const id = useWindows.getState().windows[0].id;
+    useWindows.getState().move(id, 333, 222);
+    useWindows.getState().close(id);
+
+    useWindows.getState().open("highscore");
+    const win = useWindows
+      .getState()
+      .windows.find((w) => w.type === "highscore")!;
+    expect(win.x).toBe(333);
+    expect(win.y).toBe(222);
+  });
+});
+
+describe("closeTopWindowIfUtility", () => {
+  beforeEach(() => {
+    useWindows.setState({ windows: [], topZ: 10, lastPos: {} });
+  });
+
+  it("closes the topmost window when it is a utility", () => {
+    useWindows.getState().open("highscore");
+    useWindows.getState().closeTopWindowIfUtility();
+    expect(useWindows.getState().windows).toHaveLength(0);
+  });
+
+  it("leaves a game on top untouched (it handles Escape itself)", () => {
+    useWindows.getState().open("highscore");
+    useWindows.getState().open("game-snake"); // now on top
+    useWindows.getState().closeTopWindowIfUtility();
+    const types = useWindows.getState().windows.map((w) => w.type);
+    expect(types).toContain("game-snake");
+    expect(types).toContain("highscore");
+  });
+
+  it("is a no-op when nothing is open", () => {
+    useWindows.getState().closeTopWindowIfUtility();
+    expect(useWindows.getState().windows).toHaveLength(0);
+  });
+});
 
 function entry(partial: Partial<WindowEntry> = {}): WindowEntry {
   return {
