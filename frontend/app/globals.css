@@ -265,6 +265,17 @@ body {
   .desktop-fade-in  { animation: none !important; }
 }
 
+/* Manual reduced-motion toggle (Control Panel). Mirrors the OS-level media
+   query for users who want to opt in regardless of their system setting. */
+body.reduce-motion *,
+body.reduce-motion *::before,
+body.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
 @keyframes window-open {
   from { transform: scale(0.92); opacity: 0; }
   to   { transform: scale(1);    opacity: 1; }
