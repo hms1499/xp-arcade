@@ -150,6 +150,11 @@ export function SharedMintDialog({
   const chain = stacks.networkName;
   const isMintDisabled = busy || mintsRemaining === 0;
   const canEnterLeaderboard = goal?.topTenReady === true;
+  // A timeout may still confirm, so only hard on-chain failures offer a retry.
+  const isHardFailure =
+    mintStatus === "abort_by_response" ||
+    mintStatus === "abort_by_post_condition" ||
+    mintStatus === "failed";
   const mintButtonLabel = busy
     ? "Opening wallet..."
     : mintsRemaining === 0
@@ -369,6 +374,18 @@ export function SharedMintDialog({
             <button onClick={onPlayAgain} style={PRIMARY_ACTION}>
               Play Again
             </button>
+            {isHardFailure && (
+              <button
+                onClick={() => {
+                  setTxId(null);
+                  setError(null);
+                  setMintedTokenId(null);
+                }}
+                style={SECONDARY_ACTION}
+              >
+                Try mint again
+              </button>
+            )}
             {mintStatus === "success" && (
               <button
                 onClick={() => openWindow("mynfts", { initialGame: gameId })}
