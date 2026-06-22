@@ -20,6 +20,7 @@ import { topTenEntryHint } from "@/lib/leaderboard-showcase";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
 import { markSeasonEnded, wasSeasonEnded } from "@/lib/ended-seasons";
 import { stacks } from "@/lib/stacks";
+import { networkMismatchWarning } from "@/lib/wallet-safety";
 
 const BADGE_BG: Record<number, string> = { 1: "#ffd700", 2: "#c0c0c0", 3: "#cd7f32" };
 
@@ -236,6 +237,7 @@ function LeaderboardTab({
   const claims =
     claimState.key === claimKey && claimState.checked ? claimState.claims : [];
   const claimsChecked = claimState.key === claimKey && claimState.checked;
+  const networkWarning = networkMismatchWarning(address, stacks.networkName);
 
   return (
     <div>
@@ -268,11 +270,16 @@ function LeaderboardTab({
               : "Loading live scores"}
             {myRank > 0 && <> · Your rank: #{myRank}</>}
           </span>
+          {networkWarning && claims.length > 0 && (
+            <span style={{ color: "#cc0000", marginTop: 2 }}>
+              ⚠️ {networkWarning}
+            </span>
+          )}
           {claims.map((c) =>
             c.claimOpen ? (
             <button
               key={c.season}
-              disabled={claimingSeason !== null}
+              disabled={claimingSeason !== null || !!networkWarning}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={async (e) => {
                 e.stopPropagation();
