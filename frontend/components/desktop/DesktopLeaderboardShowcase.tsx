@@ -98,6 +98,15 @@ export function DesktopLeaderboardShowcase({
         position: "absolute",
         top: 16,
         right: 16,
+        // Stay above the taskbar (28px) and below the top margin so the lower
+        // panels stay reachable instead of overflowing off-screen on shorter
+        // viewports. Scroll internally when the stack is taller than this.
+        maxHeight: "calc(100dvh - 16px - 28px - 8px)",
+        overflowY: "auto",
+        overflowX: "hidden",
+        // Room for the panels' 2px drop shadows inside the scroll box.
+        paddingRight: 4,
+        paddingBottom: 4,
         zIndex: 1,
         display: "flex",
         flexDirection: "column",
