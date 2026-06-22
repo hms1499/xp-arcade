@@ -123,8 +123,10 @@ test("a top-ten player sees a claim button for an unclaimed closed season", asyn
   const win = highScoreWindow(page);
   await expect(win).toBeVisible();
 
-  // rank #1 of a 3 STX pool -> 20% -> 0.60 STX, labelled with the closed season.
-  await expect(win.getByRole("button", { name: /Claim 0\.60 STX · Season 1/ })).toBeVisible();
+  // rank #1 of a 3 STX pool -> 20% -> up to 0.60 STX, labelled with the closed season.
+  await expect(
+    win.getByRole("button", { name: /Claim up to 0\.60 STX · Season 1/ }),
+  ).toBeVisible();
 });
 
 test("no claim button is shown once the player has claimed the season", async ({ page }) => {
