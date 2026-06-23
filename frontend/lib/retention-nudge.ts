@@ -99,3 +99,26 @@ export function seasonClosingCandidate(signals: NudgeSignals): Nudge | null {
     cta: { label: "View standings", target: { window: "highscore", gameId: best.gameId } },
   };
 }
+
+export function rankDropCandidate(signals: NudgeSignals): Nudge | null {
+  const { address, ranks, lastSeenRanks } = signals;
+  if (!address || !ranks || !lastSeenRanks) return null;
+  let best: { gameId: GameId; held: number } | null = null;
+  for (const id of GAME_IDS) {
+    const held = lastSeenRanks[id];
+    if (held == null || held < 1 || held > 10) continue; // must have held top-10
+    const now = ranks[id];
+    const dropped = now == null || now > held;            // off board or fell places
+    if (!dropped) continue;
+    if (!best || held < best.held) best = { gameId: id, held }; // best-held = most painful
+  }
+  if (!best) return null;
+  const game = GAMES[best.gameId].label;
+  return {
+    kind: "rank-drop",
+    icon: "⚠️",
+    title: "You've been bumped",
+    body: `Someone passed your ${game} score — reclaim your spot.`,
+    cta: { label: "Reclaim rank", target: { window: "highscore", gameId: best.gameId } },
+  };
+}

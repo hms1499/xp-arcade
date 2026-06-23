@@ -108,3 +108,65 @@ describe("seasonClosingCandidate", () => {
     expect(n?.cta.target).toEqual({ window: "highscore", gameId: "tetris" });
   });
 });
+
+import { rankDropCandidate } from "./retention-nudge";
+import type { LiveRanks } from "./player-ranks";
+
+const r = (over: Partial<LiveRanks>): LiveRanks => ({
+  snake: null, tetris: null, pacman: null,
+  breakout: null, minesweeper: null, solitaire: null, ...over,
+});
+
+describe("rankDropCandidate", () => {
+  it("fires when a held top-10 rank fell off the board", () => {
+    const n = rankDropCandidate(baseSignals({
+      address: "SP1",
+      lastSeenRanks: r({ snake: 3 }),
+      ranks: r({ snake: null }),
+    }));
+    expect(n?.kind).toBe("rank-drop");
+    expect(n?.cta.target).toEqual({ window: "highscore", gameId: "snake" });
+  });
+
+  it("fires when a held rank dropped places (3 → 5)", () => {
+    const n = rankDropCandidate(baseSignals({
+      address: "SP1",
+      lastSeenRanks: r({ snake: 3 }),
+      ranks: r({ snake: 5 }),
+    }));
+    expect(n?.kind).toBe("rank-drop");
+  });
+
+  it("does not fire when rank improved (3 → 2)", () => {
+    expect(rankDropCandidate(baseSignals({
+      address: "SP1",
+      lastSeenRanks: r({ snake: 3 }),
+      ranks: r({ snake: 2 }),
+    }))).toBeNull();
+  });
+
+  it("does not fire without an address", () => {
+    expect(rankDropCandidate(baseSignals({
+      address: null,
+      lastSeenRanks: r({ snake: 3 }),
+      ranks: r({ snake: 9 }),
+    }))).toBeNull();
+  });
+
+  it("does not fire without a prior snapshot", () => {
+    expect(rankDropCandidate(baseSignals({
+      address: "SP1",
+      lastSeenRanks: null,
+      ranks: r({ snake: 9 }),
+    }))).toBeNull();
+  });
+
+  it("picks the most painful loss (best previously-held rank)", () => {
+    const n = rankDropCandidate(baseSignals({
+      address: "SP1",
+      lastSeenRanks: r({ snake: 6, tetris: 2 }),
+      ranks: r({ snake: null, tetris: null }),
+    }));
+    expect(n?.cta.target).toEqual({ window: "highscore", gameId: "tetris" });
+  });
+});
