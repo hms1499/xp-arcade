@@ -1,4 +1,5 @@
 import type { GameId } from "./game-registry";
+import { GAMES } from "./game-registry";
 import type { StreakView } from "./daily-challenge";
 import type { LiveRanks } from "./player-ranks";
 import type { Countdown } from "./season-countdown";
@@ -60,4 +61,17 @@ export function shownTodayMap(
     if (day === today) out[kind as NudgeKind] = true;
   }
   return out;
+}
+
+export function streakRiskCandidate(signals: NudgeSignals): Nudge | null {
+  const { streak, dailyGame } = signals;
+  if (streak.currentStreak <= 0 || streak.completedToday) return null;
+  const game = GAMES[dailyGame].label;
+  return {
+    kind: "streak-risk",
+    icon: "🔥",
+    title: "Keep your streak",
+    body: `${streak.currentStreak}-day streak — play today's ${game} challenge to keep it.`,
+    cta: { label: "Play now", target: { window: "game", gameId: dailyGame } },
+  };
 }
