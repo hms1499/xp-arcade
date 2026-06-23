@@ -15,7 +15,7 @@ export function ChallengeDialog({
   const ref = useFocusTrap<HTMLDivElement>(onDecline);
   const who = challenge.by ? shortAddress(challenge.by) : "A friend";
   const target = formatScoreValue(challenge.gameId as GameId, challenge.target);
-  const game = GAMES[challenge.gameId].label;
+  const game = GAMES[challenge.gameId]?.label ?? challenge.gameId;
 
   return (
     <div
