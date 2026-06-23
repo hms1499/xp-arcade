@@ -22,6 +22,9 @@ import { useToasts } from "@/state/toasts";
 import { WelcomeDialog } from "@/components/dialogs/WelcomeDialog";
 import { useWelcome } from "@/state/welcome";
 import { hasSeenWelcome, markWelcomeSeen } from "@/lib/welcome";
+import { ChallengeLoader } from "@/components/desktop/ChallengeLoader";
+import { ChallengeDialog } from "@/components/dialogs/ChallengeDialog";
+import { useChallenge } from "@/state/challenge";
 
 const GAME_IDS = Object.keys(GAMES) as GameId[];
 
@@ -48,6 +51,10 @@ export function Desktop({ children }: { children: React.ReactNode }) {
   const welcomeOpen = useWelcome((s) => s.isOpen);
   const openWelcome = useWelcome((s) => s.open);
   const closeWelcome = useWelcome((s) => s.close);
+  const challenge = useChallenge((s) => s.active);
+  const challengeStatus = useChallenge((s) => s.status);
+  const acceptChallenge = useChallenge((s) => s.accept);
+  const declineChallenge = useChallenge((s) => s.decline);
 
   useEffect(() => {
     if (!hasSeenWelcome()) openWelcome();
@@ -208,6 +215,17 @@ export function Desktop({ children }: { children: React.ReactNode }) {
             open(`game-${lastGame ?? "snake"}`);
           }}
           onClose={dismissWelcome}
+        />
+      )}
+      <ChallengeLoader />
+      {challengeStatus === "pending" && challenge && (
+        <ChallengeDialog
+          challenge={challenge}
+          onAccept={() => {
+            acceptChallenge();
+            open(`game-${challenge.gameId}`);
+          }}
+          onDecline={declineChallenge}
         />
       )}
       <Taskbar leaderboardSummaries={leaderboard.summaries} />

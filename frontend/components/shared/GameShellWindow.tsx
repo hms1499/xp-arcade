@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { type GameId, GAMES } from "@/lib/game-registry";
 import { useWindows } from "@/state/window-manager";
 import { useSessionStats } from "@/state/session-stats";
@@ -14,6 +14,10 @@ import {
 } from "@/lib/contract-calls";
 import { leaderboardGoal } from "@/lib/leaderboard-showcase";
 import { formatScoreValue } from "@/lib/score-format";
+import { ChallengeBanner } from "@/components/shared/ChallengeBanner";
+import { useChallenge } from "@/state/challenge";
+import { useToasts } from "@/state/toasts";
+import { playSuccess } from "@/lib/sounds";
 
 type GoalState = {
   rows: TopEntry[];
@@ -39,6 +43,20 @@ export function GameShellWindow({
   const openWindow = useWindows((s) => s.open);
   const sessionStats = useSessionStats((s) => s.byGame[gameId]);
   const address = useWallet((s) => s.address);
+  const challenge = useChallenge((s) => s.active);
+  const challengeStatus = useChallenge((s) => s.status);
+  const markMet = useChallenge((s) => s.markMet);
+  const pushToast = useToasts((s) => s.push);
+
+  const handleChallengeMet = useCallback(() => {
+    markMet();
+    playSuccess();
+    pushToast({
+      title: "Challenge crushed!",
+      body: `You beat the target in ${game.label}.`,
+      type: "success",
+    });
+  }, [markMet, pushToast, game]);
   const [goalState, setGoalState] = useState<GoalState>({
     rows: [],
     season: null,
@@ -206,6 +224,14 @@ export function GameShellWindow({
             Details
           </button>
         </div>
+        <ChallengeBanner
+          challenge={challenge}
+          status={challengeStatus}
+          gameId={gameId}
+          score={score}
+          sessionBest={sessionStats.bestScore}
+          onMet={handleChallengeMet}
+        />
         <div className="game-shell-stage p-2">{children}</div>
       </div>
     </Window>

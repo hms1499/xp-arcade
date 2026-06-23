@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { type GameId } from "@/lib/game-registry";
 import { scoreShareUrl, xIntentUrl } from "@/lib/share";
+import { buildChallengeUrl } from "@/lib/challenge-link";
+import { useWallet } from "@/state/wallet";
 
 export function ShareActions({
   gameId,
@@ -14,9 +16,18 @@ export function ShareActions({
 }) {
   const [copied, setCopied] = useState(false);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const address = useWallet((s) => s.address);
+  const [challengeCopied, setChallengeCopied] = useState(false);
+  const challengeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
       if (copiedTimer.current) clearTimeout(copiedTimer.current);
+    },
+    [],
+  );
+  useEffect(
+    () => () => {
+      if (challengeTimer.current) clearTimeout(challengeTimer.current);
     },
     [],
   );
@@ -36,6 +47,19 @@ export function ShareActions({
     }
   }
 
+  async function handleChallenge() {
+    try {
+      await navigator.clipboard.writeText(
+        buildChallengeUrl({ gameId, score, by: address ?? undefined }),
+      );
+      setChallengeCopied(true);
+      if (challengeTimer.current) clearTimeout(challengeTimer.current);
+      challengeTimer.current = setTimeout(() => setChallengeCopied(false), 2000);
+    } catch {
+      // clipboard unavailable — leave label as-is
+    }
+  }
+
   return (
     <>
       <button type="button" onClick={handleShareOnX}>
@@ -43,6 +67,9 @@ export function ShareActions({
       </button>
       <button type="button" onClick={handleCopy}>
         {copied ? "Copied!" : "Copy link"}
+      </button>
+      <button type="button" onClick={handleChallenge}>
+        {challengeCopied ? "Challenge copied!" : "Challenge a friend"}
       </button>
     </>
   );
