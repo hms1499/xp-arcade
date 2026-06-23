@@ -1,8 +1,9 @@
 import type { GameId } from "./game-registry";
-import { GAMES } from "./game-registry";
+import { GAMES, GAME_IDS } from "./game-registry";
 import type { StreakView } from "./daily-challenge";
 import type { LiveRanks } from "./player-ranks";
 import type { Countdown } from "./season-countdown";
+import { isCountdownUrgent, formatCountdown } from "./season-countdown";
 
 export type NudgeKind = "rank-drop" | "season-closing" | "streak-risk";
 
@@ -73,5 +74,28 @@ export function streakRiskCandidate(signals: NudgeSignals): Nudge | null {
     title: "Keep your streak",
     body: `${streak.currentStreak}-day streak — play today's ${game} challenge to keep it.`,
     cta: { label: "Play now", target: { window: "game", gameId: dailyGame } },
+  };
+}
+
+export function seasonClosingCandidate(signals: NudgeSignals): Nudge | null {
+  const { ranks, countdowns } = signals;
+  if (!ranks) return null;
+  let best: { gameId: GameId; c: Countdown; endsMs: number } | null = null;
+  for (const id of GAME_IDS) {
+    if (ranks[id] == null) continue;          // only games the player is on
+    const c = countdowns[id];
+    if (!c || !isCountdownUrgent(c)) continue;
+    const endsMs = "endsAt" in c ? c.endsAt.getTime() : Number.POSITIVE_INFINITY;
+    if (!best || endsMs < best.endsMs) best = { gameId: id, c, endsMs };
+  }
+  if (!best) return null;
+  const game = GAMES[best.gameId].label;
+  const when = formatCountdown(best.c);
+  return {
+    kind: "season-closing",
+    icon: "⏳",
+    title: "Season ending soon",
+    body: `${game} season closes ${when || "soon"}. Lock in your rank.`,
+    cta: { label: "View standings", target: { window: "highscore", gameId: best.gameId } },
   };
 }

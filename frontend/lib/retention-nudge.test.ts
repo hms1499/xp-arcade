@@ -67,3 +67,44 @@ describe("streakRiskCandidate", () => {
     }))).toBeNull();
   });
 });
+
+import { seasonClosingCandidate } from "./retention-nudge";
+import type { Countdown } from "./season-countdown";
+
+const urgent = (endsAt: Date): Countdown => ({
+  state: "live", endsAt, days: 0, hours: 5, minutes: 0, seconds: 0,
+});
+const notUrgent = (endsAt: Date): Countdown => ({
+  state: "live", endsAt, days: 3, hours: 0, minutes: 0, seconds: 0,
+});
+
+describe("seasonClosingCandidate", () => {
+  it("fires for an urgent countdown on a ranked game", () => {
+    const n = seasonClosingCandidate(baseSignals({
+      address: "SP1",
+      ranks: { snake: 2, tetris: null, pacman: null, breakout: null, minesweeper: null, solitaire: null },
+      countdowns: { snake: urgent(new Date(Date.now() + 5 * 3600_000)) },
+    }));
+    expect(n?.kind).toBe("season-closing");
+    expect(n?.cta.target).toEqual({ window: "highscore", gameId: "snake" });
+  });
+
+  it("does not fire when the countdown is not urgent", () => {
+    expect(seasonClosingCandidate(baseSignals({
+      address: "SP1",
+      ranks: { snake: 2, tetris: null, pacman: null, breakout: null, minesweeper: null, solitaire: null },
+      countdowns: { snake: notUrgent(new Date(Date.now() + 3 * 86400_000)) },
+    }))).toBeNull();
+  });
+
+  it("picks the soonest-ending urgent game when several qualify", () => {
+    const soon = new Date(Date.now() + 1 * 3600_000);
+    const later = new Date(Date.now() + 6 * 3600_000);
+    const n = seasonClosingCandidate(baseSignals({
+      address: "SP1",
+      ranks: { snake: 2, tetris: 5, pacman: null, breakout: null, minesweeper: null, solitaire: null },
+      countdowns: { snake: urgent(later), tetris: urgent(soon) },
+    }));
+    expect(n?.cta.target).toEqual({ window: "highscore", gameId: "tetris" });
+  });
+});
