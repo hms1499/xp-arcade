@@ -122,3 +122,16 @@ export function rankDropCandidate(signals: NudgeSignals): Nudge | null {
     cta: { label: "Reclaim rank", target: { window: "highscore", gameId: best.gameId } },
   };
 }
+
+export function selectNudge(signals: NudgeSignals): Nudge | null {
+  const candidates: Array<(s: NudgeSignals) => Nudge | null> = [
+    rankDropCandidate,      // priority 1
+    seasonClosingCandidate, // priority 2
+    streakRiskCandidate,    // priority 3
+  ];
+  for (const candidate of candidates) {
+    const nudge = candidate(signals);
+    if (nudge && !signals.shownToday[nudge.kind]) return nudge;
+  }
+  return null;
+}

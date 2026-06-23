@@ -170,3 +170,35 @@ describe("rankDropCandidate", () => {
     expect(n?.cta.target).toEqual({ window: "highscore", gameId: "tetris" });
   });
 });
+
+import { selectNudge } from "./retention-nudge";
+
+describe("selectNudge", () => {
+  const connected = baseSignals({
+    address: "SP1",
+    streak: { currentStreak: 4, bestStreak: 9, completedToday: false },
+    lastSeenRanks: r({ snake: 3 }),
+    ranks: r({ snake: 5 }),
+    countdowns: { snake: urgent(new Date(Date.now() + 3600_000)) },
+  });
+
+  it("prefers rank-drop over season-closing and streak-risk", () => {
+    expect(selectNudge(connected)?.kind).toBe("rank-drop");
+  });
+
+  it("falls to season-closing when rank-drop was shown today", () => {
+    expect(selectNudge({ ...connected, shownToday: { "rank-drop": true } })?.kind)
+      .toBe("season-closing");
+  });
+
+  it("falls to streak-risk when higher kinds were shown today", () => {
+    expect(selectNudge({
+      ...connected,
+      shownToday: { "rank-drop": true, "season-closing": true },
+    })?.kind).toBe("streak-risk");
+  });
+
+  it("returns null when nothing qualifies", () => {
+    expect(selectNudge(baseSignals())).toBeNull();
+  });
+});
