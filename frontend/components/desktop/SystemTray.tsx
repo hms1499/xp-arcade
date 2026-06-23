@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useWallet } from "@/state/wallet";
 import { useMintTx } from "@/state/mint-tx";
 import { WalletBalloon } from "./WalletBalloon";
+import { RetentionBalloon } from "./RetentionBalloon";
 import { stacks } from "@/lib/stacks";
 import { useWindows } from "@/state/window-manager";
 
@@ -247,6 +248,7 @@ export function SystemTray() {
         {now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
       </div>
       <WalletBalloon />
+      <RetentionBalloon />
     </div>
   );
 }
