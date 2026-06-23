@@ -4,6 +4,10 @@ export const LAST_SEEN_RANKS_KEY = "xp-arcade:last-ranks";
 
 type Stored = { address: string; ranks: LiveRanks };
 
+// NOTE: A null return is overloaded — it means BOTH "unranked in every game" AND
+// "no snapshot stored yet". Rank-drop detection relies on the stored snapshot being
+// complete; a future cache change that returns partial boards could produce false
+// "bumped" nudges if this ambiguity is not resolved upstream.
 export function loadLastSeenRanks(address: string): LiveRanks | null {
   if (typeof window === "undefined") return null;
   try {
