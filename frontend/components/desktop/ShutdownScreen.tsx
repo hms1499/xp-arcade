@@ -7,7 +7,7 @@ export function ShutdownScreen({ onWake }: { onWake: () => void }) {
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 80,
+        zIndex: 1700,
         background: "#000000",
         display: "flex",
         alignItems: "center",

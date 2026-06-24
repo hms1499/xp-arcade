@@ -82,7 +82,7 @@ export function DesktopContextMenu({
         position: "fixed",
         left: pos.x,
         top: pos.y,
-        zIndex: 60,
+        zIndex: 1500,
         listStyle: "none",
         margin: 0,
         padding: "2px",

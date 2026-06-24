@@ -42,10 +42,11 @@ export function SystemDialog({
     <div
       role="dialog"
       aria-modal="true"
+      aria-labelledby="system-dialog-title"
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 70,
+        zIndex: 1600,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -63,6 +64,7 @@ export function SystemDialog({
         }}
       >
         <div
+          id="system-dialog-title"
           style={{
             background: "linear-gradient(90deg, #000080, #1084d0)",
             color: "#ffffff",

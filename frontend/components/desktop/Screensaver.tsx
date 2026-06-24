@@ -18,7 +18,7 @@ export function Screensaver({ onWake }: { onWake: () => void }) {
     const reset = (l: Logo) => {
       l.x = (Math.random() - 0.5) * 2;
       l.y = (Math.random() - 0.5) * 2;
-      l.z = Math.random();
+      l.z = Math.random() * 0.98 + 0.02;
     };
     for (let i = 0; i < COUNT; i++) {
       const l = { x: 0, y: 0, z: 0 };
@@ -75,7 +75,7 @@ export function Screensaver({ onWake }: { onWake: () => void }) {
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 90,
+        zIndex: 1800,
         background: "#000000",
         cursor: "none",
       }}
