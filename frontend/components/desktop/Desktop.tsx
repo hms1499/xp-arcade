@@ -29,6 +29,9 @@ import { DesktopContextMenu } from "@/components/desktop/DesktopContextMenu";
 import { playMenuOpen } from "@/lib/sounds";
 import { SystemDialog } from "@/components/dialogs/SystemDialog";
 import { ShutdownScreen } from "@/components/desktop/ShutdownScreen";
+import { Screensaver } from "@/components/desktop/Screensaver";
+import { useIdle } from "@/hooks/useIdle";
+import { shouldShowScreensaver } from "@/lib/screensaver";
 
 const GAME_IDS = Object.keys(GAMES) as GameId[];
 
@@ -68,6 +71,19 @@ export function Desktop({ children }: { children: React.ReactNode }) {
     markWelcomeSeen();
     closeWelcome();
   };
+
+  const gameOpen = useWindows((s) =>
+    s.windows.some((w) => w.type.startsWith("game-") && !w.minimized),
+  );
+  const idle = useIdle(60000);
+  const reducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const screensaverOn = shouldShowScreensaver({
+    idle,
+    gameOpen,
+    reducedMotion: !!reducedMotion,
+  });
 
   const [shutdownStage, setShutdownStage] = useState<"idle" | "confirm" | "off">("idle");
   const [quickPlayClosed, setQuickPlayClosed] = useState(false);
@@ -275,6 +291,7 @@ export function Desktop({ children }: { children: React.ReactNode }) {
       {shutdownStage === "off" && (
         <ShutdownScreen onWake={() => setShutdownStage("idle")} />
       )}
+      {screensaverOn && <Screensaver onWake={() => { /* idle resets on the click via useIdle's pointerdown listener */ }} />}
       <Taskbar leaderboardSummaries={leaderboard.summaries} />
     </div>
   );
