@@ -27,6 +27,8 @@ import { ChallengeDialog } from "@/components/dialogs/ChallengeDialog";
 import { useChallenge } from "@/state/challenge";
 import { DesktopContextMenu } from "@/components/desktop/DesktopContextMenu";
 import { playMenuOpen } from "@/lib/sounds";
+import { SystemDialog } from "@/components/dialogs/SystemDialog";
+import { ShutdownScreen } from "@/components/desktop/ShutdownScreen";
 
 const GAME_IDS = Object.keys(GAMES) as GameId[];
 
@@ -67,6 +69,7 @@ export function Desktop({ children }: { children: React.ReactNode }) {
     closeWelcome();
   };
 
+  const [shutdownStage, setShutdownStage] = useState<"idle" | "confirm" | "off">("idle");
   const [quickPlayClosed, setQuickPlayClosed] = useState(false);
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [iconKey, setIconKey] = useState(0);
@@ -84,6 +87,12 @@ export function Desktop({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener("xp-arcade:last-game-change", onChange);
     return () => window.removeEventListener("xp-arcade:last-game-change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const onReq = () => setShutdownStage("confirm");
+    window.addEventListener("xp-arcade:shutdown", onReq);
+    return () => window.removeEventListener("xp-arcade:shutdown", onReq);
   }, []);
 
   useEffect(() => {
@@ -251,6 +260,20 @@ export function Desktop({ children }: { children: React.ReactNode }) {
           onArrangeIcons={() => setIconKey((k) => k + 1)}
           onProperties={() => open("control-panel")}
         />
+      )}
+      {shutdownStage === "confirm" && (
+        <SystemDialog
+          kind="warning"
+          title="Shut Down Windows"
+          message="Are you sure you want to shut down XP Arcade?"
+          okLabel="Yes"
+          cancelLabel="No"
+          onOk={() => setShutdownStage("off")}
+          onCancel={() => setShutdownStage("idle")}
+        />
+      )}
+      {shutdownStage === "off" && (
+        <ShutdownScreen onWake={() => setShutdownStage("idle")} />
       )}
       <Taskbar leaderboardSummaries={leaderboard.summaries} />
     </div>

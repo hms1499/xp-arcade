@@ -277,7 +277,10 @@ export function StartMenu({
           <MenuItem
             icon="⏻"
             label="Shut Down"
-            onClick={() => location.reload()}
+            onClick={() => {
+              window.dispatchEvent(new Event("xp-arcade:shutdown"));
+              onClose();
+            }}
           />
         </ul>
       </div>
