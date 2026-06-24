@@ -25,6 +25,8 @@ import { hasSeenWelcome, markWelcomeSeen } from "@/lib/welcome";
 import { ChallengeLoader } from "@/components/desktop/ChallengeLoader";
 import { ChallengeDialog } from "@/components/dialogs/ChallengeDialog";
 import { useChallenge } from "@/state/challenge";
+import { DesktopContextMenu } from "@/components/desktop/DesktopContextMenu";
+import { playMenuOpen } from "@/lib/sounds";
 
 const GAME_IDS = Object.keys(GAMES) as GameId[];
 
@@ -66,6 +68,8 @@ export function Desktop({ children }: { children: React.ReactNode }) {
   };
 
   const [quickPlayClosed, setQuickPlayClosed] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [iconKey, setIconKey] = useState(0);
   const previousRowsRef = useRef<Record<GameId, TopEntry[]> | null>(null);
   const [lastGame, setLastGame] = useState<GameId | null>(() => {
     if (typeof window === "undefined") return null;
@@ -132,9 +136,19 @@ export function Desktop({ children }: { children: React.ReactNode }) {
       style={{ background: "#00030c" }}
     >
       <DesktopWallpaper />
+      <div
+        className="desktop-bg-layer"
+        onContextMenu={(e) => {
+          e.preventDefault();
+          playMenuOpen();
+          setMenuPos({ x: e.clientX, y: e.clientY });
+        }}
+        style={{ position: "absolute", inset: 0, zIndex: 0 }}
+      />
       <SettingsEffects />
       <WindowKeyboard />
       <div
+        key={iconKey}
         className="desktop-icon-grid absolute top-4 left-4"
         style={{ zIndex: 1 }}
       >
@@ -226,6 +240,16 @@ export function Desktop({ children }: { children: React.ReactNode }) {
             open(`game-${challenge.gameId}`);
           }}
           onDecline={declineChallenge}
+        />
+      )}
+      {menuPos && (
+        <DesktopContextMenu
+          x={menuPos.x}
+          y={menuPos.y}
+          onClose={() => setMenuPos(null)}
+          onRefresh={() => setIconKey((k) => k + 1)}
+          onArrangeIcons={() => setIconKey((k) => k + 1)}
+          onProperties={() => open("control-panel")}
         />
       )}
       <Taskbar leaderboardSummaries={leaderboard.summaries} />

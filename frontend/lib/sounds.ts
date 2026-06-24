@@ -73,6 +73,11 @@ export function playBalloon() {
   tone(1318, 0.12, "sine", 0.10, 0.05); // E6
 }
 
+/** Soft tick when a context menu opens. */
+export function playMenuOpen() {
+  tone(660, 0.03, "square", 0.06);
+}
+
 /** Short success chime for confirmed NFT */
 export function playSuccess() {
   tone(523, 0.08, "triangle", 0.12, 0.0);
