@@ -26,7 +26,10 @@ export function SystemDialog({
   onCancel: () => void;
 }) {
   useEffect(() => {
-    playBalloon(); // the "ding"; no-op when muted
+    playBalloon(); // ding once on open; no-op when muted
+  }, []);
+
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onCancel();
       if (e.key === "Enter") onOk();
