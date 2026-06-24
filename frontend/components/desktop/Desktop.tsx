@@ -25,6 +25,13 @@ import { hasSeenWelcome, markWelcomeSeen } from "@/lib/welcome";
 import { ChallengeLoader } from "@/components/desktop/ChallengeLoader";
 import { ChallengeDialog } from "@/components/dialogs/ChallengeDialog";
 import { useChallenge } from "@/state/challenge";
+import { DesktopContextMenu } from "@/components/desktop/DesktopContextMenu";
+import { playMenuOpen } from "@/lib/sounds";
+import { SystemDialog } from "@/components/dialogs/SystemDialog";
+import { ShutdownScreen } from "@/components/desktop/ShutdownScreen";
+import { Screensaver } from "@/components/desktop/Screensaver";
+import { useIdle } from "@/hooks/useIdle";
+import { shouldShowScreensaver } from "@/lib/screensaver";
 
 const GAME_IDS = Object.keys(GAMES) as GameId[];
 
@@ -65,7 +72,23 @@ export function Desktop({ children }: { children: React.ReactNode }) {
     closeWelcome();
   };
 
+  const gameOpen = useWindows((s) =>
+    s.windows.some((w) => w.type.startsWith("game-") && !w.minimized),
+  );
+  const idle = useIdle(60000);
+  const reducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const screensaverOn = shouldShowScreensaver({
+    idle,
+    gameOpen,
+    reducedMotion: !!reducedMotion,
+  });
+
+  const [shutdownStage, setShutdownStage] = useState<"idle" | "confirm" | "off">("idle");
   const [quickPlayClosed, setQuickPlayClosed] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [iconKey, setIconKey] = useState(0);
   const previousRowsRef = useRef<Record<GameId, TopEntry[]> | null>(null);
   const [lastGame, setLastGame] = useState<GameId | null>(() => {
     if (typeof window === "undefined") return null;
@@ -80,6 +103,12 @@ export function Desktop({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener("xp-arcade:last-game-change", onChange);
     return () => window.removeEventListener("xp-arcade:last-game-change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const onReq = () => setShutdownStage("confirm");
+    window.addEventListener("xp-arcade:shutdown", onReq);
+    return () => window.removeEventListener("xp-arcade:shutdown", onReq);
   }, []);
 
   useEffect(() => {
@@ -132,9 +161,19 @@ export function Desktop({ children }: { children: React.ReactNode }) {
       style={{ background: "#00030c" }}
     >
       <DesktopWallpaper />
+      <div
+        className="desktop-bg-layer"
+        onContextMenu={(e) => {
+          e.preventDefault();
+          playMenuOpen();
+          setMenuPos({ x: e.clientX, y: e.clientY });
+        }}
+        style={{ position: "absolute", inset: 0, zIndex: 0 }}
+      />
       <SettingsEffects />
       <WindowKeyboard />
       <div
+        key={iconKey}
         className="desktop-icon-grid absolute top-4 left-4"
         style={{ zIndex: 1 }}
       >
@@ -228,6 +267,31 @@ export function Desktop({ children }: { children: React.ReactNode }) {
           onDecline={declineChallenge}
         />
       )}
+      {menuPos && (
+        <DesktopContextMenu
+          x={menuPos.x}
+          y={menuPos.y}
+          onClose={() => setMenuPos(null)}
+          onRefresh={() => setIconKey((k) => k + 1)}
+          onArrangeIcons={() => setIconKey((k) => k + 1)}
+          onProperties={() => open("control-panel")}
+        />
+      )}
+      {shutdownStage === "confirm" && (
+        <SystemDialog
+          kind="warning"
+          title="Shut Down Windows"
+          message="Are you sure you want to shut down XP Arcade?"
+          okLabel="Yes"
+          cancelLabel="No"
+          onOk={() => setShutdownStage("off")}
+          onCancel={() => setShutdownStage("idle")}
+        />
+      )}
+      {shutdownStage === "off" && (
+        <ShutdownScreen onWake={() => setShutdownStage("idle")} />
+      )}
+      {screensaverOn && <Screensaver onWake={() => { /* idle resets on the click via useIdle's pointerdown listener */ }} />}
       <Taskbar leaderboardSummaries={leaderboard.summaries} />
     </div>
   );
