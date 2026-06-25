@@ -16,7 +16,6 @@ import {
 } from "@/lib/wallet-safety";
 import { recordScore } from "@/lib/high-score";
 import { GAMES, type GameId } from "@/lib/game-registry";
-import { formatScore } from "@/lib/score-format";
 import { useWindows } from "@/state/window-manager";
 import { stacks } from "@/lib/stacks";
 import {
@@ -30,6 +29,7 @@ import {
   type LeaderboardGoal,
 } from "@/lib/leaderboard-showcase";
 import { resolveMintedTokenId } from "@/lib/share";
+import { GameOverSummary } from "@/components/shared/GameOverSummary";
 
 const STATUS_LABEL: Record<TxStatus, string> = {
   pending: "Submitted · confirming on-chain",
@@ -221,34 +221,14 @@ export function SharedMintDialog({
 
   return (
     <div className="text-sm mint-dialog-enter">
-      {isTopScore && (
-        <div
-          className="mb-2 text-center"
-          style={{
-            background: "linear-gradient(90deg,#fff4b0,#ffd86b,#fff4b0)",
-            border: "1px solid #c79a2e",
-            color: "#7a5c00",
-            fontWeight: "bold",
-            padding: "4px 6px",
-            fontSize: 12,
-            letterSpacing: 0.5,
-          }}
-        >
-          🏆 NEW HIGH SCORE — top-10 on this season&apos;s leaderboard!
-        </div>
-      )}
-      <p className="mb-2">
-        <b>Game Over</b> - Score: <b>{formatScore(gameId, score)}</b>
-        <span className="block text-xs mt-1">
-          {hs.isNewRecord ? (
-            <b style={{ color: "#007700" }}>New personal best</b>
-          ) : (
-            <span className="text-gray-500">
-              Personal best: <b>{formatScore(gameId, hs.best)}</b>
-            </span>
-          )}
-        </span>
-      </p>
+      <GameOverSummary
+        gameId={gameId}
+        score={score}
+        isTopScore={isTopScore}
+        isNewRecord={hs.isNewRecord}
+        best={hs.best}
+        goal={goal}
+      />
 
       <div
         className="mb-3 text-xs"
@@ -260,7 +240,7 @@ export function SharedMintDialog({
         }}
       >
         <b>Play again is free.</b>{" "}
-        {goal ? goal.primary : "Mint only if you want this exact score saved as an NFT."}
+        Mint only if you want this exact score saved as an NFT.
         <span className="block text-gray-500 mt-1">
           Mint cost: <b>{feeStx} STX</b>. Scores are public on-chain.
         </span>
@@ -272,22 +252,6 @@ export function SharedMintDialog({
             {mintsRemaining === 0
               ? "Mint limit reached for this season (10/10)"
               : `${mintsRemaining} mint${mintsRemaining === 1 ? "" : "s"} remaining this season`}
-          </span>
-        )}
-        {goal && (
-          <span
-            className="block mt-2"
-            style={{
-              color:
-                goal.tone === "success"
-                  ? "#007700"
-                  : goal.tone === "warning"
-                  ? "#8a5a00"
-                  : "#555",
-              fontWeight: goal.tone === "success" ? "bold" : "normal",
-            }}
-          >
-            {goal.secondary}
           </span>
         )}
         {riskReport && riskReport.level !== "low" && (
