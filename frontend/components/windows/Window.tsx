@@ -49,6 +49,8 @@ export function Window({
 
   return (
     <div
+      role="dialog"
+      aria-labelledby={`${id}-title`}
       className={`window window-opening${closing ? " window-closing" : ""}`}
       style={
         win.maximized || compactViewport
@@ -116,7 +118,7 @@ export function Window({
           window.addEventListener("mouseup", onUp);
         }}
       >
-        <div className="title-bar-text">{title}</div>
+        <div id={`${id}-title`} className="title-bar-text">{title}</div>
         <div className="title-bar-controls">
           <button aria-label="Minimize" onClick={() => minimize(id)} />
           {!compactViewport && (

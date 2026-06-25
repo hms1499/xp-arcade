@@ -342,6 +342,21 @@ input[type='email'], input[type='search'], textarea {
   cursor: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='20'%3E%3Cline x1='2' y1='1' x2='9' y2='1' stroke='black' stroke-width='1.5'/%3E%3Cline x1='5.5' y1='1' x2='5.5' y2='19' stroke='black' stroke-width='1.5'/%3E%3Cline x1='2' y1='19' x2='9' y2='19' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E") 5 10, text !important;
 }
 
+/* ── Keyboard focus visibility ─────────────────────────────────── */
+/* 98.css gives buttons a black dotted :focus ring. Two places need an
+   override for keyboard users: desktop icons (black dots vanish on the
+   dark wallpaper) and title-bar controls (98.css sets outline:none). We
+   scope to :focus-visible so mouse clicks stay clean. */
+.desktop-icon-grid button:focus-visible {
+  outline: 1px dotted #ffffff;
+  outline-offset: -2px;
+}
+
+.title-bar-controls button:focus-visible {
+  outline: 1px dotted #000000;
+  outline-offset: -3px;
+}
+
 /* ---- Arcade Champion ---- */
 .champion-screen {
   position: relative;
