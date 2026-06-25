@@ -3,8 +3,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { type GameId } from "@/lib/game-registry";
 import { getTopTenForGame } from "@/lib/contract-calls";
 import { useMintTx } from "@/state/mint-tx";
-import { useSessionStats } from "@/state/session-stats";
-import { useDailyChallenge } from "@/state/daily-challenge";
+import { recordFinishedRun } from "@/lib/record-run";
 import { assessScoreRisk, type ScoreRiskReport } from "@/lib/score-risk";
 
 export function useGameSession(gameId: GameId) {
@@ -34,8 +33,7 @@ export function useGameSession(gameId: GameId) {
       setFinalScore(s);
       setShowMint(true);
       setRiskReport(assessScoreRisk({ gameId, score: s, durationMs }));
-      useSessionStats.getState().recordResult(gameId, s);
-      useDailyChallenge.getState().recordPlay(gameId, s);
+      recordFinishedRun(gameId, s);
       try {
         const top = await getTopTenForGame(gameId);
         const min =
