@@ -7,6 +7,7 @@ import { useIsOwner } from "@/lib/owner";
 import { GAMES } from "@/lib/game-registry";
 import { DESKTOP_THEMES, useDesktopTheme } from "@/state/desktop-theme";
 import { useWelcome } from "@/state/welcome";
+import { StacksLogo } from "@/components/shared/StacksLogo";
 
 const menuItemBase: React.CSSProperties = {
   width: "100%",
@@ -266,7 +267,7 @@ export function StartMenu({
             </>
           ) : (
             <MenuItem
-              icon="🔌"
+              icon={<StacksLogo size={18} />}
               label="Connect Wallet"
               onClick={() => {
                 void useWallet.getState().connect();

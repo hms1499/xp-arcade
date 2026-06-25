@@ -6,6 +6,8 @@ import { WalletBalloon } from "./WalletBalloon";
 import { RetentionBalloon } from "./RetentionBalloon";
 import { stacks } from "@/lib/stacks";
 import { useWindows } from "@/state/window-manager";
+import { StacksLogo } from "@/components/shared/StacksLogo";
+import { WALLET_CONNECT } from "@/lib/wallet-connect-copy";
 
 const sunken: CSSProperties = {
   border: "1px solid",
@@ -197,11 +199,12 @@ export function SystemTray() {
               type="button"
               className="tray-wallet-button"
               onClick={connect}
-              aria-label="Connect wallet"
+              aria-label={`${WALLET_CONNECT.label} — ${WALLET_CONNECT.tagline}`}
+              title={`${WALLET_CONNECT.label} — ${WALLET_CONNECT.tagline}`}
               style={{ background: "none", border: "none", cursor: "default", fontSize: 11, fontFamily: "inherit" }}
             >
-              <span className="tray-wallet-icon">▣</span>
-              <span className="tray-wallet-label">Connect Wallet</span>
+              <span className="tray-wallet-icon"><StacksLogo size={14} /></span>
+              <span className="tray-wallet-label">{WALLET_CONNECT.label}</span>
             </button>
           )}
         </div>

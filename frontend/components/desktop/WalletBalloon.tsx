@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { useWallet } from "@/state/wallet";
 import { TrayBalloon } from "./TrayBalloon";
+import { StacksLogo } from "@/components/shared/StacksLogo";
+import { WALLET_CONNECT } from "@/lib/wallet-connect-copy";
 
 export function WalletBalloon() {
   const address = useWallet((s) => s.address);
@@ -34,10 +36,10 @@ export function WalletBalloon() {
 
   return (
     <TrayBalloon
-      icon="🦊"
-      title="Connect your wallet"
+      icon={<StacksLogo size={18} />}
+      title={WALLET_CONNECT.label}
       body="Save scores on-chain & mint NFTs"
-      ctaLabel="Connect Now"
+      ctaLabel={WALLET_CONNECT.label}
       onCta={connect}
       onDismiss={dismiss}
       ariaLabel="Dismiss wallet reminder"
