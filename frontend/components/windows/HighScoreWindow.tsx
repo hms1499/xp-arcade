@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useWindows, type WindowEntry } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
+import { StacksLogo } from "@/components/shared/StacksLogo";
 import { Window } from "@/components/windows/Window";
 import {
   getBestScoreForGame,
@@ -366,9 +367,9 @@ function LeaderboardTab({
               <button
                 type="button"
                 onClick={() => void useWallet.getState().connect()}
-                style={{ marginTop: 3, justifySelf: "start", fontSize: 10 }}
+                style={{ marginTop: 3, justifySelf: "start", fontSize: 10, display: "inline-flex", alignItems: "center", gap: 5 }}
               >
-                🔌 Connect wallet to check prizes
+                <StacksLogo size={12} /> Connect to check prizes
               </button>
             ) : (
               <span

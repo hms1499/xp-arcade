@@ -11,6 +11,7 @@ import { shortAddress } from "@/lib/stacks-address";
 import { stacks } from "@/lib/stacks";
 import { ShareActions } from "@/components/shared/ShareActions";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { StacksLogo } from "@/components/shared/StacksLogo";
 
 const GAME_BADGE_BG: Record<string, string> = {
   snake: "#d4edda",
@@ -257,10 +258,10 @@ export function MyNftsWindow() {
         )}
         {!address && (
           <EmptyState
-            emoji="💼"
-            title="Connect your wallet"
+            icon={<StacksLogo size={40} />}
+            title="Connect Wallet"
             body="Connect to view your Score NFT collection and claim prizes."
-            actionLabel="🔌 Connect Wallet"
+            actionLabel="Connect Wallet"
             onAction={() => void connect()}
           />
         )}

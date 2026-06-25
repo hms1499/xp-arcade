@@ -17,6 +17,7 @@ import {
 import { recordScore } from "@/lib/high-score";
 import { GAMES, type GameId } from "@/lib/game-registry";
 import { useWindows } from "@/state/window-manager";
+import { StacksLogo } from "@/components/shared/StacksLogo";
 import { stacks } from "@/lib/stacks";
 import {
   scoreRiskColor,
@@ -239,8 +240,11 @@ export function SharedMintDialog({
             <button onClick={onPlayAgain} style={PRIMARY_ACTION}>
               Play Again
             </button>
-            <button onClick={connect} style={SECONDARY_ACTION}>
-              Connect to Mint
+            <button
+              onClick={connect}
+              style={{ ...SECONDARY_ACTION, display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <StacksLogo size={13} /> Connect to Mint
             </button>
             <button onClick={onClose} style={TERTIARY_ACTION}>
               Close
