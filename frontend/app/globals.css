@@ -460,3 +460,38 @@ input[type='email'], input[type='search'], textarea {
   }
   .champion-confetti { display: none; }
 }
+
+/* ── Game-over milestone feedback ──────────────────────────────── */
+/* Reuses the championPop / championConfetti keyframes (already defined
+   above) so the mint dialog celebrates a top-10 run without new motion
+   primitives. Scoped wrapper + its own reduced-motion guard. */
+.gameover-banner {
+  animation: championPop 0.5s ease-out both;
+}
+
+.gameover-confetti {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.gameover-confetti span {
+  position: absolute;
+  top: -6px;
+  width: 5px;
+  height: 5px;
+  animation: championConfetti 1.6s linear forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gameover-banner {
+    animation: none !important;
+  }
+  .gameover-confetti {
+    display: none;
+  }
+}
