@@ -361,24 +361,31 @@ function LeaderboardTab({
               </span>
             ),
           )}
-          {claims.length === 0 && (
-            <span
-              style={{
-                marginTop: 3,
-                justifySelf: "start",
-                fontSize: 10,
-                opacity: 0.8,
-              }}
-            >
-              {!address
-                ? "Connect wallet to check claimable prizes."
-                : !claimsChecked
-                ? "Checking claimable prizes..."
-                : season === 1
-                ? "Claiming opens after this season ends."
-                : "No claimable prizes for this game."}
-            </span>
-          )}
+          {claims.length === 0 &&
+            (!address ? (
+              <button
+                type="button"
+                onClick={() => void useWallet.getState().connect()}
+                style={{ marginTop: 3, justifySelf: "start", fontSize: 10 }}
+              >
+                🔌 Connect wallet to check prizes
+              </button>
+            ) : (
+              <span
+                style={{
+                  marginTop: 3,
+                  justifySelf: "start",
+                  fontSize: 10,
+                  opacity: 0.8,
+                }}
+              >
+                {!claimsChecked
+                  ? "Checking claimable prizes..."
+                  : season === 1
+                  ? "Claiming opens after this season ends."
+                  : "No claimable prizes for this game."}
+              </span>
+            ))}
         </div>
         <div style={{ display: "grid", gap: 2, textAlign: "right" }}>
           <span style={{ color: "#006400" }}>

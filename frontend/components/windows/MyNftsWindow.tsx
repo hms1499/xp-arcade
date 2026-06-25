@@ -56,6 +56,7 @@ function filterLabel(gameId: GameFilter) {
 export function MyNftsWindow() {
   const w = useWindows((s) => s.windows.find((win) => win.type === "mynfts"));
   const address = useWallet((s) => s.address);
+  const connect = useWallet((s) => s.connect);
   const [loadState, setLoadState] = useState<NftLoadState | null>(null);
   const payloadGame = w?.payload?.initialGame;
   const [gameFilterState, setGameFilterState] = useState<{
@@ -255,7 +256,13 @@ export function MyNftsWindow() {
           </>
         )}
         {!address && (
-          <p className="text-sm">Connect your wallet to see your NFTs.</p>
+          <EmptyState
+            emoji="💼"
+            title="Connect your wallet"
+            body="Connect to view your Score NFT collection and claim prizes."
+            actionLabel="🔌 Connect Wallet"
+            onAction={() => void connect()}
+          />
         )}
         {address && nfts === null && !error && (
           <div
