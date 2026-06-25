@@ -1,9 +1,10 @@
 "use client";
+import type { ReactNode } from "react";
 
 export function TrayBalloon({
   icon, title, body, ctaLabel, onCta, onDismiss, ariaLabel,
 }: {
-  icon: string;
+  icon: ReactNode;
   title: string;
   body: string;
   ctaLabel: string;

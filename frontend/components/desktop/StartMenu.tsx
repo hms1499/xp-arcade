@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { useWindows } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
 import { AboutDialog } from "@/components/dialogs/AboutDialog";
@@ -26,7 +26,7 @@ function MenuItem({
   label,
   onClick,
 }: {
-  icon: string;
+  icon: ReactNode;
   label: string;
   onClick: () => void;
 }) {

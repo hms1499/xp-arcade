@@ -1,13 +1,16 @@
 "use client";
+import type { ReactNode } from "react";
 
 export function EmptyState({
   emoji,
+  icon,
   title,
   body,
   actionLabel,
   onAction,
 }: {
-  emoji: string;
+  emoji?: string;
+  icon?: ReactNode;
   title: string;
   body: string;
   actionLabel?: string;
@@ -25,9 +28,15 @@ export function EmptyState({
         justifyItems: "center",
       }}
     >
-      <span aria-hidden="true" style={{ fontSize: 40, lineHeight: 1 }}>
-        {emoji}
-      </span>
+      {icon ? (
+        <span aria-hidden="true" style={{ lineHeight: 1 }}>
+          {icon}
+        </span>
+      ) : emoji ? (
+        <span aria-hidden="true" style={{ fontSize: 40, lineHeight: 1 }}>
+          {emoji}
+        </span>
+      ) : null}
       <p style={{ margin: 0, fontWeight: "bold", fontSize: 13 }}>{title}</p>
       <p style={{ margin: 0, fontSize: 11, color: "#555", maxWidth: 280 }}>{body}</p>
       {actionLabel && onAction && (
