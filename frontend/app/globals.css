@@ -259,6 +259,20 @@ body {
   }
 }
 
+/* Win95 title-bar controls are 16x14 — far below the ~44px touch target.
+   On coarse pointers (phones/tablets) grow the hit area so minimize/close
+   are tappable without zooming. Background-glyph stays top-left, so only
+   the surrounding hit area changes. */
+@media (pointer: coarse) {
+  .title-bar {
+    padding: 5px 3px;
+  }
+  .title-bar-controls button {
+    min-width: 26px;
+    min-height: 24px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .xp-bar-slider    { animation: none !important; }
   .boot-fade-out    { animation: none !important; }

@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   cascadePosition,
   isUtilityType,
   isWindowActive,
+  soloVisible,
   useWindows,
   type WindowEntry,
 } from "./window-manager";
@@ -30,6 +31,70 @@ describe("isUtilityType", () => {
   it("excludes games and the browser", () => {
     expect(isUtilityType("game-snake")).toBe(false);
     expect(isUtilityType("browser")).toBe(false);
+  });
+});
+
+describe("soloVisible", () => {
+  it("minimizes every other non-minimized window, keeping the target", () => {
+    const result = soloVisible(
+      [
+        entry({ id: "a" }),
+        entry({ id: "b" }),
+        entry({ id: "c" }),
+      ],
+      "b",
+    );
+    expect(result.map((w) => [w.id, w.minimized])).toEqual([
+      ["a", true],
+      ["b", false],
+      ["c", true],
+    ]);
+  });
+
+  it("leaves an already-minimized window untouched (same ref)", () => {
+    const minimized = entry({ id: "a", minimized: true });
+    const result = soloVisible([minimized, entry({ id: "b" })], "b");
+    expect(result[0]).toBe(minimized);
+  });
+});
+
+describe("compact viewport keeps one window visible", () => {
+  const matchMedia = (matches: boolean) =>
+    ((q: string) => ({
+      matches,
+      media: q,
+      addEventListener() {},
+      removeEventListener() {},
+    })) as unknown as typeof window.matchMedia;
+
+  beforeEach(() => {
+    useWindows.setState({ windows: [], topZ: 10, lastPos: {} });
+    window.matchMedia = matchMedia(true);
+  });
+  afterEach(() => {
+    window.matchMedia = matchMedia(false);
+  });
+
+  it("minimizes the previous window when a second opens", () => {
+    useWindows.getState().open("highscore");
+    useWindows.getState().open("mynfts");
+    const visible = useWindows
+      .getState()
+      .windows.filter((w) => !w.minimized);
+    expect(visible).toHaveLength(1);
+    expect(visible[0].type).toBe("mynfts");
+  });
+
+  it("focusing a minimized window hides the others", () => {
+    useWindows.getState().open("highscore");
+    const first = useWindows.getState().windows[0].id;
+    useWindows.getState().open("mynfts");
+    useWindows.getState().focus(first);
+    const visible = useWindows
+      .getState()
+      .windows.filter((w) => !w.minimized);
+    expect(visible).toHaveLength(1);
+    expect(visible[0].id).toBe(first);
   });
 });
 

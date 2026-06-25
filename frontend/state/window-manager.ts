@@ -59,6 +59,26 @@ export function isUtilityType(type: WindowType): boolean {
   return !type.startsWith("game-") && type !== "browser";
 }
 
+/**
+ * On phones/short viewports every window renders full-screen (see Window.tsx),
+ * so two open windows stack invisibly and look like the app froze. Keep just
+ * one visible: minimize every other non-minimized window. Pure for testing.
+ */
+export function soloVisible(
+  windows: WindowEntry[],
+  keepId: string,
+): WindowEntry[] {
+  return windows.map((w) =>
+    w.id === keepId || w.minimized ? w : { ...w, minimized: true },
+  );
+}
+
+/** True when the viewport forces full-screen windows (matches Window.tsx). */
+export function isCompactViewport(): boolean {
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  return window.matchMedia("(max-width: 640px), (max-height: 620px)").matches;
+}
+
 export const useWindows = create<S>((set, get) => ({
   windows: [],
   topZ: 10,
@@ -80,12 +100,12 @@ export const useWindows = create<S>((set, get) => ({
     // Reopen where the user last left this window; otherwise cascade.
     const remembered = get().lastPos[type];
     const pos = remembered ?? cascadePosition(get().windows.length);
-    set((s) => ({
-      topZ: z,
-      windows: [
+    const id = `${type}-${Date.now()}`;
+    set((s) => {
+      const next = [
         ...s.windows,
         {
-          id: `${type}-${Date.now()}`,
+          id,
           type,
           x: pos.x,
           y: pos.y,
@@ -96,19 +116,24 @@ export const useWindows = create<S>((set, get) => ({
           maximized: type === "game-solitaire" || type === "browser",
           payload,
         },
-      ],
-    }));
+      ];
+      return {
+        topZ: z,
+        windows: isCompactViewport() ? soloVisible(next, id) : next,
+      };
+    });
   },
   close: (id) =>
     set((s) => ({ windows: s.windows.filter((w) => w.id !== id) })),
   focus: (id) =>
     set((s) => {
       const z = s.topZ + 1;
+      const next = s.windows.map((w) =>
+        w.id === id ? { ...w, z, minimized: false } : w
+      );
       return {
         topZ: z,
-        windows: s.windows.map((w) =>
-          w.id === id ? { ...w, z, minimized: false } : w
-        ),
+        windows: isCompactViewport() ? soloVisible(next, id) : next,
       };
     }),
   minimize: (id) =>
