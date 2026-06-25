@@ -128,6 +128,10 @@ body {
   max-height: calc(100dvh - 16px - 28px - 8px);
 }
 
+/* Phone-only "Continue playing" bar; hidden by default, docked at the bottom
+   on small screens (rule inside the max-width:640px block below). */
+.desktop-quick-play-mobile { display: none; }
+
 @media (max-width: 900px), (max-height: 620px) {
   .desktop-showcase,
   .desktop-quick-play {
@@ -153,6 +157,22 @@ body {
 
   .xp-taskbar {
     height: 32px !important;
+  }
+
+  .desktop-quick-play-mobile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 32px; /* sit directly above the 32px-tall mobile taskbar */
+    z-index: 5; /* above icons (1); under any full-screen window (z>=11) */
+    padding: 5px 8px;
+    background: #c0c0c0;
+    border-top: 2px solid #ffffff;
+    box-shadow: 0 -2px 0 #808080;
+    font-family: "Pixelated MS Sans Serif", Arial, sans-serif;
   }
 
   .taskbar-leaderboard-ticker,

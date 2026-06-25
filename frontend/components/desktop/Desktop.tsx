@@ -313,6 +313,47 @@ function QuickPlay({
   const game = GAMES[gameId];
 
   return (
+    <>
+    {/* Phone: a thin "Continue" bar docked above the taskbar. The floating
+        card (below) is hidden under 900px; this replaces it on small screens.
+        z:5 keeps it above icons but under any full-screen window (z>=11). */}
+    <section
+      className="desktop-quick-play-mobile"
+      aria-label={hasHistory ? "Continue playing" : "Quick start"}
+    >
+      <span aria-hidden="true" style={{ fontSize: 26, lineHeight: 1 }}>
+        {game.emoji}
+      </span>
+      <span style={{ display: "grid", lineHeight: 1.2, minWidth: 0 }}>
+        <b style={{ fontSize: 11 }}>{hasHistory ? "Continue" : "Quick Start"}</b>
+        <span
+          style={{
+            fontSize: 10,
+            color: "#333",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {game.label}
+        </span>
+      </span>
+      <button
+        type="button"
+        className="default"
+        onClick={onOpen}
+        style={{ marginLeft: "auto", fontWeight: "bold", whiteSpace: "nowrap" }}
+      >
+        ▶ Play
+      </button>
+      <button
+        aria-label="Close"
+        onClick={onClose}
+        style={{ minWidth: 28, minHeight: 26, padding: 0, fontWeight: "bold" }}
+      >
+        ×
+      </button>
+    </section>
     <section
       className="desktop-quick-play"
       style={{
@@ -389,5 +430,6 @@ function QuickPlay({
         </span>
       </div>
     </section>
+    </>
   );
 }
