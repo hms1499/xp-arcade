@@ -12,12 +12,14 @@ import { playerLiveRanks, bestLiveRank, type LiveRanks } from "@/lib/player-rank
 import { PlayerStatsPanel } from "./PlayerStatsPanel";
 import { RarityBreakdown } from "./RarityBreakdown";
 import { AchievementsPanel } from "./AchievementsPanel";
-import { LevelBadge } from "./LevelBadge";
-import { computeLevel, type LevelInfo } from "@/lib/level";
+import { LevelHero } from "./LevelHero";
+import { resolveProfileLevel, type LevelInfo, type XpBreakdown } from "@/lib/level";
 import { CopyAddressButton } from "./CopyAddressButton";
 import { useWallet } from "@/state/wallet";
 import { useWindows } from "@/state/window-manager";
 import { useMintTx } from "@/state/mint-tx";
+import { usePlayXp } from "@/state/play-xp";
+import { useDailyChallenge } from "@/state/daily-challenge";
 
 type NftLoadState = {
   address: string;
@@ -49,6 +51,15 @@ export function PlayerProfileBody({
   const openWindow = useWindows((s) => s.open);
   const mintTxId = useMintTx((s) => s.txId);
   const mintStatus = useMintTx((s) => s.status);
+  const playXp = usePlayXp((s) => s.lifetimeXp);
+  const bestStreak = useDailyChallenge((s) => s.bestStreak);
+  const isOwnProfile = walletAddress === address;
+
+  // Ensure the persisted daily-challenge streak is loaded for the hero.
+  useEffect(() => {
+    useDailyChallenge.getState().hydrate();
+  }, []);
+
   const confirmedOwnMintTxId =
     walletAddress === address && mintStatus === "success" ? mintTxId : null;
 
@@ -105,6 +116,13 @@ export function PlayerProfileBody({
     [nfts, filter],
   );
   const stats = useMemo(() => (nfts ? computePlayerStats(nfts) : null), [nfts]);
+  const resolvedLevel = useMemo(
+    () =>
+      stats
+        ? resolveProfileLevel({ stats, isOwnProfile, playXp, bestStreak })
+        : null,
+    [stats, isOwnProfile, playXp, bestStreak],
+  );
   const activeRankState = rankState?.address === address ? rankState : null;
   const ranks = activeRankState && "ranks" in activeRankState ? activeRankState.ranks : null;
   const ranksLoading = activeRankState === null;
@@ -140,7 +158,8 @@ export function PlayerProfileBody({
         totalMints={stats?.totalMints}
         bestScore={stats?.bestScore}
         topGame={stats ? topGameLabel(stats) : null}
-        levelInfo={stats ? computeLevel(stats) : null}
+        levelInfo={resolvedLevel?.info ?? null}
+        levelBreakdown={resolvedLevel?.breakdown ?? null}
         onOpenMyNfts={
           walletAddress === address && !showBackToDesktop
             ? () => openWindow("mynfts")
@@ -330,6 +349,7 @@ function ProfileHeader({
   bestScore,
   topGame,
   levelInfo,
+  levelBreakdown,
   onOpenMyNfts,
   liveRank,
   ranksLoading,
@@ -340,6 +360,7 @@ function ProfileHeader({
   bestScore?: number;
   topGame: string | null;
   levelInfo?: LevelInfo | null;
+  levelBreakdown?: XpBreakdown | null;
   onOpenMyNfts?: () => void;
   liveRank: { gameId: GameId; rank: number } | null;
   ranksLoading: boolean;
@@ -399,7 +420,7 @@ function ProfileHeader({
       <p className="text-[10px] font-mono text-gray-700 mb-2 break-all">
         {address}
       </p>
-      {levelInfo && <LevelBadge info={levelInfo} />}
+      {levelInfo && <LevelHero info={levelInfo} breakdown={levelBreakdown} />}
       <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
         <ProfileChip label="NFTs" value={totalMints ?? "..."} />
         <ProfileChip label="Best" value={bestScore ?? "..."} />
