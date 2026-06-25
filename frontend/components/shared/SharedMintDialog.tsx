@@ -230,48 +230,6 @@ export function SharedMintDialog({
         goal={goal}
       />
 
-      <div
-        className="mb-3 text-xs"
-        style={{
-          background: "#f5f5f0",
-          border: "1px solid #d0d0c8",
-          padding: "5px 6px",
-          lineHeight: 1.35,
-        }}
-      >
-        <b>Play again is free.</b>{" "}
-        Mint only if you want this exact score saved as an NFT.
-        <span className="block text-gray-500 mt-1">
-          Mint cost: <b>{feeStx} STX</b>. Scores are public on-chain.
-        </span>
-        {mintsRemaining !== null && (
-          <span
-            className="block text-xs mt-1"
-            style={{ color: mintsRemaining === 0 ? "#cc0000" : "#555" }}
-          >
-            {mintsRemaining === 0
-              ? "Mint limit reached for this season (10/10)"
-              : `${mintsRemaining} mint${mintsRemaining === 1 ? "" : "s"} remaining this season`}
-          </span>
-        )}
-        {riskReport && riskReport.level !== "low" && (
-          <span
-            className="block mt-2"
-            style={{
-              color: scoreRiskColor(riskReport.level),
-              fontWeight: "bold",
-            }}
-          >
-            {scoreRiskLabel(riskReport)}: {riskReport.reasons[0]}
-          </span>
-        )}
-        {riskReport?.durationSeconds != null && (
-          <span className="block text-[10px] text-gray-500 mt-1">
-            Session length: {riskReport.durationSeconds}s
-          </span>
-        )}
-      </div>
-
       {!address ? (
         <div>
           <p className="text-xs mb-2 text-gray-500">
@@ -315,18 +273,16 @@ export function SharedMintDialog({
             Wallet confirmation should show an exact {feeStx} STX transfer.
           </p>
           <div style={ACTION_ROW}>
-            <button onClick={onPlayAgain} style={PRIMARY_ACTION}>
-              Play Again
-            </button>
             <button
               onClick={handleMint}
               disabled={isMintDisabled}
-              style={{
-                ...SECONDARY_ACTION,
-                fontWeight: isTopScore ? "bold" : "normal",
-              }}
+              className="default"
+              style={PRIMARY_ACTION}
             >
               {mintButtonLabel}
+            </button>
+            <button onClick={onPlayAgain} style={SECONDARY_ACTION}>
+              Play Again
             </button>
             <button onClick={onClose} style={TERTIARY_ACTION}>
               Close
@@ -419,6 +375,48 @@ export function SharedMintDialog({
           </div>
         </div>
       )}
+
+      <div
+        className="mt-3 text-xs"
+        style={{
+          background: "#f5f5f0",
+          border: "1px solid #d0d0c8",
+          padding: "5px 6px",
+          lineHeight: 1.35,
+        }}
+      >
+        <b>Play again is free.</b>{" "}
+        Mint only if you want this exact score saved as an NFT.
+        <span className="block text-gray-500 mt-1">
+          Mint cost: <b>{feeStx} STX</b>. Scores are public on-chain.
+        </span>
+        {mintsRemaining !== null && (
+          <span
+            className="block text-xs mt-1"
+            style={{ color: mintsRemaining === 0 ? "#cc0000" : "#555" }}
+          >
+            {mintsRemaining === 0
+              ? "Mint limit reached for this season (10/10)"
+              : `${mintsRemaining} mint${mintsRemaining === 1 ? "" : "s"} remaining this season`}
+          </span>
+        )}
+        {riskReport && riskReport.level !== "low" && (
+          <span
+            className="block mt-2"
+            style={{
+              color: scoreRiskColor(riskReport.level),
+              fontWeight: "bold",
+            }}
+          >
+            {scoreRiskLabel(riskReport)}: {riskReport.reasons[0]}
+          </span>
+        )}
+        {riskReport?.durationSeconds != null && (
+          <span className="block text-[10px] text-gray-500 mt-1">
+            Session length: {riskReport.durationSeconds}s
+          </span>
+        )}
+      </div>
 
       <div
         style={{
