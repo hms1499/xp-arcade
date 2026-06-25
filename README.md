@@ -1,7 +1,7 @@
 # XP Arcade on Stacks
 
 A **multi-game arcade platform** with on-chain scores and trustless prize pools, wrapped in a Windows 95 desktop UI.
-Four arcade games — Snake, Tetris, Pac-Man, and XP Bricks — backed by a single SIP-009 score-NFT registry contract.
+Six arcade games — Snake, Tetris, Pac-Man, XP Bricks, Minesweeper, and Solitaire — backed by a single SIP-009 score-NFT registry contract, with a cross-game XP/level progression layer on top.
 
 > Play a game → mint your score as an NFT → land in the top-10 → claim your share of the season's prize pool, paid directly from the contract.
 
@@ -9,13 +9,13 @@ Four arcade games — Snake, Tetris, Pac-Man, and XP Bricks — backed by a sing
 
 ## Live contract (mainnet)
 
-All four games share **one** registry contract. Games are added on-chain via `register-game`, not by deploying a new contract per game.
+All six games share **one** registry contract. Games are added on-chain via `register-game`, not by deploying a new contract per game.
 
 | Contract | Address |
 |---|---|
 | `xp-arcade-v4` | [`SP2CMK...xp-arcade-v4`](https://explorer.hiro.so/txid/SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4?chain=mainnet) |
 
-Deployed 2026-06-07 (block 8209345, Clarity 3). Registered games (on-chain id): Snake (1), Tetris (2), Pac-Man (3), XP Bricks (4).
+Deployed 2026-06-07 (block 8209345, Clarity 3). Registered games (on-chain id): Snake (1), Tetris (2), Pac-Man (3), XP Bricks (4), Minesweeper (5), Solitaire (6).
 
 Deployer / `contract-owner`: `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV`
 
@@ -43,6 +43,8 @@ Deployer / `contract-owner`: `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV`
 - 🧱 **Tetris** — 7 tetrominoes, wall kicks, ghost piece, level speed scaling, next-piece preview.
 - 👾 **Pac-Man** — 21×21 maze, 4 ghosts with scatter/chase/frightened AI, power pellets, 3 lives.
 - 🏓 **XP Bricks** — Breakout-style paddle/brick arcade game with lives, combos, level clear bonuses, and touch controls.
+- 💣 **Minesweeper** — classic grid sweep with difficulty levels; score is a time-based metric (faster = higher).
+- 🃏 **Solitaire** — Klondike with draw-1/draw-3 modes; score derived from solve time on a win.
 - 💾 **Score NFTs (SIP-009)** — mint any score post-game. Snake: 0.01 STX · other games: 0.02 STX. **Capped at 10 mints per player per game per season.** Metadata served from a single route `/api/metadata/score/[id]` (the game is resolved from the on-chain game-id).
 - 🏆 **Unified High Score window** — single window with one tab per game, rank-change indicators, live polling, and a **Claim** button for last season's winners.
 - 🎨 **NFT rarity** — Common / Rare / Epic / Legendary, with **per-game thresholds stored on-chain** (Snake: Rare ≥ 50 · Epic ≥ 150 · Legendary ≥ 300; other games: Rare ≥ 100 · Epic ≥ 300 · Legendary ≥ 700).
@@ -53,6 +55,22 @@ Deployer / `contract-owner`: `SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV`
   with `NEXT_PUBLIC_SEASON_END_ISO` only as a display fallback while unset.
 - 🪟 **Windows 95 desktop UX** — boot screen, taskbar, Start menu → Games submenu, draggable windows, balloon notifications, pause overlays.
 - 👤 **Public player profiles** — `/player/<stx-address>` shows score NFTs, best scores, total mints, seasons played.
+
+### Progression & engagement
+
+- ⭐ **XP / Level meta-progression** — a cross-game **Player Level** with a hero panel on the profile (level, XP bar, current title, next-title unlock). XP is **hybrid**: on-chain base (sum of minted scores) + a local per-run **play bonus** (so playing levels you up even without minting) + a daily-streak bonus. Titles run Rookie → Player → Pro → Ace → Veteran → Master → Arcade Legend. Additive and client-side — no contract change.
+- 🏅 **Achievement badges** — milestone badges (first mint, mints across every game, seasons played, challenge streaks) derived client-side from on-chain holdings.
+- ⭐ **Daily challenge** — a rotating per-day game + target with a current/best **streak** counter; completing it feeds streak XP.
+- 🤝 **Challenge a friend** — share a link that drops the recipient into the same game with your score as the target to beat.
+- 🎖️ **Hall of Fame** — all-time best minted score per game, with shareable score cards and season-share pages (`/share/...`).
+- 👑 **Arcade Champion** — a cross-game points ranking that crowns one overall champion, with a desktop panel and dedicated window.
+- 🔔 **Retention nudge** — a contextual taskbar balloon (e.g. "you're close to the top-10" / "claimable prize") shown without stacking on the connect-wallet reminder.
+
+### Desktop & wallet UX
+
+- 🪟 **Windows 95 desktop UX** — boot screen + chime, taskbar, Start menu → Games submenu, draggable windows, balloon notifications, pause overlays, right-click **context menu**, a **Shut Down** dialog/screen, and an idle **Flying Windows screensaver**.
+- 🌐 **Internet window** — an in-shell "Internet" app (iframe + open-tab, with an optional Browserbase-backed remote browser).
+- 🔗 **Unified connect-wallet treatment** — every "Connect Wallet" entry point uses one brand-correct **Stacks badge** icon (no MetaMask fox) and shared copy via a single `WALLET_CONNECT` constant.
 
 ---
 
@@ -124,7 +142,11 @@ frontend/
       tetris/               TetrisWindow, TetrisCanvas, TetrisEngine
       pacman/               PacManWindow, PacManCanvas, PacManEngine, maze
       breakout/             BreakoutWindow, BreakoutEngine
-    shared/                 GameShellWindow, SharedMintDialog
+      minesweeper/          MinesweeperWindow + engine
+      solitaire/            SolitaireWindow + Klondike engine
+    player/                 PlayerProfileBody, LevelHero, LevelBadge, AchievementsPanel, stats panels
+    champion/               ChampionBoard (cross-game Arcade Champion)
+    shared/                 GameShellWindow, SharedMintDialog, StacksLogo, ShareActions, ChallengeBanner
     windows/                HighScoreWindow (+ Claim), MyNftsWindow, SeasonAdminWindow, PlayerProfileWindow
     dialogs/                AboutDialog, BalloonNotification
   lib/
@@ -136,9 +158,15 @@ frontend/
     tx-tracker.ts           Polls a txid to confirmation for toasts
     holdings.ts             Fetch score NFT holdings across all registered games
     snake-engine.ts         Pure Snake game logic
+    level.ts                Hybrid XP → level/title curve + resolveProfileLevel
+    record-run.ts           Funnels a finished run into the stat stores
+    achievements.ts         Client-side milestone-badge derivation
+    wallet-connect-copy.ts  Shared WALLET_CONNECT label/tagline
   state/
     wallet.ts               Connected address
     window-manager.ts       Open windows, z-order, positions
+    play-xp.ts              Persisted lifetime play-XP (per game + total)
+    daily-challenge.ts      Daily target + streak tracking
     toasts.ts               Balloon notifications
 
 docs/                       Design specs + implementation plans
@@ -186,7 +214,7 @@ GitHub Actions runs three jobs on pushes to `main` and pull requests:
 
 A separate scheduled workflow runs every six hours against production. It checks
 the public health route, token metadata, configured v4 contract, owner, current
-season, pool, top-10, and deadline reads for all four games. Client-side wallet,
+season, pool, top-10, and deadline reads for all registered games. Client-side wallet,
 holdings, and transaction-timeout errors are sent to a rate-limited telemetry
 route with wallet addresses and transaction IDs redacted before Vercel logging.
 
