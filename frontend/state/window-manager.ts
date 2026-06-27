@@ -12,7 +12,8 @@ export type WindowType =
   | "player-profile"
   | "control-panel"
   | "how-it-works"
-  | "browser";
+  | "browser"
+  | "swap";
 
 export type WindowPayload = {
   address?: string;

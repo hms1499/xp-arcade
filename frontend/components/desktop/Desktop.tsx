@@ -218,6 +218,11 @@ export function Desktop({ children }: { children: React.ReactNode }) {
           onOpen={() => open("browser")}
         />
         <DesktopIcon
+          label="Swap"
+          emoji="💱"
+          onOpen={() => open("swap")}
+        />
+        <DesktopIcon
           label="How It Works"
           emoji="❔"
           onOpen={() => open("how-it-works")}

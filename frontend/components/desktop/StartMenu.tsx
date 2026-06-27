@@ -169,6 +169,11 @@ export function StartMenu({
             label="Internet"
             onClick={() => { openWin("browser"); onClose(); }}
           />
+          <MenuItem
+            icon="💱"
+            label="Swap"
+            onClick={() => { openWin("swap"); onClose(); }}
+          />
           {isOwner && (
             <MenuItem
               icon="🛠️"
