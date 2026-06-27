@@ -1,5 +1,5 @@
-// NOTE: Bitflow token ids below are PLACEHOLDERS pending the Task 1 Bitflow probe.
-// Decimals (STX 6, sBTC 8) and symbols are final. Replace ids before any live swap.
+// Bitflow token ids, verified against the live mainnet token list:
+// `token-stx` (STX, 6 decimals) and `token-sbtc` (sBTC, 8 decimals).
 
 export type SwapToken = {
   /** Bitflow SDK token id used in getQuoteForRoute / route building. */
@@ -8,7 +8,6 @@ export type SwapToken = {
   decimals: number;
 };
 
-// PLACEHOLDER ids (see header note) — replace with the real Bitflow ids from the Task 1 probe before live swaps.
 export const STX_TOKEN: SwapToken = { id: "token-stx", symbol: "STX", decimals: 6 };
 export const SBTC_TOKEN: SwapToken = { id: "token-sbtc", symbol: "sBTC", decimals: 8 };
 

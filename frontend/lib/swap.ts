@@ -1,16 +1,30 @@
 "use client";
-import { BitflowSDK, type QuoteResult } from "@bitflowlabs/core-sdk";
+import {
+  BitflowSDK,
+  type BitflowSDKConfig,
+  type QuoteResult,
+} from "@bitflowlabs/core-sdk";
 import { tokensForDirection, type Direction } from "./swap-tokens";
 import { slippageBpsToTolerance } from "./swap-math";
 
-// Bitflow config from public env (set in .env.example / Vercel).
-function readConfig() {
-  return {
-    BITFLOW_API_HOST: process.env.NEXT_PUBLIC_BITFLOW_API_HOST,
-    BITFLOW_PROVIDER_ADDRESS: process.env.NEXT_PUBLIC_BITFLOW_PROVIDER_ADDRESS,
-    READONLY_CALL_API_HOST: process.env.NEXT_PUBLIC_BITFLOW_READONLY_HOST,
-    BITFLOW_API_KEY: process.env.NEXT_PUBLIC_BITFLOW_API_KEY,
+// Bitflow's public API gateway. No API key required — endpoints are public
+// (500 req/min per IP), and these calls run client-side so the limit is
+// effectively per-user. The SDK's own baked default points at a dead TEST
+// gateway, so we always supply a working host here.
+const DEFAULT_API_HOST = "https://bitflow-sdk-api-gateway-7owjsmt8.uc.gateway.dev";
+
+// Build the SDK config, omitting any key we don't have a value for. The SDK
+// does `Object.assign(defaults, config)`, so passing an explicit `undefined`
+// would clobber its built-in defaults — only include keys that are actually set.
+function readConfig(): BitflowSDKConfig {
+  const cfg: BitflowSDKConfig = {
+    BITFLOW_API_HOST: process.env.NEXT_PUBLIC_BITFLOW_API_HOST || DEFAULT_API_HOST,
   };
+  const provider = process.env.NEXT_PUBLIC_BITFLOW_PROVIDER_ADDRESS;
+  if (provider) cfg.BITFLOW_PROVIDER_ADDRESS = provider;
+  const readonlyHost = process.env.NEXT_PUBLIC_BITFLOW_READONLY_HOST;
+  if (readonlyHost) cfg.READONLY_CALL_API_HOST = readonlyHost;
+  return cfg;
 }
 
 let client: BitflowSDK | null = null;
