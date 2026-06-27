@@ -495,3 +495,63 @@ input[type='email'], input[type='search'], textarea {
     display: none;
   }
 }
+
+/* --- Swap window --- */
+.swap-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  min-width: 280px;
+}
+.swap-panel {
+  margin: 0;
+  padding: 6px 8px 8px;
+}
+.swap-panel-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.swap-token {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+.swap-amount {
+  flex: 1;
+  text-align: right;
+}
+.swap-subrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #333;
+}
+.swap-switch {
+  align-self: center;
+  min-width: 28px;
+  height: 24px;
+  padding: 0;
+  line-height: 1;
+}
+.swap-spinner {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: #000;
+  vertical-align: middle;
+  animation: swap-blink 1s steps(2, start) infinite;
+}
+@keyframes swap-blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.2; }
+  100% { opacity: 1; }
+}

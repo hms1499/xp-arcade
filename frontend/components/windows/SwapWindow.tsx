@@ -14,6 +14,8 @@ import {
 } from "@/lib/swap-tokens";
 import { fromBaseUnits, maxStxInput, toMinReceived } from "@/lib/swap-math";
 import { mapSwapError } from "@/lib/swap-errors";
+import { swapStatusText } from "@/lib/swap-status";
+import { StxIcon, SbtcIcon } from "./swap-icons";
 import { Window } from "./Window";
 
 const SLIPPAGE_CHOICES_BPS = [10, 50, 100];
@@ -116,9 +118,16 @@ export function SwapWindow() {
     }
   }
 
+  const statusText = swapStatusText({
+    amountValid,
+    hasQuote: !!quote,
+    quoteStale,
+    submitting,
+  });
+
   return (
     <Window id={w.id} title="Swap">
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: 8, minWidth: 280 }}>
+      <div className="swap-body">
         {!onMainnet ? (
           <p>Swap is only available on mainnet.</p>
         ) : !address ? (
@@ -128,67 +137,95 @@ export function SwapWindow() {
           </div>
         ) : (
           <>
-            <label style={{ display: "grid", gap: 2 }}>
-              <span>From ({tokenX.symbol})</span>
-              <span style={{ display: "flex", gap: 4 }}>
+            <fieldset className="swap-panel">
+              <legend>From</legend>
+              <div className="swap-panel-row">
+                <span className="swap-token">
+                  {tokenX.symbol === "STX" ? <StxIcon /> : <SbtcIcon />}{tokenX.symbol}
+                </span>
                 <input
                   type="number"
                   min="0"
+                  className="swap-amount"
                   value={amountStr}
                   placeholder="0.0"
                   onChange={(e) => setAmountStr(e.target.value)}
-                  style={{ flex: 1 }}
                   aria-label={`Amount of ${tokenX.symbol} to swap`}
                 />
+              </div>
+              <div className="swap-subrow">
+                <span>
+                  {direction === "stx-to-sbtc" && balanceUstx != null
+                    ? `Balance: ${fromBaseUnits(balanceUstx, tokenX.decimals)}`
+                    : " "}
+                </span>
                 {direction === "stx-to-sbtc" && (
                   <button onClick={onMax} disabled={balanceUstx == null}>Max</button>
                 )}
-              </span>
-            </label>
+              </div>
+            </fieldset>
 
             <button
+              className="swap-switch"
               aria-label="Switch direction"
               onClick={() => { setDirection(flipDirection(direction)); setAmountStr(""); setQuote(null); }}
-              style={{ justifySelf: "center" }}
             >
               ⇅
             </button>
 
-            <label style={{ display: "grid", gap: 2 }}>
-              <span>To ({tokenY.symbol})</span>
-              <input
-                type="text"
-                readOnly
-                value={quote ? String(quote.amountOut) : loadingQuote ? "…" : ""}
-                aria-label={`Estimated ${tokenY.symbol} received`}
-              />
-            </label>
+            <fieldset className="swap-panel">
+              <legend>To</legend>
+              <div className="swap-panel-row">
+                <span className="swap-token">
+                  {tokenY.symbol === "STX" ? <StxIcon /> : <SbtcIcon />}{tokenY.symbol}
+                </span>
+                <input
+                  type="text"
+                  readOnly
+                  className="swap-amount"
+                  value={quote ? String(quote.amountOut) : loadingQuote ? "…" : ""}
+                  aria-label={`Estimated ${tokenY.symbol} received`}
+                />
+              </div>
+            </fieldset>
 
-            <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-              <span>Slippage:</span>
-              {SLIPPAGE_CHOICES_BPS.map((bps) => (
-                <button
-                  key={bps}
-                  onClick={() => setSlippageBps(bps)}
-                  aria-pressed={slippageBps === bps}
-                  style={{ fontWeight: slippageBps === bps ? "bold" : "normal" }}
-                >
-                  {bps / 100}%
-                </button>
-              ))}
-            </div>
+            <fieldset className="swap-panel">
+              <legend>Max slippage</legend>
+              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                {SLIPPAGE_CHOICES_BPS.map((bps) => (
+                  <button
+                    key={bps}
+                    onClick={() => setSlippageBps(bps)}
+                    aria-pressed={slippageBps === bps}
+                    style={{ fontWeight: slippageBps === bps ? "bold" : "normal" }}
+                  >
+                    {bps / 100}%
+                  </button>
+                ))}
+              </div>
+            </fieldset>
 
             {quote && (
-              <p style={{ fontSize: 11, color: "#333" }}>
-                Rate: 1 {tokenX.symbol} ≈ {quote.rate.toPrecision(6)} {tokenY.symbol}
-                {" · "}Min received: {toMinReceived(quote.amountOut, slippageBps).toPrecision(6)} {tokenY.symbol}
-                {quoteStale && " · quote expired, edit amount to refresh"}
-              </p>
+              <fieldset className="swap-panel">
+                <legend>Details</legend>
+                <p style={{ fontSize: 11, color: "#333", margin: 0 }}>
+                  Rate: 1 {tokenX.symbol} ≈ {quote.rate.toPrecision(6)} {tokenY.symbol}
+                  {" · "}Min received: {toMinReceived(quote.amountOut, slippageBps).toPrecision(6)} {tokenY.symbol}
+                  {quoteStale && " · quote expired, edit amount to refresh"}
+                </p>
+              </fieldset>
             )}
 
             <button className="default" onClick={onSwap} disabled={!canSwap}>
               {submitting ? "Confirm in wallet…" : "Swap"}
             </button>
+
+            <div className="status-bar">
+              <p className="status-bar-field" aria-live="polite">
+                {loadingQuote && <span className="swap-spinner" aria-hidden="true" />}
+                {statusText}
+              </p>
+            </div>
           </>
         )}
       </div>
