@@ -12,7 +12,7 @@ import {
   flipDirection,
   type Direction,
 } from "@/lib/swap-tokens";
-import { fromBaseUnits, maxStxInput } from "@/lib/swap-math";
+import { fromBaseUnits, maxStxInput, toMinReceived } from "@/lib/swap-math";
 import { mapSwapError } from "@/lib/swap-errors";
 import { Window } from "./Window";
 
@@ -69,6 +69,15 @@ export function SwapWindow() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [amount, direction, amountValid]);
 
+  const [, forceTick] = useState(0);
+  useEffect(() => {
+    if (!quote) return;
+    const ms = quote.ts + QUOTE_STALE_MS - Date.now();
+    if (ms <= 0) return;
+    const t = setTimeout(() => forceTick((n) => n + 1), ms);
+    return () => clearTimeout(t);
+  }, [quote]);
+
   if (!w) return null;
 
   const onMainnet = stacks.networkName === "mainnet";
@@ -84,10 +93,19 @@ export function SwapWindow() {
 
   async function onSwap() {
     if (!quote || !address) return;
+    if (Date.now() - quote.ts > QUOTE_STALE_MS) {
+      setQuote(null);
+      pushToast({ title: "Quote expired", body: "Re-enter the amount to refresh the price.", type: "info" });
+      return;
+    }
     setSubmitting(true);
     try {
       await executeSwap(quote, amount, address, slippageBps, {
-        onSuccess: (txId) => startSwapTx(txId, `Swapped ${amount} ${tokenX.symbol} → ${tokenY.symbol}`),
+        onSuccess: (txId) => {
+          startSwapTx(txId, `Swapped ${amount} ${tokenX.symbol} → ${tokenY.symbol}`);
+          setAmountStr("");
+          setQuote(null);
+        },
         onCancel: () => {},
       });
     } catch (e) {
@@ -163,6 +181,7 @@ export function SwapWindow() {
             {quote && (
               <p style={{ fontSize: 11, color: "#333" }}>
                 Rate: 1 {tokenX.symbol} ≈ {quote.rate.toPrecision(6)} {tokenY.symbol}
+                {" · "}Min received: {toMinReceived(quote.amountOut, slippageBps).toPrecision(6)} {tokenY.symbol}
                 {quoteStale && " · quote expired, edit amount to refresh"}
               </p>
             )}

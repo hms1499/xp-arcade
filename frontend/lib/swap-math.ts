@@ -23,3 +23,8 @@ export function slippageBpsToTolerance(bps: number): number {
 export function maxStxInput(balanceUstx: number): number {
   return Math.max(0, balanceUstx - STX_GAS_BUFFER_USTX);
 }
+
+/** Minimum tokens out after slippage — the protected floor shown to the user. */
+export function toMinReceived(amountOut: number, slippageBps: number): number {
+  return amountOut * (1 - slippageBpsToTolerance(slippageBps));
+}

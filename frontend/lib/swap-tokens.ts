@@ -8,7 +8,7 @@ export type SwapToken = {
   decimals: number;
 };
 
-// Use the EXACT ids recorded in the comment block above (Task 1 probe).
+// PLACEHOLDER ids (see header note) — replace with the real Bitflow ids from the Task 1 probe before live swaps.
 export const STX_TOKEN: SwapToken = { id: "token-stx", symbol: "STX", decimals: 6 };
 export const SBTC_TOKEN: SwapToken = { id: "token-sbtc", symbol: "sBTC", decimals: 8 };
 

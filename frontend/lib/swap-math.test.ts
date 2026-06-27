@@ -5,6 +5,7 @@ import {
   fromBaseUnits,
   slippageBpsToTolerance,
   maxStxInput,
+  toMinReceived,
 } from "./swap-math";
 
 describe("swap-math", () => {
@@ -35,5 +36,11 @@ describe("swap-math", () => {
     expect(maxStxInput(2_000_000)).toBe(1_500_000);
     expect(maxStxInput(500_000)).toBe(0);
     expect(maxStxInput(100_000)).toBe(0); // never negative
+  });
+
+  it("computes min received after slippage", () => {
+    expect(toMinReceived(100, 50)).toBeCloseTo(99.5);  // 0.5%
+    expect(toMinReceived(100, 100)).toBeCloseTo(99);    // 1%
+    expect(toMinReceived(0, 50)).toBe(0);
   });
 });
