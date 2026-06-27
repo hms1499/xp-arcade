@@ -17,6 +17,7 @@
     "ci": "npm run lint && npm run test && npm run typecheck && npm run build"
   },
   "dependencies": {
+    "@bitflowlabs/core-sdk": "^3.1.0",
     "@browserbasehq/sdk": "^2.14.1",
     "@stacks/connect": "^8.2.6",
     "@stacks/network": "^7.3.1",
