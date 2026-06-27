@@ -13,6 +13,7 @@ import { MyNftsWindow } from "@/components/windows/MyNftsWindow";
 import { SeasonAdminWindow } from "@/components/windows/SeasonAdminWindow";
 import { PlayerProfileWindow } from "@/components/windows/PlayerProfileWindow";
 import { BrowserWindow } from "@/components/windows/BrowserWindow";
+import { SwapWindow } from "@/components/windows/SwapWindow";
 import { ControlPanelWindow } from "@/components/windows/ControlPanelWindow";
 import { HowItWorksWindow } from "@/components/windows/HowItWorksWindow";
 import { Balloons } from "@/components/dialogs/BalloonNotification";
@@ -34,6 +35,7 @@ export default function Home() {
         <SeasonAdminWindow />
         <PlayerProfileWindow />
         <BrowserWindow />
+        <SwapWindow />
         <ControlPanelWindow />
         <HowItWorksWindow />
         <Balloons />
