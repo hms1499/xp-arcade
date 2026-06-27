@@ -33,7 +33,7 @@ shipping a real, usable feature.
 | Network | Mainnet only (real swaps) |
 | Pair | STX ↔ sBTC only |
 | Economy | Standalone, no fee, no new contract, no v4 change |
-| Integration | **Approach A**: Bitflow SDK client-side + `openContractCall` to sign |
+| Integration | **Approach A**: Bitflow SDK client-side — `getQuoteForRoute` for quotes, `executeSwap` opens the wallet (SDK-generated post-conditions) |
 | Gas buffer | **Hard-coded 0.5 STX** reserved on STX side |
 | Default slippage | 0.5% (selectable 0.1 / 0.5 / 1% + custom) |
 | Quote staleness | ~30s → mark stale, disable Swap until refresh |
@@ -46,19 +46,28 @@ Pure frontend. No contract changes.
 Desktop icon "Swap"  →  SwapWindow.tsx (Win95 window)
                               │
                               ├─ lib/swap.ts          ← wraps @bitflowlabs/core-sdk
-                              │     • getQuote(direction, amountIn)
-                              │     • buildSwapParams(...) → openContractCall input
-                              │     • toMinReceived(amountOut, slippageBps)
+                              │     • getQuote(direction, amountIn) → uses getQuoteForRoute
+                              │     • executeSwap(...)               → SDK opens wallet
                               │     • toBaseUnits / fromBaseUnits (6 vs 8 decimals)
+                              │     • slippageBpsToTolerance(bps)
                               │     • mapSwapError(e)
                               │
-                              ├─ @stacks/connect openContractCall  ← user signs
-                              │     + Pc post-conditions (required by repo convention)
+                              ├─ @bitflowlabs/core-sdk executeSwap   ← SDK builds tx,
+                              │     sets post-conditions from slippageTolerance,
+                              │     opens the user's wallet (stacksProvider)
                               │
                               └─ lib/tx-tracker.ts    ← existing pending/success tracking
 ```
 
-- sBTC mainnet token contract id is a constant in `lib/swap.ts`
+**Bitflow SDK surface (confirmed from docs):**
+- `new BitflowSDK({ BITFLOW_API_HOST, BITFLOW_PROVIDER_ADDRESS, READONLY_CALL_API_HOST, BITFLOW_API_KEY })`
+- `getQuoteForRoute(tokenXId, tokenYId, amount)` → `quoteResult` with selectable routes
+- `executeSwap(swapExecutionData, senderAddress, slippageTolerance, stacksProvider, onSuccess, onCancel)`
+  where `swapExecutionData = { route, amount, tokenXDecimals, tokenYDecimals }`.
+  The SDK builds the tx, derives post-conditions from `slippageTolerance`, and
+  opens the wallet itself — we do **not** hand-build `Pc` post-conditions.
+
+- sBTC mainnet token contract id is a constant in `lib/swap-tokens.ts`
   (to be confirmed during implementation — canonical mainnet `sbtc-token`).
 - Mainnet guard: if `NEXT_PUBLIC_NETWORK !== "mainnet"`, the window renders a
   disabled state ("Swap is only available on mainnet").
@@ -85,16 +94,23 @@ Desktop icon "Swap"  →  SwapWindow.tsx (Win95 window)
 The window contains **no calculation logic** — it only calls `lib/swap.ts`.
 
 ### Logic
-- `frontend/lib/swap.ts` (+ `swap.test.ts`):
-  - `SWAP_TOKENS` — metadata for STX & sBTC (id, decimals, symbol)
-  - `getQuote(direction, amountIn)` → `{ amountOut, rate, priceImpact, fee }`
+- `frontend/lib/swap-tokens.ts` (+ test) — pure constants/types:
+  - `SWAP_TOKENS` — metadata for STX & sBTC (Bitflow token id, decimals, symbol)
+  - `Direction` type (`"stx-to-sbtc" | "sbtc-to-stx"`), helpers for token X/Y per direction
+- `frontend/lib/swap-math.ts` (+ test) — pure:
   - `toBaseUnits` / `fromBaseUnits` — decimals 6 (STX) vs 8 (sBTC)
-  - `toMinReceived(amountOut, slippageBps)`
-  - `buildSwapParams(direction, amountIn, minOut, sender)` → object for
-    `openContractCall`, including `postConditions`
-  - `mapSwapError(e)` → friendly message
+  - `slippageBpsToTolerance(bps)` → fraction for SDK (50 bps → 0.005)
+  - `maxStxInput(balanceUstx)` → balance minus 0.5 STX gas buffer (floored at 0)
+- `frontend/lib/swap-errors.ts` (+ test) — pure:
+  - `mapSwapError(e)` → friendly message string
+- `frontend/lib/swap.ts` — SDK facade (thin; verified via smoke test, not unit-mocked):
+  - `getSwapClient()` — lazily builds the `BitflowSDK` from env
+  - `getQuote(direction, amountIn)` → `{ amountOut, rate, priceImpact, route, ts }`
+  - `executeSwap(direction, quote, amountIn, sender, slippageBps, callbacks)` →
+    calls SDK `executeSwap` with `stacksProvider` from `@stacks/connect`
 
-Each unit has one purpose and is independently testable with the SDK mocked.
+The pure modules are independently unit-testable. `swap.ts` is a thin adapter
+over the SDK (the real boundary), exercised by the manual mainnet smoke test.
 
 ## 5. Data Flow
 
@@ -104,12 +120,12 @@ Each unit has one purpose and is independently testable with the SDK mocked.
 3. Debounce ~400ms → lib/swap.getQuote(direction, amountIn)
                     → show amountOut, rate, price impact, min-received
 4. User clicks Swap
-       → buildSwapParams(direction, amountIn, minOut, sender)
-       → openContractCall({ ...params, postConditions, onFinish, onCancel })
-5. Wallet prompts → user signs
-6. onFinish(txId) → tx-tracker → "Processing…" toast
+       → swap.executeSwap(direction, quote, amountIn, sender, slippageBps, cb)
+       → SDK builds tx + post-conditions (from slippageTolerance), opens wallet
+5. Wallet prompts (shows SDK-generated post-conditions) → user signs
+6. onSuccess(txId) → tx-tracker → "Processing…" toast
        → on confirm: "Swap complete" toast + refresh balances
-   onCancel       → close quietly, no error
+   onCancel        → close quietly, no error
 ```
 
 - **Quote validity:** each quote carries a timestamp; older than ~30s is *stale*
@@ -121,16 +137,20 @@ Each unit has one purpose and is independently testable with the SDK mocked.
 
 ## 6. Error Handling & Safety (real money — most critical section)
 
-### Post-conditions (REQUIRED by repo convention) — core anti-loss layer
+### Post-conditions — SDK-generated from slippage (core anti-loss layer)
 
-| Direction | Token sent | Token received |
-|---|---|---|
-| STX → sBTC | `Pc.principal(sender).willSendEq(amountIn).ustx()` | sBTC `willSendGte(minOut)` (FT post-condition) |
-| sBTC → STX | sBTC `willSendEq(amountIn)` (FT) | `Pc.principal(sender).willSendGte(minOut).ustx()` |
+The Bitflow SDK `executeSwap` derives wallet post-conditions from the
+`slippageTolerance` we pass in. We do **not** hand-build `Pc` post-conditions
+(the SDK owns the router-specific call). This still satisfies the repo
+convention's intent — every token-moving write carries post-conditions — but
+the SDK is the source of truth, so:
 
-If the DEX returns less than min-received, the wallet reverts the transaction.
-Slippage is protected at two layers: the `minOut` parameter passed into Bitflow
-**and** the post-condition.
+- We pass `slippageTolerance = slippageBpsToTolerance(slippageBps)` (e.g.
+  50 bps → 0.005) so the min-received bound matches the user's chosen slippage.
+- **Smoke test (mainnet, real wallet) MUST visually confirm** the wallet prompt
+  shows post-conditions, and that a deliberately tiny slippage causes a revert
+  rather than a bad fill. This is the verification that replaces a unit test we
+  can't write over the SDK's internal tx builder.
 
 ### Pre-swap validation
 - amount > 0, ≤ balance (minus 0.5 STX gas buffer when From = STX)
@@ -148,28 +168,31 @@ All swap actions are blocked unless `NEXT_PUBLIC_NETWORK === "mainnet"`.
 
 ## 7. Testing
 
-### Unit tests — `frontend/lib/swap.test.ts` (vitest, co-located; SDK mocked, no network)
-- `toBaseUnits`/`fromBaseUnits`: STX 6 vs sBTC 8 decimals, rounding, fractional input
-- `toMinReceived`: correct per slippage bps (0.1 / 0.5 / 1%); boundaries
-- `buildSwapParams`: correct functionArgs + **post-conditions per §6 table** for
-  both directions (the most important test)
-- `mapSwapError`: each error class → correct message
-- Gas buffer 0.5 STX: "Max" and amount validation compute correctly
+### Unit tests — co-located `*.test.ts` (vitest; pure modules, no network)
+- `swap-math.test.ts`:
+  - `toBaseUnits`/`fromBaseUnits`: STX 6 vs sBTC 8 decimals, rounding, fractional input
+  - `slippageBpsToTolerance`: 10/50/100 bps → 0.001/0.005/0.01; boundaries
+  - `maxStxInput`: balance minus 0.5 STX buffer; floors at 0 when balance < buffer
+- `swap-tokens.test.ts`: direction → correct tokenX/tokenY id + decimals
+- `swap-errors.test.ts`: `mapSwapError` each error class → correct message
 
+No unit tests over `swap.ts` (thin SDK adapter) — covered by smoke test.
 No contract tests (no contract change).
 
 ### Manual smoke test (required before "done")
 On mainnet, real wallet, swap a **very small** amount (e.g. 1–2 STX) in both
-directions; confirm the post-condition revert works when slippage is set
-extremely low.
+directions; visually confirm the wallet prompt shows post-conditions, and that a
+deliberately tiny slippage causes a revert rather than a bad fill.
 
 ### Gate
-`npx tsc --noEmit`, `npm test`, `npm run lint` all green.
+`npm run lint`, `npm test`, `npx tsc --noEmit`, `npm run build` all green
+(or `npm run ci`).
 
 ## 8. Open Items for Implementation
 - Confirm `@bitflowlabs/core-sdk` browser compatibility with `@stacks/connect` v8
-  (`openContractCall` param shape). If CORS/rate-limit issues arise on the quote
-  call, optionally proxy quotes through a Next API route (does not change the
-  client-side signing flow).
-- Confirm canonical sBTC mainnet token contract id + decimals.
-- Identify exact env var(s) Bitflow SDK requires (Hiro API key, etc.).
+  (which provider/object `executeSwap` expects as `stacksProvider`). If the SDK
+  needs a server-only host or CORS blocks the quote call, proxy `getQuoteForRoute`
+  through a Next API route (does not change the wallet-signing flow).
+- Confirm canonical sBTC mainnet Bitflow token id + decimals (and STX token id).
+- Confirm exact Bitflow config/env values: `BITFLOW_API_HOST`,
+  `BITFLOW_PROVIDER_ADDRESS`, `READONLY_CALL_API_HOST`, `BITFLOW_API_KEY`.
