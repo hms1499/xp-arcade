@@ -55,4 +55,17 @@ describe("SwapWindow", () => {
       expect(text).toMatch(/only available on mainnet/i);
     }
   });
+
+  it("shows the connect-wallet CTA on mainnet when no wallet is connected", () => {
+    const originalNetworkName = stacks.networkName;
+    try {
+      stacks.networkName = "mainnet";
+      useWallet.setState({ address: null });
+      act(() => { useWindows.getState().open("swap"); });
+      act(() => { root.render(<SwapWindow />); });
+      expect(container.textContent ?? "").toMatch(/connect your wallet/i);
+    } finally {
+      stacks.networkName = originalNetworkName;
+    }
+  });
 });
