@@ -555,3 +555,6 @@ input[type='email'], input[type='search'], textarea {
   50% { opacity: 0.2; }
   100% { opacity: 1; }
 }
+@media (prefers-reduced-motion: reduce) {
+  .swap-spinner { animation: none; }
+}
