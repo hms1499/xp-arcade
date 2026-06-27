@@ -7,23 +7,29 @@ import {
 import { tokensForDirection, type Direction } from "./swap-tokens";
 import { slippageBpsToTolerance } from "./swap-math";
 
-// Bitflow's public API gateway. No API key required — endpoints are public
-// (500 req/min per IP), and these calls run client-side so the limit is
-// effectively per-user. The SDK's own baked default points at a dead TEST
-// gateway, so we always supply a working host here.
-const DEFAULT_API_HOST = "https://bitflow-sdk-api-gateway-7owjsmt8.uc.gateway.dev";
+// Route the SDK's read calls through our same-origin proxy (app/api/bitflow/*)
+// instead of hitting Bitflow's third-party domains directly. That keeps quotes
+// working for users whose ad-blocker / Brave Shields blocks *.gateway.dev, and
+// removes a third-party CORS/uptime dependency. No API key needed — the proxy
+// reaches Bitflow's public endpoints server-side. Swaps still execute in the
+// browser via the wallet; only reads are proxied.
+function proxyBase(): string {
+  // Client component path: window is always defined when getQuote runs.
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return `${origin}/api/bitflow`;
+}
 
 // Build the SDK config, omitting any key we don't have a value for. The SDK
 // does `Object.assign(defaults, config)`, so passing an explicit `undefined`
 // would clobber its built-in defaults — only include keys that are actually set.
 function readConfig(): BitflowSDKConfig {
+  const base = proxyBase();
   const cfg: BitflowSDKConfig = {
-    BITFLOW_API_HOST: process.env.NEXT_PUBLIC_BITFLOW_API_HOST || DEFAULT_API_HOST,
+    BITFLOW_API_HOST: `${base}/sdk`,
+    READONLY_CALL_API_HOST: `${base}/node`,
   };
   const provider = process.env.NEXT_PUBLIC_BITFLOW_PROVIDER_ADDRESS;
   if (provider) cfg.BITFLOW_PROVIDER_ADDRESS = provider;
-  const readonlyHost = process.env.NEXT_PUBLIC_BITFLOW_READONLY_HOST;
-  if (readonlyHost) cfg.READONLY_CALL_API_HOST = readonlyHost;
   return cfg;
 }
 
