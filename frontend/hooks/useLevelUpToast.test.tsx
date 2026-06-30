@@ -73,6 +73,7 @@ describe("useLevelUpToast", () => {
     expect(useToasts.getState().toasts).toHaveLength(0);
     act(() => { usePlayXp.setState({ lifetimeXp: 2400 }); }); // xp 4900 -> Lv8
     expect(useToasts.getState().toasts.length).toBeGreaterThan(0);
+    expect(useToasts.getState().toasts[0].type).toBe("info"); // 6→8 stays in "Player" band — no title change
     expect(useLevelProgress.getState().acknowledged.SP_A).toBe(8);
   });
 });

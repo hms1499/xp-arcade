@@ -11,7 +11,7 @@ vi.mock("@/lib/holdings", () => ({
 }));
 
 import { useWallet } from "@/state/wallet";
-import { useMintTx } from "@/state/mint-tx";
+import { clearReadCache } from "@/lib/read-cache";
 import { useConnectedPlayerStats } from "./useConnectedPlayerStats";
 
 // Enable React act() so createRoot + act() flush effects synchronously.
@@ -36,8 +36,8 @@ let root: Root;
 
 beforeEach(() => {
   fetchMock.mockReset();
+  clearReadCache(); // prevent a cached holdings:SP_A entry from bleeding across tests
   useWallet.setState({ address: null });
-  useMintTx.setState({ status: "pending" });
   probed = { stats: null };
   container = document.createElement("div");
   document.body.appendChild(container);
