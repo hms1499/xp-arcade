@@ -26,6 +26,7 @@ function nft(score: number): ScoreNft {
 // the test can assert on it (no @testing-library renderHook in this project).
 let probed: { stats: PlayerStats | null };
 function Probe() {
+  // eslint-disable-next-line react-hooks/globals
   probed = useConnectedPlayerStats();
   return null;
 }
