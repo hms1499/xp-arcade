@@ -17,6 +17,7 @@ import { SwapWindow } from "@/components/windows/SwapWindow";
 import { ControlPanelWindow } from "@/components/windows/ControlPanelWindow";
 import { HowItWorksWindow } from "@/components/windows/HowItWorksWindow";
 import { Balloons } from "@/components/dialogs/BalloonNotification";
+import { LevelUpWatcher } from "@/components/desktop/LevelUpWatcher";
 
 export default function Home() {
   return (
@@ -39,6 +40,7 @@ export default function Home() {
         <ControlPanelWindow />
         <HowItWorksWindow />
         <Balloons />
+        <LevelUpWatcher />
       </Desktop>
     </BootScreen>
   );
