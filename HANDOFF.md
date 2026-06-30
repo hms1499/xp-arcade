@@ -41,6 +41,8 @@ To check live on-chain state, query the contract via Hiro Explorer or `clarinet 
 
 ## To-do for next session
 
+### XP/Level v2 (level-up toast) — shipped on main 2026-06-30, frontend-only.
+
 ### Leaderboard proxy + cache — shipped client-side (2026-06-15)
 
 Shared leaderboard reads (top-ten/current-season/prize-pool/season-end-block for
