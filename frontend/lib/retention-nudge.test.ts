@@ -5,6 +5,7 @@ import {
   markNudgeShown,
   shownTodayMap,
   streakRiskCandidate,
+  prizeUnclaimedCandidate,
 } from "./retention-nudge";
 import type { NudgeSignals } from "./retention-nudge";
 
@@ -40,6 +41,7 @@ function baseSignals(over: Partial<NudgeSignals> = {}): NudgeSignals {
     lastSeenRanks: null,
     countdowns: {},
     shownToday: {},
+    unclaimed: null,
     ...over,
   };
 }
@@ -200,5 +202,52 @@ describe("selectNudge", () => {
 
   it("returns null when nothing qualifies", () => {
     expect(selectNudge(baseSignals())).toBeNull();
+  });
+});
+
+describe("prizeUnclaimedCandidate", () => {
+  it("returns null without a summary", () => {
+    expect(prizeUnclaimedCandidate(baseSignals())).toBeNull();
+  });
+
+  it("aggregates multiple games", () => {
+    const n = prizeUnclaimedCandidate(baseSignals({
+      unclaimed: { totalUstx: 1_250_000, gamesCount: 3, topGame: "tetris" },
+    }));
+    expect(n).toMatchObject({
+      kind: "prize-unclaimed",
+      icon: "💰",
+      title: "Unclaimed prize!",
+      body: "You have 1.25 STX waiting across 3 games. Claim before the window closes.",
+      cta: { label: "Claim now", target: { window: "highscore", gameId: "tetris" } },
+    });
+  });
+
+  it("names the game when only one has a prize", () => {
+    const n = prizeUnclaimedCandidate(baseSignals({
+      unclaimed: { totalUstx: 590_000, gamesCount: 1, topGame: "minesweeper" },
+    }));
+    expect(n?.body).toBe(
+      "You have 0.59 STX waiting in Minesweeper. Claim before the window closes.",
+    );
+  });
+
+  it("outranks every other nudge in selectNudge", () => {
+    const signals = baseSignals({
+      address: "SP_A",
+      unclaimed: { totalUstx: 500_000, gamesCount: 1, topGame: "snake" },
+      // rank-drop signal present too:
+      ranks: { snake: null, tetris: null, pacman: null, breakout: null, minesweeper: null, solitaire: null },
+      lastSeenRanks: { snake: 1, tetris: null, pacman: null, breakout: null, minesweeper: null, solitaire: null },
+    });
+    expect(selectNudge(signals)?.kind).toBe("prize-unclaimed");
+  });
+
+  it("respects the once-per-day dedupe", () => {
+    const signals = baseSignals({
+      unclaimed: { totalUstx: 500_000, gamesCount: 1, topGame: "snake" },
+      shownToday: { "prize-unclaimed": true },
+    });
+    expect(selectNudge(signals)).toBeNull();
   });
 });

@@ -4,8 +4,9 @@ import type { StreakView } from "./daily-challenge";
 import type { LiveRanks } from "./player-ranks";
 import type { Countdown } from "./season-countdown";
 import { isCountdownUrgent, formatCountdown } from "./season-countdown";
+import type { UnclaimedSummary } from "@/state/unclaimed-prizes";
 
-export type NudgeKind = "rank-drop" | "season-closing" | "streak-risk";
+export type NudgeKind = "prize-unclaimed" | "rank-drop" | "season-closing" | "streak-risk";
 
 export type NudgeTarget =
   | { window: "highscore"; gameId: GameId }
@@ -27,6 +28,7 @@ export type NudgeSignals = {
   lastSeenRanks: LiveRanks | null;
   countdowns: Partial<Record<GameId, Countdown>>;
   shownToday: Partial<Record<NudgeKind, boolean>>;
+  unclaimed: UnclaimedSummary | null;
 };
 
 export const NUDGE_SHOWN_KEY = "xp-arcade:nudge";
@@ -62,6 +64,22 @@ export function shownTodayMap(
     if (day === today) out[kind as NudgeKind] = true;
   }
   return out;
+}
+
+export function prizeUnclaimedCandidate(signals: NudgeSignals): Nudge | null {
+  const u = signals.unclaimed;
+  if (!u || u.totalUstx <= 0) return null;
+  const stx = (u.totalUstx / 1_000_000).toFixed(2);
+  const body = u.gamesCount === 1
+    ? `You have ${stx} STX waiting in ${GAMES[u.topGame].label}. Claim before the window closes.`
+    : `You have ${stx} STX waiting across ${u.gamesCount} games. Claim before the window closes.`;
+  return {
+    kind: "prize-unclaimed",
+    icon: "💰",
+    title: "Unclaimed prize!",
+    body,
+    cta: { label: "Claim now", target: { window: "highscore", gameId: u.topGame } },
+  };
 }
 
 export function streakRiskCandidate(signals: NudgeSignals): Nudge | null {
@@ -125,9 +143,10 @@ export function rankDropCandidate(signals: NudgeSignals): Nudge | null {
 
 export function selectNudge(signals: NudgeSignals): Nudge | null {
   const candidates: Array<(s: NudgeSignals) => Nudge | null> = [
-    rankDropCandidate,      // priority 1
-    seasonClosingCandidate, // priority 2
-    streakRiskCandidate,    // priority 3
+    prizeUnclaimedCandidate, // priority 0 — real money beats re-engagement
+    rankDropCandidate,       // priority 1
+    seasonClosingCandidate,  // priority 2
+    streakRiskCandidate,     // priority 3
   ];
   for (const candidate of candidates) {
     const nudge = candidate(signals);
