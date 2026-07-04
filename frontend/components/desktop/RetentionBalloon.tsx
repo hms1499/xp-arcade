@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useWallet } from "@/state/wallet";
 import { useWindows } from "@/state/window-manager";
+import { useUnclaimedPrizes, type UnclaimedSummary } from "@/state/unclaimed-prizes";
 import { TrayBalloon } from "./TrayBalloon";
 import { collectNudgeSignals } from "@/lib/collect-nudge-signals";
 import {
@@ -19,6 +20,14 @@ const AUTO_HIDE_MS = 9000;
 function walletBalloonGone(): boolean {
   return typeof sessionStorage !== "undefined"
     && sessionStorage.getItem("balloon-dismissed") === "1";
+}
+
+/** Scan (deduped in the store) and reduce store state to the nudge signal. */
+export async function fetchUnclaimedSummary(address: string): Promise<UnclaimedSummary | null> {
+  await useUnclaimedPrizes.getState().scan(address);
+  const s = useUnclaimedPrizes.getState();
+  if (s.status !== "done" || s.totalUstx <= 0 || !s.topGame) return null;
+  return { totalUstx: s.totalUstx, gamesCount: s.gamesCount, topGame: s.topGame };
 }
 
 export function RetentionBalloon() {
@@ -39,7 +48,8 @@ export function RetentionBalloon() {
           lastSeenRanks: address ? loadLastSeenRanks(address) : null,
           fetchSnapshot: fetchLeaderboardSnapshot,
           fetchTip: getCurrentStacksBlockHeight,
-          fetchUnclaimed: async () => null, // TODO(Task 6): wire real unclaimed-prize fetch
+          fetchUnclaimed: () =>
+            address ? fetchUnclaimedSummary(address) : Promise.resolve(null),
         });
         if (cancelled) return;
         const picked = selectNudge(signals);

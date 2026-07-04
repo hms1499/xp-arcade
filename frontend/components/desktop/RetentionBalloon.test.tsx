@@ -21,10 +21,14 @@ vi.mock("@/lib/collect-nudge-signals", () => ({
     lastSeenRanks: { snake: 3, tetris: null, pacman: null, breakout: null, minesweeper: null, solitaire: null },
     countdowns: {},
     shownToday: {},
+    unclaimed: null,
   })),
 }));
 
-import { RetentionBalloon } from "./RetentionBalloon";
+const { collectNudgeSignals } = await import("@/lib/collect-nudge-signals");
+
+import { RetentionBalloon, fetchUnclaimedSummary } from "./RetentionBalloon";
+import { useUnclaimedPrizes, resetUnclaimedForTest } from "@/state/unclaimed-prizes";
 
 let container: HTMLDivElement;
 let root: Root;
@@ -34,6 +38,7 @@ beforeEach(() => {
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
+  resetUnclaimedForTest();
 });
 
 afterEach(async () => {
@@ -42,6 +47,7 @@ afterEach(async () => {
   vi.useRealTimers();
   vi.clearAllMocks();
   localStorage.clear();
+  resetUnclaimedForTest();
 });
 
 describe("RetentionBalloon", () => {
@@ -66,6 +72,58 @@ describe("RetentionBalloon", () => {
     await act(async () => { cta!.click(); });
 
     expect(open).toHaveBeenCalledWith("highscore", { initialTab: "snake" });
+  });
+
+  it("shows the unclaimed-prize balloon and opens High Scores at the top game", async () => {
+    // collectNudgeSignals is fully mocked at module level, so it never invokes the
+    // real fetchUnclaimed wiring — override its resolved value for this case to
+    // exercise the real selectNudge/prizeUnclaimedCandidate + CTA-open path.
+    vi.mocked(collectNudgeSignals).mockResolvedValueOnce({
+      address: "SP1",
+      streak: { currentStreak: 0, bestStreak: 0, completedToday: true },
+      dailyGame: "snake",
+      ranks: null,
+      lastSeenRanks: null,
+      countdowns: {},
+      shownToday: {},
+      unclaimed: { totalUstx: 1_250_000, gamesCount: 1, topGame: "tetris" },
+    });
+
+    await act(async () => { root.render(<RetentionBalloon />); });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3600);
+    });
+
+    expect(container.textContent).toContain("Unclaimed prize!");
+
+    const buttons = Array.from(container.querySelectorAll("button"));
+    const cta = buttons.find((b) => b.textContent?.trim() === "Claim now");
+    expect(cta).toBeTruthy();
+
+    await act(async () => { cta!.click(); });
+
+    expect(open).toHaveBeenCalledWith("highscore", { initialTab: "tetris" });
+  });
+
+  it("fetchUnclaimedSummary reduces real store state to a nudge-ready summary", async () => {
+    // Pre-seed the store as "done" for this address so scan() hits its own
+    // dedupe short-circuit (no network deps needed) — exercises the real
+    // useUnclaimedPrizes store, not a mock.
+    useUnclaimedPrizes.setState({
+      status: "done",
+      scannedFor: "SP1",
+      claims: [{ gameId: "tetris", season: 1, amountUstx: 1_250_000 }],
+      totalUstx: 1_250_000,
+      gamesCount: 1,
+      topGame: "tetris",
+    });
+
+    await expect(fetchUnclaimedSummary("SP1")).resolves.toEqual({
+      totalUstx: 1_250_000,
+      gamesCount: 1,
+      topGame: "tetris",
+    });
   });
 
   it("marks the kind shown today after rendering", async () => {
