@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { uintCV, principalCV } from "@stacks/transactions";
+import { clearReadCache } from "./read-cache";
 
 type ContractCallOpts = {
   functionName: string;
@@ -38,12 +39,13 @@ import {
   claimPrizeV3,
   mintScoreForGame,
   getClaimableAmount,
+  getSeasonPrizeForGame,
   isClaimOpen,
 } from "./contract-calls";
 
 const ADDR = "SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV";
 
-beforeEach(() => { calls.length = 0; readCalls.length = 0; });
+beforeEach(() => { calls.length = 0; readCalls.length = 0; clearReadCache(); });
 
 describe("contract-calls v3 arg shaping", () => {
   it("get-top-ten prepends the game-id", async () => {
@@ -87,5 +89,21 @@ describe("contract-calls v3 arg shaping", () => {
     await isClaimOpen("tetris", 2).catch(() => {});
     expect(readCalls[0].functionName).toBe("is-claim-open");
     expect(readCalls[0].functionArgs).toEqual([uintCV(2), uintCV(2)]);
+  });
+});
+
+describe("claim-path read caching", () => {
+  it("serves getSeasonPrizeForGame from cache on the second call", async () => {
+    const before = readCalls.length;
+    await getSeasonPrizeForGame("snake", 1);
+    await getSeasonPrizeForGame("snake", 1);
+    expect(readCalls.length).toBe(before + 1);
+  });
+
+  it("serves isClaimOpen from cache on the second call", async () => {
+    const before = readCalls.length;
+    await isClaimOpen("snake", 1);
+    await isClaimOpen("snake", 1);
+    expect(readCalls.length).toBe(before + 1);
   });
 });

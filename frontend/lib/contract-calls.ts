@@ -89,21 +89,23 @@ export async function getSeasonPrizeForGame(
   gameId: GameId,
   season: number,
 ): Promise<SeasonPrize> {
-  const res = await fetchCallReadOnlyFunction({
-    ...gameBase(gameId),
-    functionName: "get-season-prize",
-    functionArgs: [uintCV(onchainIdFor(gameId)), uintCV(season)],
-    senderAddress: GAMES[gameId].contractAddress,
+  return cachedRead(`seasonprize:${gameId}:${season}`, READ_TTL_MS, async () => {
+    const res = await fetchCallReadOnlyFunction({
+      ...gameBase(gameId),
+      functionName: "get-season-prize",
+      functionArgs: [uintCV(onchainIdFor(gameId)), uintCV(season)],
+      senderAddress: GAMES[gameId].contractAddress,
+    });
+    const v = unwrap<null | {
+      total: string;
+      "top-ten": Array<{ player: string; score: string }>;
+    }>(cvToValue(res));
+    if (!v) return null;
+    return {
+      total: Number(v.total),
+      topTen: v["top-ten"].map((e) => ({ player: String(e.player), score: Number(e.score) })),
+    };
   });
-  const v = unwrap<null | {
-    total: string;
-    "top-ten": Array<{ player: string; score: string }>;
-  }>(cvToValue(res));
-  if (!v) return null;
-  return {
-    total: Number(v.total),
-    topTen: v["top-ten"].map((e) => ({ player: String(e.player), score: Number(e.score) })),
-  };
 }
 
 export async function getClaimableAmount(
@@ -123,13 +125,15 @@ export async function getClaimableAmount(
 }
 
 export async function isClaimOpen(gameId: GameId, season: number): Promise<boolean> {
-  const res = await fetchCallReadOnlyFunction({
-    ...gameBase(gameId),
-    functionName: "is-claim-open",
-    functionArgs: [uintCV(onchainIdFor(gameId)), uintCV(season)],
-    senderAddress: GAMES[gameId].contractAddress,
+  return cachedRead(`claimopen:${gameId}:${season}`, READ_TTL_MS, async () => {
+    const res = await fetchCallReadOnlyFunction({
+      ...gameBase(gameId),
+      functionName: "is-claim-open",
+      functionArgs: [uintCV(onchainIdFor(gameId)), uintCV(season)],
+      senderAddress: GAMES[gameId].contractAddress,
+    });
+    return Boolean(cvToValue(res));
   });
-  return Boolean(cvToValue(res));
 }
 
 export async function hasClaimedPrizeForGame(
