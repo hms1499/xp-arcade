@@ -18,6 +18,7 @@ import { ControlPanelWindow } from "@/components/windows/ControlPanelWindow";
 import { HowItWorksWindow } from "@/components/windows/HowItWorksWindow";
 import { Balloons } from "@/components/dialogs/BalloonNotification";
 import { LevelUpWatcher } from "@/components/desktop/LevelUpWatcher";
+import { PrizeWatcher } from "@/components/desktop/PrizeWatcher";
 
 export default function Home() {
   return (
@@ -41,6 +42,7 @@ export default function Home() {
         <HowItWorksWindow />
         <Balloons />
         <LevelUpWatcher />
+        <PrizeWatcher />
       </Desktop>
     </BootScreen>
   );
