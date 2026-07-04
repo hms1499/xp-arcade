@@ -64,6 +64,8 @@ describe("PrizeTrayBadge", () => {
 
     expect(open).toHaveBeenCalledWith("highscore", { initialTab: "pacman" });
 
-    useWindows.setState({ open: prevOpen });
+    act(() => {
+      useWindows.setState({ open: prevOpen });
+    });
   });
 });
