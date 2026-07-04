@@ -12,6 +12,13 @@ export function clearReadCache(): void {
   inFlight.clear();
 }
 
+/** Drop cached + in-flight reads whose key starts with `keyPrefix` (e.g. after
+ *  a confirmed claim makes `claimed:`/`claimable:` values stale). */
+export function invalidateReadCache(keyPrefix: string): void {
+  for (const key of cache.keys()) if (key.startsWith(keyPrefix)) cache.delete(key);
+  for (const key of inFlight.keys()) if (key.startsWith(keyPrefix)) inFlight.delete(key);
+}
+
 /** Memoized read: serves a fresh cached value, dedupes concurrent calls for the
  *  same key, and runs the fetch through retryWithBackoff. */
 export async function cachedRead<T>(

@@ -1,6 +1,6 @@
 // frontend/lib/read-cache.test.ts
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { cachedRead, clearReadCache } from "./read-cache";
+import { cachedRead, clearReadCache, invalidateReadCache } from "./read-cache";
 
 beforeEach(() => {
   clearReadCache();
@@ -45,5 +45,21 @@ describe("cachedRead", () => {
     const result = await cachedRead("k", 1000, fn, { sleep: () => Promise.resolve() });
     expect(result).toBe(7);
     expect(fn).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("invalidateReadCache", () => {
+  it("drops matching keys and keeps others", async () => {
+    let aCalls = 0;
+    let bCalls = 0;
+    await cachedRead("claimed:snake:1:SP_A", 60_000, async () => ++aCalls);
+    await cachedRead("best:snake:SP_A", 60_000, async () => ++bCalls);
+
+    invalidateReadCache("claimed:snake:1");
+
+    await cachedRead("claimed:snake:1:SP_A", 60_000, async () => ++aCalls);
+    await cachedRead("best:snake:SP_A", 60_000, async () => ++bCalls);
+    expect(aCalls).toBe(2); // refetched after invalidation
+    expect(bCalls).toBe(1); // untouched key still cached
   });
 });
