@@ -4,6 +4,7 @@ import { useWallet } from "@/state/wallet";
 import { useMintTx } from "@/state/mint-tx";
 import { WalletBalloon } from "./WalletBalloon";
 import { RetentionBalloon } from "./RetentionBalloon";
+import { PrizeTrayBadge } from "./PrizeTrayBadge";
 import { stacks } from "@/lib/stacks";
 import { useWindows } from "@/state/window-manager";
 import { StacksLogo } from "@/components/shared/StacksLogo";
@@ -176,6 +177,7 @@ export function SystemTray() {
           <div className="tray-spinner" />
         </div>
       )}
+      <PrizeTrayBadge />
       <div ref={walletRef} style={{ position: "relative" }}>
         <div style={sunken}>
           {address ? (
