@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useWindows, type WindowEntry } from "@/state/window-manager";
 import { useWallet } from "@/state/wallet";
+import { useUnclaimedPrizes } from "@/state/unclaimed-prizes";
 import { StacksLogo } from "@/components/shared/StacksLogo";
 import { Window } from "@/components/windows/Window";
 import {
@@ -315,6 +316,7 @@ function LeaderboardTab({
                       ...prev,
                       claims: prev.claims.filter((x) => x.season !== c.season),
                     }));
+                    void useUnclaimedPrizes.getState().refresh({ gameId, season: c.season });
                     useToasts.getState().push({
                       title: "Prize received",
                       body: `Season ${c.season} payout has arrived in your wallet.`,
