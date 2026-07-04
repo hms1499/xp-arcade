@@ -7,6 +7,7 @@ import type { LeaderboardSnapshot } from "./leaderboard-snapshot";
 import { deriveCountdown, type Countdown } from "./season-countdown";
 import { blocksToEta } from "./season-blocks";
 import type { NudgeKind, NudgeSignals } from "./retention-nudge";
+import type { UnclaimedSummary } from "@/state/unclaimed-prizes";
 
 export type CollectDeps = {
   address: string | null;
@@ -15,6 +16,7 @@ export type CollectDeps = {
   lastSeenRanks: LiveRanks | null;
   fetchSnapshot: () => Promise<LeaderboardSnapshot>;
   fetchTip: () => Promise<number>;
+  fetchUnclaimed: () => Promise<UnclaimedSummary | null>;
   now?: number;
 };
 
@@ -29,10 +31,14 @@ export async function collectNudgeSignals(deps: CollectDeps): Promise<NudgeSigna
     lastSeenRanks: deps.lastSeenRanks,
     countdowns: {},
     shownToday: deps.shownToday,
+    unclaimed: null,
   };
   if (!deps.address) return base;
 
-  const snap = await deps.fetchSnapshot();
+  const [snap, unclaimed] = await Promise.all([
+    deps.fetchSnapshot(),
+    deps.fetchUnclaimed().catch(() => null),
+  ]);
   const ranks = playerLiveRanks(snap, deps.address);
   // seasonEndBlock ships inside the snapshot — only ranked games with a positive
   // end block need a countdown, and the chain tip is fetched once for all of them.
@@ -51,5 +57,5 @@ export async function collectNudgeSignals(deps: CollectDeps): Promise<NudgeSigna
       );
     }
   }
-  return { ...base, ranks, countdowns };
+  return { ...base, ranks, countdowns, unclaimed };
 }

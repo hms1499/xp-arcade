@@ -39,6 +39,7 @@ export function RetentionBalloon() {
           lastSeenRanks: address ? loadLastSeenRanks(address) : null,
           fetchSnapshot: fetchLeaderboardSnapshot,
           fetchTip: getCurrentStacksBlockHeight,
+          fetchUnclaimed: async () => null, // TODO(Task 6): wire real unclaimed-prize fetch
         });
         if (cancelled) return;
         const picked = selectNudge(signals);
