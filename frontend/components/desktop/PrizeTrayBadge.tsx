@@ -31,7 +31,7 @@ export function PrizeTrayBadge() {
       title={`Unclaimed prizes: ${stx} STX`}
       aria-label={`Unclaimed prizes: ${stx} STX — open High Scores to claim`}
       onClick={() => open("highscore", { initialTab: topGame })}
-      style={{ ...sunken, border: "1px solid", cursor: "default", color: "#7a5c00" }}
+      style={{ ...sunken, cursor: "default", color: "#7a5c00" }}
     >
       <span aria-hidden="true">💰</span>
       <span style={{ fontWeight: "bold" }}>{stx}</span>

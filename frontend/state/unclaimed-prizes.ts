@@ -107,8 +107,9 @@ export const useUnclaimedPrizes = create<S>((set, get) => ({
     const address = get().scannedFor;
     if (!address) return;
     if (claimed) {
-      invalidateReadCache(`claimed:${claimed.gameId}:${claimed.season}`);
-      invalidateReadCache(`claimable:${claimed.gameId}:${claimed.season}`);
+      // Trailing colon so season 1 never prefix-matches season 10+ keys.
+      invalidateReadCache(`claimed:${claimed.gameId}:${claimed.season}:`);
+      invalidateReadCache(`claimable:${claimed.gameId}:${claimed.season}:`);
     }
     set({ status: "idle" }); // defeat the done-dedupe so scan really re-runs
     await get().scan(address, deps);

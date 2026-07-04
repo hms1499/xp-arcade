@@ -214,6 +214,11 @@ body {
     padding: 0 4px !important;
   }
 
+  .tray-prize-badge {
+    padding: 0 3px !important;
+    gap: 2px !important;
+  }
+
   .toast-stack,
   .wallet-balloon {
     right: 6px !important;
