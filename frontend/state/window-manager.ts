@@ -29,18 +29,22 @@ export type WindowEntry = {
   z: number;
   minimized: boolean;
   maximized?: boolean;
+  /** Set once the user has resized; undefined = default width, auto height. */
+  w?: number;
+  h?: number;
   payload?: WindowPayload;
 };
 
 type S = {
   windows: WindowEntry[];
   topZ: number;
-  lastPos: Partial<Record<WindowType, { x: number; y: number }>>;
+  lastPos: Partial<Record<WindowType, { x: number; y: number; w?: number; h?: number }>>;
   open: (type: WindowType, payload?: WindowPayload) => void;
   close: (id: string) => void;
   focus: (id: string) => void;
   minimize: (id: string) => void;
   move: (id: string, x: number, y: number) => void;
+  resize: (id: string, geom: WindowGeometry) => void;
   toggleMaximize: (id: string) => void;
   closeTopWindowIfUtility: () => void;
 };
@@ -181,6 +185,8 @@ export const useWindows = create<S>((set, get) => ({
           type,
           x: pos.x,
           y: pos.y,
+          w: remembered?.w,
+          h: remembered?.h,
           z,
           minimized: false,
           // Solitaire's Klondike board and the browser both need the room —
@@ -217,7 +223,28 @@ export const useWindows = create<S>((set, get) => ({
       const win = s.windows.find((w) => w.id === id);
       return {
         windows: s.windows.map((w) => (w.id === id ? { ...w, x, y } : w)),
-        lastPos: win ? { ...s.lastPos, [win.type]: { x, y } } : s.lastPos,
+        lastPos: win
+          ? { ...s.lastPos, [win.type]: { ...s.lastPos[win.type], x, y } }
+          : s.lastPos,
+      };
+    }),
+  resize: (id, geom) =>
+    set((s) => {
+      const win = s.windows.find((w) => w.id === id);
+      // no-op: unknown id — same state ref so Zustand skips re-render
+      if (!win) return s;
+      const g =
+        typeof window === "undefined"
+          ? geom
+          : clampGeometry(geom, {
+              width: window.innerWidth,
+              height: window.innerHeight,
+            });
+      return {
+        windows: s.windows.map((w) =>
+          w.id === id ? { ...w, x: g.x, y: g.y, w: g.w, h: g.h } : w,
+        ),
+        lastPos: { ...s.lastPos, [win.type]: { x: g.x, y: g.y, w: g.w, h: g.h } },
       };
     }),
   closeTopWindowIfUtility: () =>

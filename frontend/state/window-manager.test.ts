@@ -353,3 +353,72 @@ describe("resizeGeometry", () => {
     expect(g).toEqual({ x: 100, y: 70, w: 420, h: 310 });
   });
 });
+
+describe("resize action + geometry memory", () => {
+  const matchMedia = (matches: boolean) =>
+    ((q: string) => ({
+      matches,
+      media: q,
+      addEventListener() {},
+      removeEventListener() {},
+    })) as unknown as typeof window.matchMedia;
+
+  beforeEach(() => {
+    useWindows.setState({ windows: [], topZ: 10, lastPos: {} });
+    window.matchMedia = matchMedia(false);
+  });
+
+  it("applies geometry to the target window", () => {
+    useWindows.getState().open("highscore");
+    const id = useWindows.getState().windows[0].id;
+    useWindows.getState().resize(id, { x: 40, y: 30, w: 640, h: 480 });
+    const w = useWindows.getState().windows[0];
+    expect([w.x, w.y, w.w, w.h]).toEqual([40, 30, 640, 480]);
+  });
+
+  it("clamps below-minimum geometry", () => {
+    useWindows.getState().open("highscore");
+    const id = useWindows.getState().windows[0].id;
+    useWindows.getState().resize(id, { x: 40, y: 30, w: 10, h: 10 });
+    const w = useWindows.getState().windows[0];
+    expect([w.w, w.h]).toEqual([300, 200]);
+  });
+
+  it("is a same-ref no-op for unknown ids", () => {
+    useWindows.getState().open("highscore");
+    const before = useWindows.getState().windows;
+    useWindows.getState().resize("nope", { x: 0, y: 0, w: 400, h: 300 });
+    expect(useWindows.getState().windows).toBe(before);
+  });
+
+  it("remembers geometry so reopen restores it", () => {
+    useWindows.getState().open("highscore");
+    const id = useWindows.getState().windows[0].id;
+    useWindows.getState().resize(id, { x: 40, y: 30, w: 640, h: 480 });
+    useWindows.getState().close(id);
+    useWindows.getState().open("highscore");
+    const w = useWindows.getState().windows[0];
+    expect([w.x, w.y, w.w, w.h]).toEqual([40, 30, 640, 480]);
+  });
+
+  it("move updates position without clobbering remembered size", () => {
+    useWindows.getState().open("highscore");
+    const id = useWindows.getState().windows[0].id;
+    useWindows.getState().resize(id, { x: 40, y: 30, w: 640, h: 480 });
+    useWindows.getState().move(id, 200, 150);
+    useWindows.getState().close(id);
+    useWindows.getState().open("highscore");
+    const w = useWindows.getState().windows[0];
+    expect([w.x, w.y, w.w, w.h]).toEqual([200, 150, 640, 480]);
+  });
+
+  it("windows that never resized reopen without w/h", () => {
+    useWindows.getState().open("highscore");
+    const id = useWindows.getState().windows[0].id;
+    useWindows.getState().move(id, 200, 150);
+    useWindows.getState().close(id);
+    useWindows.getState().open("highscore");
+    const w = useWindows.getState().windows[0];
+    expect([w.x, w.y, w.w, w.h]).toEqual([200, 150, undefined, undefined]);
+  });
+});
