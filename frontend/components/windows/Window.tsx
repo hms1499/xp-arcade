@@ -125,14 +125,12 @@ export function Window({
               zIndex: win.z,
               width: effectiveWidth,
               maxWidth: "calc(100vw - 8px)",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
               ...(win.h
-                ? {
-                    height: win.h,
-                    display: "flex",
-                    flexDirection: "column",
-                    overflow: "hidden",
-                  }
-                : { maxHeight: "calc(100vh - 36px)", overflow: "auto" }),
+                ? { height: win.h }
+                : { maxHeight: "calc(100vh - 36px)" }),
             }
       }
       onMouseDown={() => focus(id)}
@@ -194,8 +192,8 @@ export function Window({
         className="window-body"
         style={
           win.maximized || compactViewport || win.h
-            ? { flex: 1, overflow: "auto" }
-            : undefined
+            ? { flex: 1, overflow: "auto", minHeight: 0 }
+            : { minHeight: 0, overflow: "auto" }
         }
       >
         {children}

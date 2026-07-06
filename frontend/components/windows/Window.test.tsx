@@ -102,4 +102,13 @@ describe("Window resize handles", () => {
     expect(frame.style.width).toBe("640px");
     expect(frame.style.height).toBe("480px");
   });
+
+  it("never lets the frame scroll for an un-resized window (body scrolls instead)", () => {
+    seed("highscore");
+    render();
+    const frame = container.querySelector(".window") as HTMLElement;
+    const body = container.querySelector(".window-body") as HTMLElement;
+    expect(frame.style.overflow).toBe("hidden");
+    expect(body.style.overflow).toBe("auto");
+  });
 });
