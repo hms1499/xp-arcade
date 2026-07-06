@@ -5,6 +5,9 @@ import {
   isWindowActive,
   soloVisible,
   useWindows,
+  isResizableType,
+  clampGeometry,
+  resizeGeometry,
   type WindowEntry,
 } from "./window-manager";
 
@@ -274,5 +277,79 @@ describe("browser window", () => {
       .getState()
       .windows.filter((w) => w.type === "browser").length;
     expect(count).toBe(1);
+  });
+});
+
+describe("isResizableType", () => {
+  it("allows utility windows and the browser", () => {
+    expect(isResizableType("highscore")).toBe(true);
+    expect(isResizableType("browser")).toBe(true);
+    expect(isResizableType("swap")).toBe(true);
+  });
+
+  it("excludes every game window", () => {
+    expect(isResizableType("game-snake")).toBe(false);
+    expect(isResizableType("game-solitaire")).toBe(false);
+  });
+});
+
+describe("clampGeometry", () => {
+  const vp = { width: 1024, height: 768 };
+
+  it("enforces the 300x200 minimum size", () => {
+    const g = clampGeometry({ x: 50, y: 50, w: 100, h: 80 }, vp);
+    expect(g.w).toBe(300);
+    expect(g.h).toBe(200);
+  });
+
+  it("caps size to the viewport minus the 28px taskbar", () => {
+    const g = clampGeometry({ x: 0, y: 0, w: 5000, h: 5000 }, vp);
+    expect(g.w).toBe(1024);
+    expect(g.h).toBe(740);
+  });
+
+  it("keeps the title bar reachable (same bounds as drag)", () => {
+    const g = clampGeometry({ x: -900, y: -50, w: 400, h: 300 }, vp);
+    expect(g.x).toBe(-400 + 60);
+    expect(g.y).toBe(0);
+  });
+
+  it("lets min size win over a degenerate viewport", () => {
+    const g = clampGeometry({ x: 0, y: 0, w: 400, h: 300 }, { width: 200, height: 100 });
+    expect(g.w).toBe(300);
+    expect(g.h).toBe(200);
+  });
+});
+
+describe("resizeGeometry", () => {
+  const vp = { width: 1024, height: 768 };
+  const start = { x: 100, y: 80, w: 400, h: 300 };
+
+  it("grows from the right/bottom edges by the pointer delta", () => {
+    const g = resizeGeometry(start, { right: true, bottom: true }, 50, 40, vp);
+    expect(g).toEqual({ x: 100, y: 80, w: 450, h: 340 });
+  });
+
+  it("dragging the left edge moves x and anchors the right edge", () => {
+    const g = resizeGeometry(start, { left: true }, 50, 0, vp);
+    expect(g).toEqual({ x: 150, y: 80, w: 350, h: 300 });
+    expect(g.x + g.w).toBe(start.x + start.w);
+  });
+
+  it("keeps the right edge anchored when a left drag hits min width", () => {
+    const g = resizeGeometry(start, { left: true }, 999, 0, vp);
+    expect(g.w).toBe(300);
+    expect(g.x + g.w).toBe(start.x + start.w);
+  });
+
+  it("dragging the top edge moves y and anchors the bottom edge", () => {
+    const g = resizeGeometry(start, { top: true }, 0, 30, vp);
+    expect(g).toEqual({ x: 100, y: 110, w: 400, h: 270 });
+    expect(g.y + g.h).toBe(start.y + start.h);
+  });
+
+  it("resizes both axes from a corner", () => {
+    const g = resizeGeometry(start, { top: true, right: true }, 20, -10, vp);
+    expect(g).toEqual({ x: 100, y: 70, w: 420, h: 310 });
   });
 });

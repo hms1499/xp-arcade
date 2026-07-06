@@ -60,6 +60,77 @@ export function isUtilityType(type: WindowType): boolean {
   return !type.startsWith("game-") && type !== "browser";
 }
 
+export type WindowGeometry = { x: number; y: number; w: number; h: number };
+export type ResizeEdges = {
+  left?: boolean;
+  right?: boolean;
+  top?: boolean;
+  bottom?: boolean;
+};
+
+export const MIN_WINDOW_W = 300;
+export const MIN_WINDOW_H = 200;
+const TASKBAR_H = 28;
+
+/**
+ * Resizable = every non-game window. Deliberately NOT isUtilityType: that
+ * helper is Escape-close semantics and excludes the browser, which must
+ * still be resizable.
+ */
+export function isResizableType(type: WindowType): boolean {
+  return !type.startsWith("game-");
+}
+
+/**
+ * Clamp a window's geometry: 300x200 minimum (which wins over a degenerate
+ * viewport), viewport-minus-taskbar maximum, and position bounds matching
+ * the title-bar drag clamp so the title bar stays reachable.
+ */
+export function clampGeometry(
+  geom: WindowGeometry,
+  viewport: { width: number; height: number },
+): WindowGeometry {
+  const w = Math.min(geom.w, Math.max(MIN_WINDOW_W, viewport.width));
+  const h = Math.min(geom.h, Math.max(MIN_WINDOW_H, viewport.height - TASKBAR_H));
+  const cw = Math.max(w, MIN_WINDOW_W);
+  const ch = Math.max(h, MIN_WINDOW_H);
+  return {
+    x: Math.max(-cw + 60, Math.min(geom.x, viewport.width - 60)),
+    y: Math.max(0, Math.min(geom.y, viewport.height - TASKBAR_H)),
+    w: cw,
+    h: ch,
+  };
+}
+
+/**
+ * Apply a pointer delta to the edges being dragged. Size is clamped first
+ * and position derived from it, so when a left/top drag hits the size
+ * limit the opposite edge stays anchored (real-Windows behavior).
+ */
+export function resizeGeometry(
+  start: WindowGeometry,
+  edges: ResizeEdges,
+  dx: number,
+  dy: number,
+  viewport: { width: number; height: number },
+): WindowGeometry {
+  const raw: WindowGeometry = {
+    x: start.x,
+    y: start.y,
+    w: edges.right ? start.w + dx : edges.left ? start.w - dx : start.w,
+    h: edges.bottom ? start.h + dy : edges.top ? start.h - dy : start.h,
+  };
+  const clamped = clampGeometry(raw, viewport);
+  return clampGeometry(
+    {
+      ...clamped,
+      x: edges.left ? start.x + (start.w - clamped.w) : clamped.x,
+      y: edges.top ? start.y + (start.h - clamped.h) : clamped.y,
+    },
+    viewport,
+  );
+}
+
 /**
  * On phones/short viewports every window renders full-screen (see Window.tsx),
  * so two open windows stack invisibly and look like the app froze. Keep just
