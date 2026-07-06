@@ -75,7 +75,10 @@ nonsense via one pure function used by both:
   4 edge strips (6px thick) + 4 corner squares (12px), with cursors
   `ns-resize` (top/bottom), `ew-resize` (left/right), `nwse-resize`
   (top-left/bottom-right), `nesw-resize` (top-right/bottom-left). Corners
-  render after edges so they win the hit test.
+  render after edges so they win the hit test. *(Amended after runtime
+  verification: cursors live in `globals.css` as `[data-resize=…]` rules
+  with `!important`, not inline styles — the Win95 cursor theme's global
+  `* { cursor: … !important }` rule clobbers inline cursors.)*
 - `onMouseDown` on a handle: record start pointer + start geometry + which
   edges the handle controls; attach `mousemove`/`mouseup` listeners on
   `window` (same pattern as the existing title-bar drag); on move, compute
@@ -86,11 +89,15 @@ nonsense via one pure function used by both:
   the title bar.
 - Rendering:
   - `width`: `win.w ?? width` (the existing prop default).
-  - If `win.h` is set, the non-maximized style branch switches to
-    `display:flex; flexDirection:column; height: win.h` and the
-    `window-body` gets `flex:1; overflow:auto` — the same content-scroll
-    treatment the maximized branch already uses. Without `win.h`, height
-    stays auto (current behavior, zero visual change for untouched windows).
+  - The non-maximized frame is always a flex column with `overflow: hidden`;
+    `window-body` is the scroll container in every mode. With `win.h` set the
+    frame gets `height: win.h` and the body `flex:1`; without it, height
+    stays auto with the existing `maxHeight` cap and the body scrolls.
+    *(Amended after runtime verification: the original design kept
+    `overflow:auto` on the frame for untouched windows, but the handles are
+    absolute children of the frame — if the frame scrolls, they drift with
+    the content. Side effect of the fix, intended: the title bar stays
+    pinned while content scrolls, matching real Windows.)*
 - Maximize interaction unchanged: the maximized branch ignores `w/h`;
   restore returns to the user's dragged size.
 
