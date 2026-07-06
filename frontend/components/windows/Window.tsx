@@ -1,6 +1,29 @@
 "use client";
-import { ReactNode, useEffect, useRef, useState } from "react";
-import { useWindows } from "@/state/window-manager";
+import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
+import {
+  useWindows,
+  isResizableType,
+  resizeGeometry,
+  type ResizeEdges,
+} from "@/state/window-manager";
+
+const EDGE = 6;
+const CORNER = 12;
+
+const RESIZE_HANDLES: {
+  dir: string;
+  edges: ResizeEdges;
+  style: CSSProperties;
+}[] = [
+  { dir: "n", edges: { top: true }, style: { top: 0, left: CORNER, right: CORNER, height: EDGE, cursor: "ns-resize" } },
+  { dir: "s", edges: { bottom: true }, style: { bottom: 0, left: CORNER, right: CORNER, height: EDGE, cursor: "ns-resize" } },
+  { dir: "e", edges: { right: true }, style: { top: CORNER, bottom: CORNER, right: 0, width: EDGE, cursor: "ew-resize" } },
+  { dir: "w", edges: { left: true }, style: { top: CORNER, bottom: CORNER, left: 0, width: EDGE, cursor: "ew-resize" } },
+  { dir: "nw", edges: { top: true, left: true }, style: { top: 0, left: 0, width: CORNER, height: CORNER, cursor: "nwse-resize" } },
+  { dir: "ne", edges: { top: true, right: true }, style: { top: 0, right: 0, width: CORNER, height: CORNER, cursor: "nesw-resize" } },
+  { dir: "sw", edges: { bottom: true, left: true }, style: { bottom: 0, left: 0, width: CORNER, height: CORNER, cursor: "nesw-resize" } },
+  { dir: "se", edges: { bottom: true, right: true }, style: { bottom: 0, right: 0, width: CORNER, height: CORNER, cursor: "nwse-resize" } },
+];
 
 export function Window({
   id,
@@ -19,12 +42,14 @@ export function Window({
   const minimize = useWindows((s) => s.minimize);
   const move = useWindows((s) => s.move);
   const toggleMaximize = useWindows((s) => s.toggleMaximize);
+  const resize = useWindows((s) => s.resize);
   const maxZ = useWindows((s) =>
     Math.max(...s.windows.filter((w) => !w.minimized).map((w) => w.z), 0)
   );
   const dragRef = useRef<{ ox: number; oy: number } | null>(null);
   const flashingRef = useRef(false);
   const titlebarRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const [closing, setClosing] = useState(false);
   const [compactViewport, setCompactViewport] = useState(false);
 
@@ -47,8 +72,37 @@ export function Window({
 
   const isActive = win.z === maxZ;
 
+  const effectiveWidth = win.w ?? width;
+  const resizable =
+    isResizableType(win.type) && !win.maximized && !compactViewport;
+
+  const startResize =
+    (edges: ResizeEdges) => (e: React.MouseEvent) => {
+      e.preventDefault();
+      const start = {
+        x: win.x,
+        y: win.y,
+        w: effectiveWidth,
+        // First-ever resize: measure the current auto height.
+        h: win.h ?? rootRef.current?.offsetHeight ?? 200,
+      };
+      const sx = e.clientX;
+      const sy = e.clientY;
+      const viewport = { width: window.innerWidth, height: window.innerHeight };
+      const onMove = (ev: MouseEvent) => {
+        resize(id, resizeGeometry(start, edges, ev.clientX - sx, ev.clientY - sy, viewport));
+      };
+      const onUp = () => {
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+      };
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    };
+
   return (
     <div
+      ref={rootRef}
       role="dialog"
       aria-labelledby={`${id}-title`}
       className={`window window-opening${closing ? " window-closing" : ""}`}
@@ -69,10 +123,16 @@ export function Window({
               left: win.x,
               top: win.y,
               zIndex: win.z,
-              width,
+              width: effectiveWidth,
               maxWidth: "calc(100vw - 8px)",
-              maxHeight: "calc(100vh - 36px)",
-              overflow: "auto",
+              ...(win.h
+                ? {
+                    height: win.h,
+                    display: "flex",
+                    flexDirection: "column",
+                    overflow: "hidden",
+                  }
+                : { maxHeight: "calc(100vh - 36px)", overflow: "auto" }),
             }
       }
       onMouseDown={() => focus(id)}
@@ -105,7 +165,7 @@ export function Window({
             if (!dragRef.current) return;
             const rawX = ev.clientX - dragRef.current.ox;
             const rawY = ev.clientY - dragRef.current.oy;
-            const clampedX = Math.max(-width + 60, Math.min(rawX, vw - 60));
+            const clampedX = Math.max(-effectiveWidth + 60, Math.min(rawX, vw - 60));
             const clampedY = Math.max(0, Math.min(rawY, vh - 28));
             move(id, clampedX, clampedY);
           };
@@ -133,13 +193,22 @@ export function Window({
       <div
         className="window-body"
         style={
-          win.maximized || compactViewport
+          win.maximized || compactViewport || win.h
             ? { flex: 1, overflow: "auto" }
             : undefined
         }
       >
         {children}
       </div>
+      {resizable &&
+        RESIZE_HANDLES.map((h) => (
+          <div
+            key={h.dir}
+            data-resize={h.dir}
+            onMouseDown={startResize(h.edges)}
+            style={{ position: "absolute", zIndex: 3, ...h.style }}
+          />
+        ))}
     </div>
   );
 }
