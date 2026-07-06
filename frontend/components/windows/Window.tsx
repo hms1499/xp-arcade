@@ -15,14 +15,14 @@ const RESIZE_HANDLES: {
   edges: ResizeEdges;
   style: CSSProperties;
 }[] = [
-  { dir: "n", edges: { top: true }, style: { top: 0, left: CORNER, right: CORNER, height: EDGE, cursor: "ns-resize" } },
-  { dir: "s", edges: { bottom: true }, style: { bottom: 0, left: CORNER, right: CORNER, height: EDGE, cursor: "ns-resize" } },
-  { dir: "e", edges: { right: true }, style: { top: CORNER, bottom: CORNER, right: 0, width: EDGE, cursor: "ew-resize" } },
-  { dir: "w", edges: { left: true }, style: { top: CORNER, bottom: CORNER, left: 0, width: EDGE, cursor: "ew-resize" } },
-  { dir: "nw", edges: { top: true, left: true }, style: { top: 0, left: 0, width: CORNER, height: CORNER, cursor: "nwse-resize" } },
-  { dir: "ne", edges: { top: true, right: true }, style: { top: 0, right: 0, width: CORNER, height: CORNER, cursor: "nesw-resize" } },
-  { dir: "sw", edges: { bottom: true, left: true }, style: { bottom: 0, left: 0, width: CORNER, height: CORNER, cursor: "nesw-resize" } },
-  { dir: "se", edges: { bottom: true, right: true }, style: { bottom: 0, right: 0, width: CORNER, height: CORNER, cursor: "nwse-resize" } },
+  { dir: "n", edges: { top: true }, style: { top: 0, left: CORNER, right: CORNER, height: EDGE } },
+  { dir: "s", edges: { bottom: true }, style: { bottom: 0, left: CORNER, right: CORNER, height: EDGE } },
+  { dir: "e", edges: { right: true }, style: { top: CORNER, bottom: CORNER, right: 0, width: EDGE } },
+  { dir: "w", edges: { left: true }, style: { top: CORNER, bottom: CORNER, left: 0, width: EDGE } },
+  { dir: "nw", edges: { top: true, left: true }, style: { top: 0, left: 0, width: CORNER, height: CORNER } },
+  { dir: "ne", edges: { top: true, right: true }, style: { top: 0, right: 0, width: CORNER, height: CORNER } },
+  { dir: "sw", edges: { bottom: true, left: true }, style: { bottom: 0, left: 0, width: CORNER, height: CORNER } },
+  { dir: "se", edges: { bottom: true, right: true }, style: { bottom: 0, right: 0, width: CORNER, height: CORNER } },
 ];
 
 export function Window({
