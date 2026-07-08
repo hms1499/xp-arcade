@@ -81,8 +81,10 @@ and **UTC day**. Approved set:
 **Existing error events (folded into the same store):**
 `wallet_connect_error`, `tx_confirmation_timeout`, `holdings_total_failure`.
 
-Games (for the `game` dimension): `snake`, `tetris`, `pacman`, `bricks`,
-`minesweeper`, `solitaire`.
+Games (for the `game` dimension): the real `GameId` union from
+`lib/game-registry.ts` — `snake`, `tetris`, `pacman`, `breakout`,
+`minesweeper`, `solitaire` (note: the XP Bricks slug is `breakout`). Reuse
+`GAME_IDS`; do not invent slugs.
 
 ## 5. Architecture
 
