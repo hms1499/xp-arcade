@@ -23,6 +23,7 @@ import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
 import { markSeasonEnded, wasSeasonEnded } from "@/lib/ended-seasons";
 import { stacks } from "@/lib/stacks";
 import { networkMismatchWarning } from "@/lib/wallet-safety";
+import { trackFunnel } from "@/lib/telemetry";
 
 const BADGE_BG: Record<number, string> = { 1: "#ffd700", 2: "#c0c0c0", 3: "#cd7f32" };
 
@@ -285,6 +286,7 @@ function LeaderboardTab({
               onMouseDown={(e) => e.stopPropagation()}
               onClick={async (e) => {
                 e.stopPropagation();
+                trackFunnel("claim_attempted", { game: gameId });
                 setClaimingSeason(c.season);
                 let txId: string;
                 try {
@@ -312,6 +314,7 @@ function LeaderboardTab({
                   claimWatchRef.current = null;
                   setClaimingSeason(null);
                   if (outcome === "confirmed") {
+                    trackFunnel("claim_confirmed", { game: gameId });
                     setClaimState((prev) => ({
                       ...prev,
                       claims: prev.claims.filter((x) => x.season !== c.season),
@@ -323,12 +326,14 @@ function LeaderboardTab({
                       type: "success",
                     });
                   } else if (outcome === "timeout") {
+                    trackFunnel("claim_failed", { game: gameId });
                     useToasts.getState().push({
                       title: "Confirmation delayed",
                       body: `Season ${c.season} claim may still confirm. Check Explorer before retrying.`,
                       type: "info",
                     });
                   } else {
+                    trackFunnel("claim_failed", { game: gameId });
                     useToasts.getState().push({
                       title: "Claim failed",
                       body: `Season ${c.season} claim was rejected on-chain. You can try again.`,
