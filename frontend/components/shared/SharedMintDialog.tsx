@@ -19,6 +19,7 @@ import { GAMES, type GameId } from "@/lib/game-registry";
 import { useWindows } from "@/state/window-manager";
 import { StacksLogo } from "@/components/shared/StacksLogo";
 import { stacks } from "@/lib/stacks";
+import { trackFunnel } from "@/lib/telemetry";
 import {
   scoreRiskColor,
   scoreRiskLabel,
@@ -197,6 +198,7 @@ export function SharedMintDialog({
 
   async function handleMint() {
     if (!address) return;
+    trackFunnel("mint_attempted", { game: gameId });
     setBusy(true);
     setError(null);
     try {
