@@ -1,9 +1,25 @@
 import { NextResponse } from "next/server";
 import { rateLimit } from "@/lib/rate-limit";
-import { sanitizeTelemetryPayload } from "@/lib/telemetry";
+import { isFunnelEvent, sanitizeTelemetryPayload } from "@/lib/telemetry";
+import { incrWithTtl } from "@/lib/redis";
+import {
+  EVENT_TTL_SECONDS,
+  dailyGameKey,
+  dailyKey,
+  totalKey,
+  utcDay,
+} from "@/lib/metrics-keys";
 
-const LIMIT = 20;
+// Play emits more events than errors do, so allow a more generous window.
+const LIMIT = 60;
 const WINDOW_MS = 60_000;
+
+async function countEvent(event: string, game?: string): Promise<void> {
+  const day = utcDay();
+  await incrWithTtl(dailyKey(event, day), EVENT_TTL_SECONDS);
+  await incrWithTtl(totalKey(event));
+  if (game) await incrWithTtl(dailyGameKey(event, game, day), EVENT_TTL_SECONDS);
+}
 
 export async function POST(request: Request) {
   const ip =
@@ -22,6 +38,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid payload" }, { status: 400 });
   }
 
-  console.error(`[client-telemetry] ${JSON.stringify(payload)}`);
+  await countEvent(payload.event, payload.game);
+  if (!isFunnelEvent(payload.event)) {
+    console.error(`[client-telemetry] ${JSON.stringify(payload)}`);
+  }
   return new NextResponse(null, { status: 202 });
 }
