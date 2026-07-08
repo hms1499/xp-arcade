@@ -5,6 +5,7 @@ import { watchTx, type TxStatus } from "@/lib/tx-tracker";
 import { useWallet } from "@/state/wallet";
 import { useToasts } from "@/state/toasts";
 import { playSuccess } from "@/lib/sounds";
+import { trackFunnel } from "@/lib/telemetry";
 
 type MintTxState = {
   gameId: GameId | null;
@@ -40,6 +41,7 @@ export const useMintTx = create<MintTxState>((set) => ({
       useWallet.getState().setMintPending(false);
       stopFn = null;
       if (s === "success") {
+        trackFunnel("mint_confirmed", { game: gameId });
         playSuccess();
         useToasts.getState().push({
           title: "NFT confirmed!",
@@ -48,6 +50,7 @@ export const useMintTx = create<MintTxState>((set) => ({
           duration: 6000,
         });
       } else if (s === "timeout") {
+        trackFunnel("mint_failed", { game: gameId });
         useToasts.getState().push({
           title: "Confirmation delayed",
           body: "The transaction may still confirm. Check it in Explorer.",
@@ -55,6 +58,7 @@ export const useMintTx = create<MintTxState>((set) => ({
           duration: 8000,
         });
       } else {
+        trackFunnel("mint_failed", { game: gameId });
         useToasts.getState().push({
           title: "Mint failed",
           body: "Transaction was rejected on-chain.",
