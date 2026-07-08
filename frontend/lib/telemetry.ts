@@ -68,8 +68,10 @@ export function sanitizeTelemetryPayload(
     : redactSensitiveText(
         typeof input.message === "string" ? input.message : "Unknown client error",
       ).slice(0, 300);
-  const path =
-    typeof input.path === "string"
+  // Funnel events carry only event + game — no free-text path.
+  const path = isFunnelEvent(event)
+    ? undefined
+    : typeof input.path === "string"
       ? redactSensitiveText(input.path).slice(0, 120)
       : undefined;
   return { event, message, path, game };
@@ -109,7 +111,6 @@ export function trackFunnel(
   const payload = sanitizeTelemetryPayload({
     event,
     game: opts.game,
-    path: window.location.pathname,
   });
   if (!payload) return;
   send(JSON.stringify(payload));

@@ -47,4 +47,22 @@ describe("sanitizeTelemetryPayload", () => {
     expect(isFunnelEvent("mint_attempted")).toBe(true);
     expect(isFunnelEvent("wallet_connect_error")).toBe(false);
   });
+
+  it("strips path from funnel events", () => {
+    const p = sanitizeTelemetryPayload({
+      event: "mint_confirmed",
+      game: "snake",
+      path: "/player/SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV",
+    });
+    expect(p?.path).toBeUndefined();
+  });
+
+  it("keeps redacted path on error events", () => {
+    const p = sanitizeTelemetryPayload({
+      event: "wallet_connect_error",
+      message: "x",
+      path: "/share/score/1",
+    });
+    expect(p?.path).toBe("/share/score/1");
+  });
 });
