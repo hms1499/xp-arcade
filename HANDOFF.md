@@ -41,6 +41,23 @@ To check live on-chain state, query the contract via Hiro Explorer or `clarinet 
 
 ## To-do for next session
 
+### Observability — funnel metrics (phase 1) — shipped 2026-07-08
+
+Client emits play→mint→claim funnel events (+ the 3 existing error events)
+through `lib/telemetry.ts` → `POST /api/telemetry`, which counts them in Upstash
+Redis (per-event/per-game/per-day, 90-day TTL). `GET /api/metrics/summary` +
+`/admin/metrics` (public-read, Win95) show the two golden ratios
+(played→attempted, attempted→confirmed). No contract change. Redis calls are
+guarded; with no `KV_REST_API_*` env the whole pipeline is a no-op.
+
+- [ ] **User action:** install "Upstash for Redis" in the Vercel Marketplace
+      (free tier) so `KV_REST_API_URL` / `KV_REST_API_TOKEN` are injected, then
+      redeploy. Counters start filling after that.
+- [ ] After a day of traffic, read `/admin/metrics` and use the ratios to inform
+      the retention work.
+- [ ] Future phase 2: economic/on-chain invariant alerting (reuses this store);
+      optional password/wallet gate on the page; charts once history exists.
+
 ### XP/Level v2 (level-up toast) — shipped on main 2026-06-30, frontend-only.
 
 ### Leaderboard proxy + cache — shipped client-side (2026-06-15)
