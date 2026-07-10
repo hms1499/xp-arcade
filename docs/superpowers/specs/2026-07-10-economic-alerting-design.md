@@ -30,7 +30,7 @@ an economic action overdue?". This phase adds that missing watcher.
 
 ## 2. Goals
 
-- Detect four economic-lifecycle conditions per game from **read-only** chain
+- Detect three economic-lifecycle conditions per game from **read-only** chain
   state, on a daily schedule.
 - Deliver actionable alerts to **Discord** so the owner acts (or players are
   reminded) before money gets stuck.
@@ -61,24 +61,33 @@ Per game (ids 1–6), evaluated against the chain tip. `S` = current season.
 
 | # | Code | Severity | Fires when | Suggested action |
 |---|---|---|---|---|
-| 1 | `season_overdue` | critical | `season-end-block > 0` AND `stacks_tip ≥ end-block` (season not yet rolled) | call `end-season(game)` |
-| 2 | `season_ending_soon` | warning | `end-block > 0` AND `0 < end-block − stacks_tip ≤ SEASON_END_WARN_BLOCKS` | prepare to end / notify players |
-| 3 | `finalize_overdue` | critical | closed season `s`: `season-prize` exists, `finalized = false`, `burn_tip > claim-deadline`, `total − paid > 0` | call `finalize-season(game, s)` |
-| 4 | `claim_closing_soon` | warning | closed season `s`: `is-claim-open` true, `0 < claim-deadline − burn_tip ≤ CLAIM_WARN_BURN_BLOCKS`, `total − paid > 0` | remind players to claim |
+| 1 | `season_ending_soon` | warning | `end-block > 0` AND `0 < end-block − stacks_tip ≤ SEASON_END_WARN_BLOCKS` | prepare to end / notify players |
+| 2 | `finalize_overdue` | critical | closed season `s`: `season-prize` exists, `finalized = false`, `burn_tip > claim-deadline`, `total − paid > 0` | call `finalize-season(game, s)` |
+| 3 | `claim_closing_soon` | warning | closed season `s`: `is-claim-open` true, `0 < claim-deadline − burn_tip ≤ CLAIM_WARN_BURN_BLOCKS`, `total − paid > 0` | remind players to claim |
 
-Rules #1 and #3 are exact boolean comparisons — the high-value "money is
-overdue/stuck" signals. Rules #2 and #4 are advance warnings.
+Rule #2 (`finalize_overdue`) is the exact, high-value "money is stuck" signal —
+the only `critical`. Rules #1 and #3 are advance warnings.
 
-**Closed-season scan range:** for #3/#4 only inspect `s ∈ [max(1, S−2), S−1]`.
+**Dropped rule — `season_overdue`:** an earlier draft alerted when
+`stacks_tip ≥ season-end-block`. On-chain probing showed this is unusable:
+`season-end-block` is a **single per-game value that `end-season` does not
+reset**, so after a season rolls the deadline stays in the past. Snake, for
+example, currently sits on open season 2 with a stale season-1 deadline
+(`end-block 8470355 < tip ≈ 8521430`), which would fire a false "overdue"
+critical every single day. Because ending is permissionless and the owner may
+intentionally roll seasons manually, "expired deadline present" is not reliably
+an actionable condition. The only *forward-looking* deadline signal that is
+unambiguous is `end-block > tip` (rule #1), which is kept.
+
+**Closed-season scan range:** for #2/#3 only inspect `s ∈ [max(1, S−2), S−1]`.
 Older seasons are already finalized; the range is bounded and cheap.
 
 **Thresholds (defaults, env-overridable):**
 
-- `SEASON_END_WARN_BLOCKS` — stacks blocks of lead time for #2. Post-Nakamoto
+- `SEASON_END_WARN_BLOCKS` — stacks blocks of lead time for #1. Post-Nakamoto
   stacks-block cadence is fast/variable, so this is a coarse advance notice;
-  default `1000` and document that #1 (exact) is the reliable signal. Override
-  via `SEASON_END_WARN_BLOCKS` env.
-- `CLAIM_WARN_BURN_BLOCKS` — burn blocks of lead time for #4. Burn blocks track
+  default `1000`. Override via `SEASON_END_WARN_BLOCKS` env.
+- `CLAIM_WARN_BURN_BLOCKS` — burn blocks of lead time for #3. Burn blocks track
   Bitcoin (~144/day; `CLAIM-WINDOW u4320 ≈ 30 days` confirms this), so this
   threshold is meaningful in wall-clock terms. Default ≈ 432 (~3 days). Override
   via `CLAIM_WARN_BURN_BLOCKS` env.
@@ -134,7 +143,7 @@ type Thresholds = { seasonEndWarnBlocks: number; claimWarnBurnBlocks: number };
 ```
 Functions:
 - `computeAlerts(snapshot: ChainSnapshot, thresholds: Thresholds): Alert[]` —
-  implements rules #1–#4; deterministic, no I/O.
+  implements rules #1–#3; deterministic, no I/O.
 - `formatDiscordMessage(alerts: Alert[]): { content: string }` — groups by
   severity, Win95-flavored plain text, contains **no principals or txids** (game
   slug + uSTX amounts + block heights only). Discord `content` max 2000 chars;
@@ -166,13 +175,16 @@ POST.
   so the workflow run goes red (same contract as `production-health.mjs`).
 
 ### 6.3 `frontend/lib/economic-alerts.test.ts` — Vitest
-- #1 fires when `end-block>0 && tip≥end`; silent when `end-block=0` or `tip<end`.
-- #2 fires only inside `SEASON_END_WARN_BLOCKS`; silent past it / when overdue
-  (overdue is #1's job).
-- #3 fires for closed season past `claim-deadline`, `finalized=false`,
-  `total−paid>0`; silent when finalized, when `total−paid=0`, or still in window.
-- #4 fires when claim open, within `CLAIM_WARN_BURN_BLOCKS`, money remaining;
-  silent when finalized / no money / outside threshold.
+- #1 (`season_ending_soon`) fires only inside `SEASON_END_WARN_BLOCKS`
+  (`0 < end-block − tip ≤ threshold`); silent when `end-block=0`, when
+  `tip ≥ end-block` (already past — deliberately no alert, the dropped rule), and
+  when the gap exceeds the threshold.
+- #2 (`finalize_overdue`) fires for closed season past `claim-deadline`,
+  `finalized=false`, `total−paid>0`; silent when finalized, when `total−paid=0`,
+  or still in window.
+- #3 (`claim_closing_soon`) fires when claim open, within
+  `CLAIM_WARN_BURN_BLOCKS`, money remaining; silent when finalized / no money /
+  outside threshold.
 - Multiple games / multiple closed seasons aggregate correctly.
 - `formatDiscordMessage` groups critical-before-warning and its output contains
   no `SP…`/`ST…` principal or `0x…` txid substrings.
@@ -194,7 +206,7 @@ POST.
 
 Read-only calls evaluate at the chain tip, so on-chain `stacks-block-height` /
 `burn-block-height` inside the contract already reflect "now". The runner still
-fetches `/v2/info` because the *deltas* in rules #2/#4 (`end-block − tip`,
+fetches `/v2/info` because the *deltas* in rules #1/#3 (`end-block − tip`,
 `claim-deadline − burn-tip`) need the current heights on the client side — no
 read-only function returns "blocks remaining".
 
