@@ -36,3 +36,13 @@ See `frontend/.env.example`.
 - **Sound effects** (XP `ding`/`error`/`balloon`) are intentionally deferred —
   they need MP3 assets we can't generate. Wire-up snippet is in the plan's
   Phase 8 task 8.2.
+
+## Economic-alerts workflow (phase 2 observability)
+
+- `.github/workflows/economic-alerts.yml` runs `npm run alerts:economic` daily.
+- Requires GitHub repo secret **`ALERT_WEBHOOK_URL`** (a Discord Incoming
+  Webhook URL). Without it the run prints alerts to the workflow log and exits 0.
+- Optional overrides: `STACKS_API_URL`, `SEASON_END_WARN_BLOCKS` (default 1000),
+  `CLAIM_WARN_BURN_BLOCKS` (default 432).
+- The runner is `frontend/scripts/economic-alerts.ts`, executed via
+  `node --experimental-strip-types` (Node 22) — no `tsx` dependency.
