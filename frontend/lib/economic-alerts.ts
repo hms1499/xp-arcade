@@ -94,3 +94,17 @@ export function computeAlerts(
   }
   return alerts;
 }
+
+export function formatDiscordMessage(alerts: Alert[]): { content: string } {
+  const critical = alerts.filter((a) => a.severity === "critical");
+  const warning = alerts.filter((a) => a.severity === "warning");
+
+  const lines: string[] = [];
+  lines.push(
+    `**XP Arcade — economic alerts** (${critical.length} critical, ${warning.length} warning)`,
+  );
+  for (const a of critical) lines.push(`🔴 [${a.code}] ${a.message}`);
+  for (const a of warning) lines.push(`🟡 [${a.code}] ${a.message}`);
+
+  return { content: lines.join("\n") };
+}

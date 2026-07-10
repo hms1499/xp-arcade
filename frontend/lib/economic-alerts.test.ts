@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { computeAlerts, type ChainSnapshot, type Thresholds } from "./economic-alerts";
+import { formatDiscordMessage } from "./economic-alerts";
 
 const THRESHOLDS: Thresholds = { seasonEndWarnBlocks: 1000, claimWarnBurnBlocks: 432 };
 
@@ -130,5 +131,33 @@ describe("computeAlerts — aggregation", () => {
     });
     const codes = computeAlerts(snap, THRESHOLDS).map((a) => a.code).sort();
     expect(codes).toEqual(["finalize_overdue", "season_ending_soon"]);
+  });
+});
+
+describe("formatDiscordMessage", () => {
+  const alerts = [
+    { severity: "warning" as const, code: "season_ending_soon", game: "snake", message: "snake: season deadline in ~500 stacks blocks (end-block 100500)." },
+    { severity: "critical" as const, code: "finalize_overdue", game: "tetris", message: "tetris: season 1 claim window closed with 500000 uSTX unclaimed — call finalize-season(tetris, 1)." },
+  ];
+
+  it("puts critical alerts before warnings", () => {
+    const { content } = formatDiscordMessage(alerts);
+    expect(content.indexOf("finalize_overdue")).toBeLessThan(content.indexOf("season_ending_soon"));
+  });
+
+  it("mentions counts of each severity", () => {
+    const { content } = formatDiscordMessage(alerts);
+    expect(content).toContain("1 critical");
+    expect(content).toContain("1 warning");
+  });
+
+  it("contains no principals or txids", () => {
+    const { content } = formatDiscordMessage(alerts);
+    expect(content).not.toMatch(/S[PT][0-9A-Z]{6,}/); // no SP…/ST… principals
+    expect(content).not.toMatch(/0x[0-9a-fA-F]{8,}/); // no txids
+  });
+
+  it("handles an empty list without throwing", () => {
+    expect(() => formatDiscordMessage([])).not.toThrow();
   });
 });
