@@ -12,6 +12,7 @@
     "test:visual": "playwright test",
     "test:e2e:ci": "playwright test e2e/season-admin.spec.ts e2e/claim-prize.spec.ts",
     "health:production": "node scripts/production-health.mjs",
+    "alerts:economic": "node --experimental-strip-types scripts/economic-alerts.ts",
     "smoke:snapshot": "node scripts/smoke-snapshot.mjs",
     "typecheck": "tsc --noEmit",
     "ci": "npm run lint && npm run test && npm run typecheck && npm run build"
