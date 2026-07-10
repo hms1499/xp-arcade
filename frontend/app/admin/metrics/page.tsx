@@ -14,22 +14,29 @@ function n(e: Record<string, EventCounts>, k: string): number {
   return e[k]?.total ?? 0;
 }
 
+type Result = { days: number; data: Summary | null; error: string | null };
+
 export default function MetricsPage() {
   const [days, setDays] = useState(7);
-  const [data, setData] = useState<Summary | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<Result>({ days: 7, data: null, error: null });
 
   useEffect(() => {
     let cancelled = false;
-    setError(null);
     fetch(`/api/metrics/summary?days=${days}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-      .then((d: Summary) => !cancelled && setData(d))
-      .catch((e) => !cancelled && setError(e.message));
+      .then((d: Summary) => !cancelled && setResult({ days, data: d, error: null }))
+      .catch((e) => !cancelled && setResult({ days, data: null, error: e.message }));
     return () => {
       cancelled = true;
     };
   }, [days]);
+
+  // Only trust the result if it matches the currently-selected range; a stale
+  // result (or none yet) reads as "loading", which also clears a prior error
+  // when the range changes — without a synchronous setState in the effect.
+  const fresh = result.days === days;
+  const data = fresh ? result.data : null;
+  const error = fresh ? result.error : null;
 
   const e = data?.events ?? {};
   const played = n(e, "game_over");
