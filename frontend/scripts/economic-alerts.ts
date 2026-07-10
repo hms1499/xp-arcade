@@ -36,23 +36,73 @@ function fetchWithTimeout(input: string, init: RequestInit = {}) {
   return fetch(input, { ...init, signal: AbortSignal.timeout(10_000) });
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Hiro's public API rate-limits unauthenticated callers; a burst of ~49 sequential
+// read-only calls per run can trip a 429. Retry those (and transient network/timeout
+// failures) with exponential backoff so a transient blip doesn't turn a healthy chain
+// into a red GitHub Actions run. Genuine errors (bad contract call, real outage) still
+// surface — and still exit 1 — once retries are exhausted.
+const RETRY_DELAYS_MS = [500, 1000, 2000, 4000];
+
+function isRetryableError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  if (/\b429\b|Too Many Requests/i.test(message)) return true;
+  if (/timeout|ETIMEDOUT|ECONNRESET|ECONNREFUSED|ENOTFOUND|EAI_AGAIN|network|fetch failed/i.test(message)) {
+    return true;
+  }
+  if (error instanceof Error && error.name === "AbortError") return true;
+  return false;
+}
+
+async function withRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      const canRetry = attempt < RETRY_DELAYS_MS.length && isRetryableError(error);
+      if (!canRetry) throw error;
+      const delay = RETRY_DELAYS_MS[attempt];
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(
+        `WARN ${label}: ${message} — retrying in ${delay}ms (attempt ${attempt + 2}/${RETRY_DELAYS_MS.length + 1})`,
+      );
+      await sleep(delay);
+    }
+  }
+}
+
+// Small pacing gap between sequential reads, on top of the retry policy, to reduce
+// how hard each run bursts against Hiro's per-minute quota.
+const INTER_CALL_DELAY_MS = 150;
+
 async function readOnly(functionName: string, functionArgs: ReturnType<typeof uintCV>[] = []) {
-  const result = await fetchCallReadOnlyFunction({
-    contractAddress: CONTRACT_ADDRESS,
-    contractName: CONTRACT_NAME,
-    functionName,
-    functionArgs,
-    senderAddress: CONTRACT_ADDRESS,
-    network: "mainnet",
-    client: { baseUrl: API_URL, fetch: fetchWithTimeout },
-  });
+  const result = await withRetry(
+    () =>
+      fetchCallReadOnlyFunction({
+        contractAddress: CONTRACT_ADDRESS,
+        contractName: CONTRACT_NAME,
+        functionName,
+        functionArgs,
+        senderAddress: CONTRACT_ADDRESS,
+        network: "mainnet",
+        client: { baseUrl: API_URL, fetch: fetchWithTimeout },
+      }),
+    `readOnly:${functionName}`,
+  );
+  await sleep(INTER_CALL_DELAY_MS);
   return cvToValue(result);
 }
 
 async function fetchTips(): Promise<{ stacksTip: number; burnTip: number }> {
-  const res = await fetchWithTimeout(`${API_URL}/v2/info`);
-  if (!res.ok) throw new Error(`/v2/info returned HTTP ${res.status}`);
-  const info = await res.json();
+  const info = await withRetry(async () => {
+    const res = await fetchWithTimeout(`${API_URL}/v2/info`);
+    if (res.status === 429) throw new Error("/v2/info returned HTTP 429: Too Many Requests");
+    if (!res.ok) throw new Error(`/v2/info returned HTTP ${res.status}`);
+    return res.json();
+  }, "fetchTips:/v2/info");
   return {
     stacksTip: Number(info.stacks_tip_height),
     burnTip: Number(info.burn_block_height),
