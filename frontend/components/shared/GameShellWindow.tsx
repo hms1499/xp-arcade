@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { type GameId, GAMES } from "@/lib/game-registry";
 import { useWindows } from "@/state/window-manager";
 import { useSessionStats } from "@/state/session-stats";
@@ -109,36 +109,34 @@ export function GameShellWindow({
     };
   }, [w, gameId, address]);
 
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
+  const [viewportEl, setViewportEl] = useState<HTMLDivElement | null>(null);
+  const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null);
   const [avail, setAvail] = useState({ w: 0, h: 0 });
   const [natural, setNatural] = useState({ w: 0, h: 0 });
 
   useEffect(() => {
-    const viewport = viewportRef.current;
-    const stage = stageRef.current;
-    if (!viewport || !stage) return;
+    if (!viewportEl || !stageEl) return;
 
     // The viewport is the space the window's geometry leaves for the field.
     const viewportObserver = new ResizeObserver(() => {
-      setAvail({ w: viewport.clientWidth, h: viewport.clientHeight });
+      setAvail({ w: viewportEl.clientWidth, h: viewportEl.clientHeight });
     });
     // offsetWidth/offsetHeight ignore the stage's own transform, so this stays
     // the game's natural size no matter what scale is applied.
     const stageObserver = new ResizeObserver(() => {
-      setNatural({ w: stage.offsetWidth, h: stage.offsetHeight });
+      setNatural({ w: stageEl.offsetWidth, h: stageEl.offsetHeight });
     });
 
-    viewportObserver.observe(viewport);
-    stageObserver.observe(stage);
-    setAvail({ w: viewport.clientWidth, h: viewport.clientHeight });
-    setNatural({ w: stage.offsetWidth, h: stage.offsetHeight });
+    viewportObserver.observe(viewportEl);
+    stageObserver.observe(stageEl);
+    setAvail({ w: viewportEl.clientWidth, h: viewportEl.clientHeight });
+    setNatural({ w: stageEl.offsetWidth, h: stageEl.offsetHeight });
 
     return () => {
       viewportObserver.disconnect();
       stageObserver.disconnect();
     };
-  }, []);
+  }, [viewportEl, stageEl]);
 
   const scale = computeGameScale({
     availW: avail.w,
@@ -272,7 +270,7 @@ export function GameShellWindow({
           onMet={handleChallengeMet}
         />
         <div
-          ref={viewportRef}
+          ref={setViewportEl}
           className="game-shell-stage"
           style={{
             flex: 1,
@@ -284,7 +282,7 @@ export function GameShellWindow({
           }}
         >
           <div
-            ref={stageRef}
+            ref={setStageEl}
             className="game-shell-stage-inner p-2"
             style={{
               flex: "none",
