@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeGameScale, MIN_GAME_SCALE, MAX_GAME_SCALE } from "./game-scale";
+import { computeGameScale, MAX_GAME_SCALE } from "./game-scale";
 
 const NATURAL = { naturalW: 640, naturalH: 480 };
 
@@ -30,17 +30,17 @@ describe("computeGameScale", () => {
     expect(computeGameScale({ availW: 0, availH: 0, ...NATURAL })).toBe(1);
   });
 
-  // The floor exists only as a guard. If it ever binds, the scaled field would be
-  // wider than the viewport that clips it, and part of the game would be
-  // invisible. The smallest window the manager allows is 300x200; assert the
-  // field still fits inside it, for a game larger than any we ship.
-  it("keeps the field inside the viewport at the smallest allowed window", () => {
+  // There is no floor: the field must always fit inside whatever the window
+  // affords, even at the real Snake-at-minimum-window numbers, where the old
+  // 0.25 floor was reachable and would have clamped the scale upward past
+  // what the viewport could show (clipping top and bottom with no scrollbar).
+  it("keeps the field inside the viewport even when the true fit is below the old floor", () => {
     const availW = 300;
-    const availH = 200;
-    const big = { naturalW: 900, naturalH: 700 };
-    const k = computeGameScale({ availW, availH, ...big });
-    expect(k).toBeGreaterThan(MIN_GAME_SCALE);
-    expect(big.naturalW * k).toBeLessThanOrEqual(availW);
-    expect(big.naturalH * k).toBeLessThanOrEqual(availH);
+    const availH = 95;
+    const natural = { naturalW: 640, naturalH: 496 };
+    const k = computeGameScale({ availW, availH, ...natural });
+    expect(natural.naturalW * k).toBeLessThanOrEqual(availW);
+    expect(natural.naturalH * k).toBeLessThanOrEqual(availH);
+    expect(k).toBeLessThan(0.25);
   });
 });

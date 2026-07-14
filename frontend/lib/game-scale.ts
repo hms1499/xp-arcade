@@ -1,11 +1,13 @@
 /**
- * The floor is a guard, not a design knob: a scale clamped ABOVE what the
- * window affords would push the field past the viewport that clips it, hiding
- * part of the game. It sits below anything reachable from the 300x200 window
- * minimum. The ceiling is the bound meant to be felt -- it stops a maximized
- * window on a large display from blowing the field up into abstract art.
+ * The ceiling is the only clamp, and it is a design bound, not a guard: it
+ * stops a maximized window on a large display from blowing the field up into
+ * abstract art. There is deliberately NO floor. A floor would clamp the scale
+ * ABOVE what the window's available space affords whenever the window is
+ * small enough -- and that can only ever push the field past the viewport
+ * that clips it, hiding part of the game. The field must always fit, even if
+ * that means a very small game at the smallest window; the user opted into
+ * that by dragging the window there.
  */
-export const MIN_GAME_SCALE = 0.25;
 export const MAX_GAME_SCALE = 3;
 
 export type GameScaleInput = {
@@ -33,5 +35,5 @@ export function computeGameScale({
   if (naturalW <= 0 || naturalH <= 0) return 1;
   if (availW <= 0 || availH <= 0) return 1;
   const fit = Math.min(availW / naturalW, availH / naturalH);
-  return Math.min(MAX_GAME_SCALE, Math.max(MIN_GAME_SCALE, fit));
+  return Math.min(MAX_GAME_SCALE, fit);
 }
