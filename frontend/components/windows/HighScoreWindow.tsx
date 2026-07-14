@@ -21,6 +21,7 @@ import { formatScoreValue } from "@/lib/score-format";
 import { topTenEntryHint } from "@/lib/leaderboard-showcase";
 import { useSeasonCountdown, formatCountdown } from "@/lib/season-countdown";
 import { markSeasonEnded, wasSeasonEnded } from "@/lib/ended-seasons";
+import { canOfferSeasonClose } from "@/lib/season-close";
 import { stacks } from "@/lib/stacks";
 import { networkMismatchWarning } from "@/lib/wallet-safety";
 import { trackFunnel } from "@/lib/telemetry";
@@ -424,8 +425,14 @@ function LeaderboardTab({
           )}
         </div>
       </div>
-      {countdown.state === "reached" &&
-        !wasSeasonEnded(gameId, countdown.endBlock) && (
+      {canOfferSeasonClose({
+        countdownReached: countdown.state === "reached",
+        alreadyEnded:
+          countdown.state === "reached" &&
+          wasSeasonEnded(gameId, countdown.endBlock),
+        poolUstx,
+        topTenCount: rows?.length ?? 0,
+      }) && (
         <div className="mb-2 px-1">
           <button
             type="button"
