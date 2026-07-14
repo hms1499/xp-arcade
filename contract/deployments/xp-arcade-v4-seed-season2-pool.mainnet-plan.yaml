@@ -1,0 +1,294 @@
+id: 0
+name: XP Arcade v4 seed season-2 prize pool (mainnet)
+network: mainnet
+stacks-node: https://api.hiro.so
+bitcoin-node: http://blockstack:blockstacksystem@bitcoin.blockstack.com:8332
+# Owner-only seed. Run with the deployer wallet AFTER the set-season-end-block
+# plan has confirmed:
+#   clarinet deployments apply -p contract/deployments/xp-arcade-v4-seed-season2-pool.mainnet-plan.yaml --no-dashboard
+# Never use -c on mainnet (it recomputes the fee).
+#
+# WHY: the contract has no deposit function -- mint fees are the ONLY way STX
+# enters a prize pool. A season that opens at "Pool 0.00 STX" gives a first-time
+# visitor no reason to mint. This mints 5 scores per game so every pool starts
+# non-zero: 0.55 STX of mint fees (+ ~0.30 STX of tx fees).
+#
+# Score u1 with player-name "SEED" is deliberate: try-insert-top-ten dedupes by
+# player, so the owner holds at most ONE top-10 slot per game, at the lowest
+# possible score -- displaced by the first real player once the list fills.
+# Do NOT seed with plausible-looking scores; that would fake the leaderboard.
+plan:
+  batches:
+  - id: 0
+    transactions:
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u1
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u1
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u1
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u1
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u1
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u2
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u2
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u2
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u2
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u2
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u3
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u3
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u3
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u3
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u3
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u4
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u4
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u4
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u4
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u4
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u5
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u5
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u5
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u5
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u5
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u6
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u6
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u6
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u6
+      - u1
+      - '"SEED"'
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: mint-score
+      parameters:
+      - u6
+      - u1
+      - '"SEED"'
+      cost: 10000
+    epoch: '3.3'

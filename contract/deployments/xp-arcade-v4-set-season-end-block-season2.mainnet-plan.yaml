@@ -1,0 +1,71 @@
+id: 0
+name: XP Arcade v4 set season-end-block -- season 2 (mainnet)
+network: mainnet
+stacks-node: https://api.hiro.so
+bitcoin-node: http://blockstack:blockstacksystem@bitcoin.blockstack.com:8332
+# Owner-only. Run with the deployer wallet:
+#   clarinet deployments apply -p contract/deployments/xp-arcade-v4-set-season-end-block-season2.mainnet-plan.yaml --no-dashboard
+# Never use -c on mainnet (it recomputes the fee).
+#
+# WHY: end-season does NOT reset season-end-block. Season 2 opened while the map
+# still held the season-1 deadline (u8470355, long past the tip) -- a "stillborn"
+# season: the frontend showed every game as expired and anyone could close it.
+# This sets a FUTURE shared deadline H for all 6 games.
+#
+#   H = u8741624  (~30 days from stacks tip 8546952 @ ~13.3 s/block, ~2026-08-13)
+#
+# MUST run BEFORE the pool-seed plan, and before any future end-season call the
+# NEXT H must be set first -- otherwise the new season is stillborn again.
+plan:
+  batches:
+  - id: 0
+    transactions:
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: set-season-end-block
+      parameters:
+      - u1
+      - u8741624
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: set-season-end-block
+      parameters:
+      - u2
+      - u8741624
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: set-season-end-block
+      parameters:
+      - u3
+      - u8741624
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: set-season-end-block
+      parameters:
+      - u4
+      - u8741624
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: set-season-end-block
+      parameters:
+      - u5
+      - u8741624
+      cost: 10000
+    - transaction-type: contract-call
+      contract-id: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV.xp-arcade-v4
+      expected-sender: SP2CMK69QNY60HBG8BJ4X5TD7XX2ZT4XB62V13SV
+      method: set-season-end-block
+      parameters:
+      - u6
+      - u8741624
+      cost: 10000
+    epoch: '3.3'
