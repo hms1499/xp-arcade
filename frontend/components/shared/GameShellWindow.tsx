@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { type GameId, GAMES } from "@/lib/game-registry";
 import { useWindows } from "@/state/window-manager";
 import { useSessionStats } from "@/state/session-stats";
@@ -18,6 +18,7 @@ import { ChallengeBanner } from "@/components/shared/ChallengeBanner";
 import { useChallenge } from "@/state/challenge";
 import { useToasts } from "@/state/toasts";
 import { playSuccess } from "@/lib/sounds";
+import { computeGameScale } from "@/lib/game-scale";
 
 type GoalState = {
   rows: TopEntry[];
@@ -108,6 +109,44 @@ export function GameShellWindow({
     };
   }, [w, gameId, address]);
 
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [avail, setAvail] = useState({ w: 0, h: 0 });
+  const [natural, setNatural] = useState({ w: 0, h: 0 });
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const stage = stageRef.current;
+    if (!viewport || !stage) return;
+
+    // The viewport is the space the window's geometry leaves for the field.
+    const viewportObserver = new ResizeObserver(() => {
+      setAvail({ w: viewport.clientWidth, h: viewport.clientHeight });
+    });
+    // offsetWidth/offsetHeight ignore the stage's own transform, so this stays
+    // the game's natural size no matter what scale is applied.
+    const stageObserver = new ResizeObserver(() => {
+      setNatural({ w: stage.offsetWidth, h: stage.offsetHeight });
+    });
+
+    viewportObserver.observe(viewport);
+    stageObserver.observe(stage);
+    setAvail({ w: viewport.clientWidth, h: viewport.clientHeight });
+    setNatural({ w: stage.offsetWidth, h: stage.offsetHeight });
+
+    return () => {
+      viewportObserver.disconnect();
+      stageObserver.disconnect();
+    };
+  }, []);
+
+  const scale = computeGameScale({
+    availW: avail.w,
+    availH: avail.h,
+    naturalW: natural.w,
+    naturalH: natural.h,
+  });
+
   if (!w) return null;
 
   const goal = leaderboardGoal({
@@ -120,7 +159,7 @@ export function GameShellWindow({
     <Window id={w.id} title={`${game.emoji} ${game.label}`}>
       <div
         className="game-shell-content"
-        style={{ display: "flex", flexDirection: "column" }}
+        style={{ display: "flex", flexDirection: "column", height: "100%" }}
       >
         <div
           className="game-shell-toolbar"
@@ -232,7 +271,30 @@ export function GameShellWindow({
           sessionBest={sessionStats.bestScore}
           onMet={handleChallengeMet}
         />
-        <div className="game-shell-stage p-2">{children}</div>
+        <div
+          ref={viewportRef}
+          className="game-shell-stage"
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            ref={stageRef}
+            className="game-shell-stage-inner p-2"
+            style={{
+              flex: "none",
+              transform: `scale(${scale})`,
+              transformOrigin: "center",
+            }}
+          >
+            {children}
+          </div>
+        </div>
       </div>
     </Window>
   );
