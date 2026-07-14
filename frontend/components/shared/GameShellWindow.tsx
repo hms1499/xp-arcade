@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { type GameId, GAMES } from "@/lib/game-registry";
 import { useWindows } from "@/state/window-manager";
 import { useSessionStats } from "@/state/session-stats";
@@ -32,10 +32,19 @@ export function GameShellWindow({
   gameId,
   score,
   children,
+  unscaled = false,
 }: {
   gameId: GameId;
   score: number;
   children: React.ReactNode;
+  /**
+   * Set for chrome that must render at native size instead of scaling with
+   * the play field -- e.g. the game-over/mint dialog, which is the wallet /
+   * STX-transaction surface. When true, `children` render inside the
+   * viewport layer WITHOUT the stage's transform, and the viewport scrolls
+   * (rather than clipping) if the content is taller than available space.
+   */
+  unscaled?: boolean;
 }) {
   const game = GAMES[gameId];
   const w = useWindows((s) =>
@@ -114,7 +123,11 @@ export function GameShellWindow({
   const [avail, setAvail] = useState({ w: 0, h: 0 });
   const [natural, setNatural] = useState({ w: 0, h: 0 });
 
-  useEffect(() => {
+  // useLayoutEffect (not useEffect) so the measurement lands before paint --
+  // otherwise, if the browser window resizes while this window is
+  // minimized, the first painted frame after restore uses stale avail/
+  // natural values before self-correcting on the next tick.
+  useLayoutEffect(() => {
     if (!viewportEl || !stageEl) return;
 
     // The viewport is the space the window's geometry leaves for the field.
@@ -275,23 +288,29 @@ export function GameShellWindow({
           style={{
             flex: 1,
             minHeight: 0,
-            overflow: "hidden",
+            overflow: unscaled ? "auto" : "hidden",
             display: "flex",
-            alignItems: "center",
+            alignItems: unscaled ? "flex-start" : "center",
             justifyContent: "center",
           }}
         >
-          <div
-            ref={setStageEl}
-            className="game-shell-stage-inner p-2"
-            style={{
-              flex: "none",
-              transform: `scale(${scale})`,
-              transformOrigin: "center",
-            }}
-          >
-            {children}
-          </div>
+          {unscaled ? (
+            <div className="game-shell-stage-inner p-2" style={{ flex: "none" }}>
+              {children}
+            </div>
+          ) : (
+            <div
+              ref={setStageEl}
+              className="game-shell-stage-inner p-2"
+              style={{
+                flex: "none",
+                transform: `scale(${scale})`,
+                transformOrigin: "center",
+              }}
+            >
+              {children}
+            </div>
+          )}
         </div>
       </div>
     </Window>
