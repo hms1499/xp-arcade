@@ -71,10 +71,13 @@ describe("Window resize handles", () => {
     expect(dirs.sort()).toEqual(["e", "n", "ne", "nw", "s", "se", "sw", "w"]);
   });
 
-  it("renders no handles for a game window", () => {
+  it("renders all 8 handles for a game window -- the play field scales to fit", () => {
     seed("game-snake");
     render();
-    expect(container.querySelectorAll("[data-resize]").length).toBe(0);
+    const dirs = [...container.querySelectorAll("[data-resize]")].map((el) =>
+      el.getAttribute("data-resize"),
+    );
+    expect(dirs.sort()).toEqual(["e", "n", "ne", "nw", "s", "se", "sw", "w"]);
   });
 
   it("renders no handles while maximized", () => {

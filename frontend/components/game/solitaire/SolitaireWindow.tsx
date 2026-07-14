@@ -139,7 +139,11 @@ export function SolitaireWindow() {
   const showAuto = canAutoComplete(game) && !game.won;
 
   return (
-    <GameShellWindow gameId="solitaire" score={game.won && !practice ? liveScore : 0}>
+    <GameShellWindow
+      gameId="solitaire"
+      score={game.won && !practice ? liveScore : 0}
+      unscaled={showMint}
+    >
       {showMint ? (
         <SharedMintDialog
           gameId="solitaire"

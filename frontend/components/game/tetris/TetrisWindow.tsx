@@ -31,7 +31,7 @@ export function TetrisWindow() {
   if (!w) return null;
 
   return (
-    <GameShellWindow gameId="tetris" score={score}>
+    <GameShellWindow gameId="tetris" score={score} unscaled={showMint}>
       {showMint ? (
         <SharedMintDialog
           gameId="tetris"

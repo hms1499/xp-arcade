@@ -31,7 +31,7 @@ export function SnakeWindow() {
   if (!w) return null;
 
   return (
-    <GameShellWindow gameId="snake" score={score}>
+    <GameShellWindow gameId="snake" score={score} unscaled={showMint}>
       {showMint ? (
         <SharedMintDialog
           gameId="snake"

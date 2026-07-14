@@ -53,8 +53,8 @@ constant exists to drift when someone edits `CELL_SIZE`.
 
 ```ts
 computeGameScale({ availW, availH, naturalW, naturalH }): number
-  // clamp(min(availW / naturalW, availH / naturalH), MIN_SCALE, MAX_SCALE)
-  // MIN_SCALE = 0.25, MAX_SCALE = 3
+  // min(MAX_SCALE, min(availW / naturalW, availH / naturalH))
+  // MAX_SCALE = 3. There is deliberately NO floor -- see below.
 ```
 
 Taking the **minimum** of the two ratios preserves aspect ratio: the field never
@@ -62,20 +62,24 @@ distorts, and leftover space on the long axis becomes Win95 grey letterbox aroun
 a centred field. Returns `1` when the natural size is not measured yet
 (`naturalW` or `naturalH` is 0), so the first paint is the size games have today.
 
-**The floor must never bind.** A scale floor that clamps *above* the ratio the
-window actually affords would push the field past the viewport layer, and
-`overflow: hidden` would silently clip the play area — a game you cannot fully
-see is worse than a small one. `MIN_SCALE = 0.25` is chosen to sit below anything
-reachable: the smallest window the manager permits is 300x200
-(`MIN_WINDOW_W/H`), and the widest game is well under 1200px natural, so the
-worst real ratio stays above 0.25. The floor exists only to stop a degenerate
-value (a zero-sized viewport during a layout transition) from collapsing the
-field to nothing. `MAX_SCALE = 3` is the one bound meant to be felt: it stops a
-maximized window on a large display from blowing the field up into abstract art.
+**There is no floor, and there must not be one.** An earlier draft of this design
+set `MIN_SCALE = 0.25`, claiming it sat below anything reachable. It did not.
+Measured in the browser: at the 200px minimum window height, the title bar, body
+margins, toolbar and goal row leave roughly 95px for the field, while Snake's
+natural height is ~496px — a true fit of ~0.19. A floor would have clamped that
+*upward* to 0.25, producing a ~124px field inside a ~95px viewport, which
+`overflow: hidden` clips top and bottom with no scrollbar.
 
-Shrinking is therefore bounded by the window minimum, not by the scale floor —
-which is the honest place for that limit to live, since it is what the user is
-actually dragging.
+That is the general shape of the mistake: a floor can only ever raise the scale
+above what the window affords, so a floor can only ever cause clipping. A game
+you cannot fully see is worse than a small one. The scale therefore shrinks
+freely, and how small a game can get is bounded by `MIN_WINDOW_W/H` — the honest
+place for that limit to live, since the window is what the user is dragging.
+
+`MAX_SCALE = 3` is the one bound meant to be felt: it stops a maximized window on
+a large display from blowing the field up into abstract art. Degenerate inputs
+(any of the four sizes `<= 0`, e.g. a zero-size box mid-layout) return `1` before
+any division, which is what keeps the field from collapsing to nothing.
 
 ### Chrome does not scale
 

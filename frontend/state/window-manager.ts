@@ -77,12 +77,12 @@ export const MIN_WINDOW_H = 200;
 const TASKBAR_H = 28;
 
 /**
- * Resizable = every non-game window. Deliberately NOT isUtilityType: that
- * helper is Escape-close semantics and excludes the browser, which must
- * still be resizable.
+ * Every window resizes. Games included: the play field keeps its hard-pixel
+ * layout and GameShellWindow scales it to fit (see lib/game-scale.ts), so a
+ * wider window means a bigger board, not empty space around a fixed one.
  */
-export function isResizableType(type: WindowType): boolean {
-  return !type.startsWith("game-");
+export function isResizableType(_type: WindowType): boolean {
+  return true;
 }
 
 /**

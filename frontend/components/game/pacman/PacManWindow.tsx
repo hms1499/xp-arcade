@@ -31,7 +31,7 @@ export function PacManWindow() {
   if (!w) return null;
 
   return (
-    <GameShellWindow gameId="pacman" score={score}>
+    <GameShellWindow gameId="pacman" score={score} unscaled={showMint}>
       {showMint ? (
         <SharedMintDialog
           gameId="pacman"

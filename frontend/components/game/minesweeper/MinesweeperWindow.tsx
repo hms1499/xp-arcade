@@ -89,7 +89,7 @@ export function MinesweeperWindow() {
   const practiceWin = game.status === "won" && difficulty !== RANKED;
 
   return (
-    <GameShellWindow gameId="minesweeper" score={liveScore}>
+    <GameShellWindow gameId="minesweeper" score={liveScore} unscaled={showMint}>
       {showMint ? (
         <SharedMintDialog
           gameId="minesweeper"

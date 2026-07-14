@@ -31,7 +31,7 @@ export function BreakoutWindow() {
   if (!w) return null;
 
   return (
-    <GameShellWindow gameId="breakout" score={score}>
+    <GameShellWindow gameId="breakout" score={score} unscaled={showMint}>
       {showMint ? (
         <SharedMintDialog
           gameId="breakout"

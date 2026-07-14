@@ -281,15 +281,15 @@ describe("browser window", () => {
 });
 
 describe("isResizableType", () => {
-  it("allows utility windows and the browser", () => {
+  it("allows utility windows", () => {
     expect(isResizableType("highscore")).toBe(true);
     expect(isResizableType("browser")).toBe(true);
     expect(isResizableType("swap")).toBe(true);
   });
 
-  it("excludes every game window", () => {
-    expect(isResizableType("game-snake")).toBe(false);
-    expect(isResizableType("game-solitaire")).toBe(false);
+  it("allows game windows -- the play field scales to fit", () => {
+    expect(isResizableType("game-snake")).toBe(true);
+    expect(isResizableType("game-solitaire")).toBe(true);
   });
 });
 

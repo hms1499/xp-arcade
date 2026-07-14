@@ -262,6 +262,9 @@ body {
   .game-shell-stage {
     display: flex;
     flex: 1;
+  }
+
+  .game-shell-stage-inner {
     padding: 4px !important;
   }
 

@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { type GameId, GAMES } from "@/lib/game-registry";
 import { useWindows } from "@/state/window-manager";
 import { useSessionStats } from "@/state/session-stats";
@@ -18,6 +18,7 @@ import { ChallengeBanner } from "@/components/shared/ChallengeBanner";
 import { useChallenge } from "@/state/challenge";
 import { useToasts } from "@/state/toasts";
 import { playSuccess } from "@/lib/sounds";
+import { computeGameScale } from "@/lib/game-scale";
 
 type GoalState = {
   rows: TopEntry[];
@@ -31,10 +32,19 @@ export function GameShellWindow({
   gameId,
   score,
   children,
+  unscaled = false,
 }: {
   gameId: GameId;
   score: number;
   children: React.ReactNode;
+  /**
+   * Set for chrome that must render at native size instead of scaling with
+   * the play field -- e.g. the game-over/mint dialog, which is the wallet /
+   * STX-transaction surface. When true, `children` render inside the
+   * viewport layer WITHOUT the stage's transform, and the viewport scrolls
+   * (rather than clipping) if the content is taller than available space.
+   */
+  unscaled?: boolean;
 }) {
   const game = GAMES[gameId];
   const w = useWindows((s) =>
@@ -108,6 +118,46 @@ export function GameShellWindow({
     };
   }, [w, gameId, address]);
 
+  const [viewportEl, setViewportEl] = useState<HTMLDivElement | null>(null);
+  const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null);
+  const [avail, setAvail] = useState({ w: 0, h: 0 });
+  const [natural, setNatural] = useState({ w: 0, h: 0 });
+
+  // useLayoutEffect (not useEffect) so the measurement lands before paint --
+  // otherwise, if the browser window resizes while this window is
+  // minimized, the first painted frame after restore uses stale avail/
+  // natural values before self-correcting on the next tick.
+  useLayoutEffect(() => {
+    if (!viewportEl || !stageEl) return;
+
+    // The viewport is the space the window's geometry leaves for the field.
+    const viewportObserver = new ResizeObserver(() => {
+      setAvail({ w: viewportEl.clientWidth, h: viewportEl.clientHeight });
+    });
+    // offsetWidth/offsetHeight ignore the stage's own transform, so this stays
+    // the game's natural size no matter what scale is applied.
+    const stageObserver = new ResizeObserver(() => {
+      setNatural({ w: stageEl.offsetWidth, h: stageEl.offsetHeight });
+    });
+
+    viewportObserver.observe(viewportEl);
+    stageObserver.observe(stageEl);
+    setAvail({ w: viewportEl.clientWidth, h: viewportEl.clientHeight });
+    setNatural({ w: stageEl.offsetWidth, h: stageEl.offsetHeight });
+
+    return () => {
+      viewportObserver.disconnect();
+      stageObserver.disconnect();
+    };
+  }, [viewportEl, stageEl]);
+
+  const scale = computeGameScale({
+    availW: avail.w,
+    availH: avail.h,
+    naturalW: natural.w,
+    naturalH: natural.h,
+  });
+
   if (!w) return null;
 
   const goal = leaderboardGoal({
@@ -120,7 +170,7 @@ export function GameShellWindow({
     <Window id={w.id} title={`${game.emoji} ${game.label}`}>
       <div
         className="game-shell-content"
-        style={{ display: "flex", flexDirection: "column" }}
+        style={{ display: "flex", flexDirection: "column", height: "100%" }}
       >
         <div
           className="game-shell-toolbar"
@@ -232,7 +282,36 @@ export function GameShellWindow({
           sessionBest={sessionStats.bestScore}
           onMet={handleChallengeMet}
         />
-        <div className="game-shell-stage p-2">{children}</div>
+        <div
+          ref={setViewportEl}
+          className="game-shell-stage"
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflow: unscaled ? "auto" : "hidden",
+            display: "flex",
+            alignItems: unscaled ? "flex-start" : "center",
+            justifyContent: "center",
+          }}
+        >
+          {unscaled ? (
+            <div className="game-shell-stage-inner p-2" style={{ flex: "none" }}>
+              {children}
+            </div>
+          ) : (
+            <div
+              ref={setStageEl}
+              className="game-shell-stage-inner p-2"
+              style={{
+                flex: "none",
+                transform: `scale(${scale})`,
+                transformOrigin: "center",
+              }}
+            >
+              {children}
+            </div>
+          )}
+        </div>
       </div>
     </Window>
   );
