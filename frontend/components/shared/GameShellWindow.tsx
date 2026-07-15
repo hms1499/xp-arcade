@@ -142,8 +142,15 @@ export function GameShellWindow({
 
     viewportObserver.observe(viewportEl);
     stageObserver.observe(stageEl);
+    // Synchronous pre-paint measurement is intentional: the ResizeObserver
+    // callbacks only fire *after* paint, so without seeding avail/natural here
+    // the first restored frame would render on stale dimensions (see comment
+    // above). This is the sanctioned useLayoutEffect measure-then-setState
+    // pattern, not the cascading-render anti-pattern the rule targets.
+    /* eslint-disable react-hooks/set-state-in-effect */
     setAvail({ w: viewportEl.clientWidth, h: viewportEl.clientHeight });
     setNatural({ w: stageEl.offsetWidth, h: stageEl.offsetHeight });
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     return () => {
       viewportObserver.disconnect();
